@@ -1,1 +1,5 @@
-# borda
+# Borda
+
+## Run
+
+    docker-compose up
