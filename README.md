@@ -2,6 +2,6 @@
 
 ## Run
 
-    docker-compose up
+    docker-compose up -d
     export POSTGRES_URI=postgres://postgres:postgres@localhost:5432/postgres?sslmode=disable
-    go run cmd/borda/main.go
+    make run

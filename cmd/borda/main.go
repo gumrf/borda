@@ -1,9 +1,11 @@
 package main
 
 import (
-	"borda/internal/borda"
+	borda "borda/internal/app"
 )
 
+const configPath string = "configs"
+
 func main() {
-	borda.Run()
+	borda.Run(configPath)
 }

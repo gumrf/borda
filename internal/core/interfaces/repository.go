@@ -1,14 +1,14 @@
-package repository
+package interfaces
 
-import "borda/internal/domain"
+import "borda/internal/core/entities"
 
-type TaskRepositoryI interface {
+type TaskRepository interface {
 	// CreateNewTask создает новый такс
-	CreateNewTask(t domain.Task) (domain.Task, error)
+	CreateNewTask(t entities.Task) (entities.Task, error)
 	// DeleteTask удаляет таск
 	DeleteTask(taskId int) error
 	// Update обновляет
-	UpdateTask(t domain.Task) (domain.Task, error)
+	UpdateTask(t entities.Task) (entities.Task, error)
 	// Show открывает все скрытые таски
 	Show()
 	// Открывает определенный таск
@@ -26,18 +26,18 @@ type TaskRepositoryI interface {
 	// Import загружает таски из json или markdown файла
 	Import(file string) (taskCount int, err error)
 	// Getauthors return Authors associeted with task
-	GetAuthors(taskId int)([]domain.Author, error)
+	GetAuthors(taskId int) ([]entities.Author, error)
 }
 
-type UserRepositoryI interface {}
+type UserRepository interface{}
 
-type TeamRepositoryI interface{}
+type TeamRepository interface{}
 
-type RoleRepositoryI interface{}
+type RoleRepository interface{}
 
-type RepositoryI interface {
-	Users() (UserRepositoryI, error)
-	Roles() (RoleRepositoryI, error)
-	Tasks() (TaskRepositoryI, error)
-	Teams() (TeamRepositoryI, error)
+type Repository interface {
+	Users() (UserRepository, error)
+	Roles() (RoleRepository, error)
+	Tasks() (TaskRepository, error)
+	Teams() (TeamRepository, error)
 }

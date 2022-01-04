@@ -3,7 +3,7 @@ package postgres
 import (
 	"github.com/jmoiron/sqlx"
 
-	"borda/internal/repository"
+	"borda/internal/core/interfaces"
 )
 
 type PostgresRepository struct {
@@ -11,21 +11,21 @@ type PostgresRepository struct {
 }
 
 // Verify interface compliance
-var _ repository.RepositoryI = (*PostgresRepository)(nil)
+var _ interfaces.Repository = (*PostgresRepository)(nil)
 
-func (pr *PostgresRepository) Users() (repository.UserRepositoryI, error) {
+func (pr *PostgresRepository) Users() (interfaces.UserRepository, error) {
 	panic("not implemented") // TODO: implement me
 }
 
-func (pr *PostgresRepository) Roles() (repository.RoleRepositoryI, error) {
+func (pr *PostgresRepository) Roles() (interfaces.RoleRepository, error) {
 	panic("not implemented") // TODO: implement me
 }
 
-func (pr *PostgresRepository) Tasks() (repository.TaskRepositoryI, error) {
+func (pr *PostgresRepository) Tasks() (interfaces.TaskRepository, error) {
 	panic("not implemented") // TODO: implement me
 }
 
-func (pr *PostgresRepository) Teams() (repository.TeamRepositoryI, error) {
+func (pr *PostgresRepository) Teams() (interfaces.TeamRepository, error) {
 	panic("not implemented") // TODO: implement me
 }
 

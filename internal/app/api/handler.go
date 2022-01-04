@@ -4,15 +4,20 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
+	"go.uber.org/zap"
 )
 
-type Handler struct{}
-
-func NewHandlers() *Handler {
-	return &Handler{}
+type ApiHandler struct {
+	logger *zap.Logger
 }
 
-func (h *Handler) Init() *gin.Engine {
+func NewApiHandler(logger *zap.Logger) *ApiHandler {
+	return &ApiHandler{
+		logger: logger,
+	}
+}
+
+func (h *ApiHandler) Init() *gin.Engine {
 	// Init gin router
 	router := gin.New()
 
@@ -33,12 +38,8 @@ func (h *Handler) Init() *gin.Engine {
 	return router
 }
 
-func (h *Handler) health(c *gin.Context) {
-	type healthResponse struct {
-		Message string
-	}
+func (h *ApiHandler) health(c *gin.Context) {
+	healthResponse := struct{ Message string }{Message: "health"}
 
-	c.JSON(http.StatusOK, healthResponse{
-		Message: "health",
-	})
+	c.JSON(http.StatusOK, healthResponse)
 }
