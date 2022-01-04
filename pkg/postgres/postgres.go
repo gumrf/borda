@@ -1,6 +1,7 @@
 package postgres
 
 import (
+	"errors"
 	"fmt"
 	"log"
 	"time"
@@ -14,29 +15,52 @@ const (
 	DBPingMaxAttempts int = 5
 )
 
+var (
+	ErrDatabasePingTimeout = errors.New("reach ping timeout")
+)
+
 type DB struct {
 	*sqlx.DB
 }
 
 // Options contains postgres database connection options.
-type Options struct {
-	Host string
-	Port int
+// type Options struct {
+// 	Host string
+// 	Port int
 
-	User     string
-	Password string
-	Database string
+// 	User     string
+// 	Password string
+// 	Database string
 
-	SSLMode string
-}
+// 	SSLMode string
+// }
 
-func NewPostgresDatabase(opts Options) (*DB, error) {
-	dataSourceName := fmt.Sprintf(
-		"host=%s port=%v user=%s password=%s dbname=%s sslmode=%s",
-		opts.Host, opts.Port, opts.User, opts.Password, opts.Database, opts.SSLMode,
-	)
+func NewPostgresDatabase(uri, username, password string) (*DB, error) {
 
-	db, err := sqlx.Open("postgres", dataSourceName)
+	// opts, err := pq.ParseURL(uri)
+	// db := pg.Connect(opts)
+
+	// opts, err := pq.NewConnector(uri)
+	// if err != nil {
+
+	// }
+
+	// dataSourceName := pq.ParseURL(url)
+	// connector := pq.NewConnector(uri)
+	// if username != "" && password != "" {
+	// 	opts.SetAuth(options.Credential{
+	// 		Username: username, Password: password,
+	// 	})
+	// }
+
+	// dataSourceName := fmt.Sprintf(
+	// 	"host=%s port=%v user=%s password=%s dbname=%s sslmode=%s",
+	// 	opts.Host, opts.Port, opts.User, opts.Password, opts.Database, opts.SSLMode,
+	// )
+
+	// TODO: if specified username and password parse uri and override values
+
+	db, err := sqlx.Open("postgres", uri)
 	if err != nil {
 		return nil, fmt.Errorf("sqlx.Open: %v", err)
 	}
@@ -55,7 +79,6 @@ func NewPostgresDatabase(opts Options) (*DB, error) {
 			continue
 		}
 
-		log.Println("Connected to database")
 		break
 	}
 
