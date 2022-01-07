@@ -2,63 +2,60 @@ package borda
 
 import (
 	"borda/internal/app/api"
-	"borda/internal/app/config"
 	"borda/internal/app/server"
+	"borda/internal/app/setup"
 	"borda/pkg/postgres"
 	"context"
 	"errors"
+	"os"
+	"path/filepath"
 	"fmt"
 	"net/http"
-	"os"
 	"os/signal"
 	"syscall"
 	"time"
-
-	"go.uber.org/zap"
 )
 
-func Run(configPath string) {
-	// Logger
-	logger, err := zap.NewProduction()
+func Run() {
+	// Config & logger
+	cfg := setup.InitConfig()
+	fmt.Println("[+] CONFIG: OK")
+	err := setup.InitLogger(cfg.Additional.LogDir, cfg.Additional.LogFileName)
 	if err != nil {
-		panic(fmt.Errorf("Failed to initialize zap logger: %v", err))
+		fmt.Println("[-] Error on init logger:", err)
+		os.Exit(1)
+	}
+	fmt.Println("[+] LOGS: ", filepath.Join(cfg.Additional.LogDir, cfg.Additional.LogFileName) )
+
+	logger, err := setup.GetReadyLogger()
+	if err != nil {
+		fmt.Println("[-] Error on get logger:", err)
 	}
 
-	logger.Info("Logger initialized")
+	// logger.Println("Basic app init!")
 
-	// Config
-	cfg, err := config.Init(configPath)
-	if err != nil {
-		logger.Error("Failed to initialize config", zap.Error(err))
-	}
-
-	fmt.Println(cfg.Postgres.URI)
+	fmt.Println("[+] DATABASE URI: ", cfg.DB_URI())
 
 	// Database
-	logger.Info("Connecting to database")
-
-	db, err := postgres.NewPostgresDatabase(cfg.Postgres.URI, "", "")
+	db, err := postgres.NewPostgresDatabase(cfg.DB_URI(), "", "")
 	if err != nil {
-		logger.Error("Failed connecting to database:", zap.Error(err))
+		logger.Fatalln("Failed connecting to database:", err)
 	}
+	fmt.Println("[+] CONNECT TO DB: OK")
 
-	logger.Info("Connected to database", zap.String("uri", db.DataSourceName))
-
-	// TODO: Initialize services
+	// // TODO: Initialize services
 
 	// Api handlers
-	handler := api.NewApiHandler(logger)
+	handler := api.NewRoutes()
 
 	// HTTP Server
-	server := server.NewServer(handler.Init(), logger)
+	server := server.NewServer(handler, cfg.HTTP.Host, cfg.HTTP.Port)
 
 	go func() {
 		if err := server.Run(); !errors.Is(err, http.ErrServerClosed) {
-			logger.Error("Error occurred while running http server:", zap.Error(err))
+			logger.Fatalln("Error occurred while running http server:", err)
 		}
 	}()
-
-	logger.Info("Server started")
 
 	// Graceful Shutdown
 	quit := make(chan os.Signal, 1)
@@ -73,18 +70,12 @@ func Run(configPath string) {
 	defer shutdown()
 
 	if err := server.Stop(ctx); err != nil {
-		logger.Error("Failed to stop server", zap.Error(err))
+		logger.Fatalln("Failed to stop server", err)
 	}
 
 	// Close database connections
 	if err := db.Close(); err != nil {
-		logger.Error("Failed to stop database", zap.Error(err))
-	}
-
-	logger.Info("Server stoped")
-
-	if err := logger.Sync(); err != nil {
-		panic(fmt.Errorf("logger.Sync: %w", err))
+		logger.Fatalln("Failed to stop database", err)
 	}
 
 	os.Exit(1)

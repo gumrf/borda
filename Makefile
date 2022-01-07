@@ -6,4 +6,4 @@ build: dep
 	go build -o ./.bin/borda
 
 run:
-	go run cmd/borda/main.go
+	go run cmd/main.go
