@@ -11,9 +11,9 @@ type Server struct {
 }
 
 func NewServer(handler http.Handler, host string, port string) *Server {
-	serverPort := fmt.Sprintf("%s:%s", host, port)
+	serverAddr := fmt.Sprintf("%s:%s", host, port)
 	return &Server{
-		httpServer: &http.Server{Addr: serverPort, Handler: handler},
+		httpServer: &http.Server{Addr: serverAddr, Handler: handler},
 	}
 }
 
