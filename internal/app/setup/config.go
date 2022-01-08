@@ -12,7 +12,7 @@ type (
 		HTTP        HTTPConfig
 		Additional  AdditionalConfig
 		Credentials CredentialsConfig
-	}
+ 	}
 
 	CredentialsConfig struct {
 		JWTKey string
@@ -38,7 +38,7 @@ type (
 	}
 )
 
-func (c *Config) DB_URI() string {
+func (c *Config) DatabaseURI() string {
 	return fmt.Sprintf(
 		"postgres://%s:%s@%s:%s/%s?sslmode=disable",
 		c.Postgres.User, c.Postgres.Password, c.Postgres.Host, c.Postgres.Port, c.Postgres.Database)
