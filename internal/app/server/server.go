@@ -2,20 +2,19 @@ package server
 
 import (
 	"context"
+	"fmt"
 	"net/http"
-
-	"go.uber.org/zap"
+	"borda/internal/app/setup"
 )
 
 type Server struct {
 	httpServer *http.Server
-	logger *zap.Logger
 }
 
-func NewServer(handler http.Handler, logger *zap.Logger) *Server {
+func NewServer(handler http.Handler, config setup.HTTPConfig) *Server {
+	serverAddr := fmt.Sprintf("%s:%s", config.Host, config.Port)
 	return &Server{
-		httpServer: &http.Server{Addr: ":8080", Handler: handler},
-		logger:     logger,
+		httpServer: &http.Server{Addr: serverAddr, Handler: handler},
 	}
 }
 
