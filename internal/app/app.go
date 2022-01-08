@@ -27,16 +27,16 @@ func Run() {
 		fmt.Println("[-] Error on init logger:", err)
 		os.Exit(1)
 	}
-	logger.Debug("[+] LOGS: ", filepath.Join(cfg.Additional.LogDir, cfg.Additional.LogFileName))
+	logger.Info("[+] LOGS: ", filepath.Join(cfg.Additional.LogDir, cfg.Additional.LogFileName))
 	
 	// Database
-	logger.Debug("[+] DATABASE URI: ", cfg.DatabaseURI())
+	logger.Info("[+] DATABASE URI: ", cfg.DatabaseURI())
 	
 	db, err := postgres.NewPostgresDatabase(cfg.DatabaseURI())
 	if err != nil {
 		logger.Fatalw("Failed connecting to database:", err)
 	}
-	logger.Debug("[+] CONNECT TO DB: OK")
+	logger.Info("[+] CONNECT TO DB: OK")
 
 	// // TODO: Initialize services
 

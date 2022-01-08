@@ -52,7 +52,7 @@ func InitLogger(logDir, logFileName string) (Logger, error) {
 	encoderConfig.EncodeLevel = zapcore.CapitalLevelEncoder
 	encoder := zapcore.NewConsoleEncoder(encoderConfig)
 
-	core := zapcore.NewCore(encoder, writerSyncer, zapcore.InfoLevel)
+	core := zapcore.NewCore(encoder, writerSyncer, zapcore.DebugLevel)
 
 	logger := zap.New(core)
 	sugarLogger := logger.Sugar()
