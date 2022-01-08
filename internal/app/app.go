@@ -49,7 +49,7 @@ func Run() {
 	handler := api.NewRoutes()
 
 	// HTTP Server
-	server := server.NewServer(handler, cfg.HTTP.Host, cfg.HTTP.Port)
+	server := server.NewServer(handler, cfg.HTTP)
 
 	go func() {
 		if err := server.Run(); !errors.Is(err, http.ErrServerClosed) {
