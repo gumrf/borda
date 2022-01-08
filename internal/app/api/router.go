@@ -1,34 +1,32 @@
 package api
 
 import (
-	"github.com/gin-gonic/gin"
-	"time"
-	"fmt"
 	"borda/internal/app/setup"
+	"time"
+
+	"github.com/gin-gonic/gin"
 )
 
 type ApiHandler struct {
-    router *gin.Engine
+	router *gin.Engine
 }
 
 func NewRoutes() *gin.Engine {
-    r := ApiHandler{
-        router: gin.Default(),
-    }
-	logger, err := setup.GetReadyLogger()
-	if err != nil {
-		fmt.Println("Logger is die :)")
+	r := ApiHandler{
+		router: gin.Default(),
 	}
-	logger.Println("HEAL CHECK HANDLER")
-	r.router.GET("/", func (c *gin.Context)  {
-		
+
+	logger := setup.GetLoggerInstance()
+	logger.Debug("HEAL CHECK HANDLER")
+	r.router.GET("/", func(c *gin.Context) {
+
 		c.JSON(200, gin.H{
-        	"message": "OK",
-			"time" : time.Now().Format(time.UnixDate),
-    	})
+			"message": "OK",
+			"time":    time.Now().Format(time.UnixDate),
+		})
 	})
 
-    v1 := r.router.Group("/v1")
-    r.addHealCheck(v1)
-    return r.router
+	v1 := r.router.Group("/v1")
+	r.addHealCheck(v1)
+	return r.router
 }

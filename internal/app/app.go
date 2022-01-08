@@ -7,41 +7,36 @@ import (
 	"borda/pkg/postgres"
 	"context"
 	"errors"
-	"os"
-	"path/filepath"
 	"fmt"
 	"net/http"
+	"os"
 	"os/signal"
+	"path/filepath"
 	"syscall"
 	"time"
 )
 
 func Run() {
+
 	// Config & logger
 	cfg := setup.InitConfig()
 	fmt.Println("[+] CONFIG: OK")
-	err := setup.InitLogger(cfg.Additional.LogDir, cfg.Additional.LogFileName)
+
+	logger, err := setup.InitLogger(cfg.Additional.LogDir, cfg.Additional.LogFileName)
 	if err != nil {
 		fmt.Println("[-] Error on init logger:", err)
 		os.Exit(1)
 	}
-	fmt.Println("[+] LOGS: ", filepath.Join(cfg.Additional.LogDir, cfg.Additional.LogFileName) )
-
-	logger, err := setup.GetReadyLogger()
-	if err != nil {
-		fmt.Println("[-] Error on get logger:", err)
-	}
-
-	// logger.Println("Basic app init!")
-
-	fmt.Println("[+] DATABASE URI: ", cfg.DB_URI())
-
+	logger.Debug("[+] LOGS: ", filepath.Join(cfg.Additional.LogDir, cfg.Additional.LogFileName))
+	
 	// Database
-	db, err := postgres.NewPostgresDatabase(cfg.DB_URI(), "", "")
+	logger.Debug("[+] DATABASE URI: ", cfg.DatabaseURI())
+	
+	db, err := postgres.NewPostgresDatabase(cfg.DatabaseURI())
 	if err != nil {
-		logger.Fatalln("Failed connecting to database:", err)
+		logger.Fatalw("Failed connecting to database:", err)
 	}
-	fmt.Println("[+] CONNECT TO DB: OK")
+	logger.Debug("[+] CONNECT TO DB: OK")
 
 	// // TODO: Initialize services
 
@@ -53,7 +48,7 @@ func Run() {
 
 	go func() {
 		if err := server.Run(); !errors.Is(err, http.ErrServerClosed) {
-			logger.Fatalln("Error occurred while running http server:", err)
+			logger.Fatal("Error occurred while running http server:", err)
 		}
 	}()
 
@@ -70,12 +65,12 @@ func Run() {
 	defer shutdown()
 
 	if err := server.Stop(ctx); err != nil {
-		logger.Fatalln("Failed to stop server", err)
+		logger.Fatal("Failed to stop server", err)
 	}
 
 	// Close database connections
 	if err := db.Close(); err != nil {
-		logger.Fatalln("Failed to stop database", err)
+		logger.Fatal("Failed to stop database", err)
 	}
 
 	os.Exit(1)
