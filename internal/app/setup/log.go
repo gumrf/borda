@@ -14,16 +14,13 @@ type Logger struct {
 	lock sync.Mutex
 }
 
-var ZapLogger = Logger{
-	SugaredLogger: &zap.SugaredLogger{},
-	lock:          sync.Mutex{},
-}
+var ZapLogger = new(Logger)
 
-func InitLogger(logDir, logFileName string) (Logger, error) {
+func InitLogger(logDir, logFileName string) error {
 	if _, err := os.Stat(logDir); os.IsNotExist(err) {
 		err := os.Mkdir(logDir, 0777)
 		if err != nil {
-			return Logger{}, err
+			return err
 		}
 	}
 
@@ -31,14 +28,14 @@ func InitLogger(logDir, logFileName string) (Logger, error) {
 	if _, err := os.Stat(filePath); os.IsNotExist(err) {
 		file, err := os.Create(filePath)
 		if err != nil {
-			return Logger{}, err
+			return err
 		}
 		defer file.Close()
 	}
 
 	file, err := os.OpenFile(filePath, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0666)
 	if err != nil {
-		return Logger{}, err
+		return err
 	}
 
 	writerSyncer := zapcore.NewMultiWriteSyncer(
@@ -57,11 +54,10 @@ func InitLogger(logDir, logFileName string) (Logger, error) {
 	logger := zap.New(core)
 	sugarLogger := logger.Sugar()
 
-	return Logger{
-		SugaredLogger: sugarLogger,
-		lock:          sync.Mutex{},
-	}, nil
+	ZapLogger.SugaredLogger = sugarLogger
+	ZapLogger.lock = sync.Mutex{}
 
+	return nil
 }
 
 func GetLoggerInstance() *zap.SugaredLogger {
