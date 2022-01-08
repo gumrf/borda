@@ -11,15 +11,16 @@ type ApiHandler struct {
 	router *gin.Engine
 }
 
+
 func NewRoutes() *gin.Engine {
 	r := ApiHandler{
 		router: gin.Default(),
 	}
-
 	logger := setup.GetLoggerInstance()
-	logger.Debug("HEAL CHECK HANDLER")
+	logger.Debug("Route init")
+	
 	r.router.GET("/", func(c *gin.Context) {
-
+		
 		c.JSON(200, gin.H{
 			"message": "OK",
 			"time":    time.Now().Format(time.UnixDate),
