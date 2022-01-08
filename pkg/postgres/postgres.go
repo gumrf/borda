@@ -21,8 +21,7 @@ type DB struct {
 	DataSourceName string
 }
 
-func NewPostgresDatabase(uri, username, password string) (*DB, error) {
-
+func NewPostgresDatabase(uri string) (*DB, error) {
 	db, err := sqlx.Open("postgres", uri)
 	if err != nil {
 		return nil, fmt.Errorf("sqlx.Open: %w", err)
