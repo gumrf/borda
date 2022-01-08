@@ -56,9 +56,9 @@ func InitConfig() *Config {
 	config := new(Config)
 	config.Postgres.Host = getEnv("DB_HOST", "localhost")
 	config.Postgres.Port = getEnv("DB_PORT", "5432")
-	config.Postgres.User = getEnv("DB_USER", "jayse_test")
-	config.Postgres.Password = getEnv("DB_PASSWORD", "test")
-	config.Postgres.Database = getEnv("DB_NAME", "test_db")
+	config.Postgres.User = getEnv("DB_USER", "postgres")
+	config.Postgres.Password = getEnv("DB_PASSWORD", "postgres")
+	config.Postgres.Database = getEnv("DB_NAME", "postgres")
 
 	config.HTTP.Host = getEnv("HTTP_HOST", "localhost")
 	config.HTTP.Port = getEnv("HTTP_PORT", "8080")
