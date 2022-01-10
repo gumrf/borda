@@ -4,7 +4,6 @@ import (
 	"borda/internal/app/api"
 	"borda/internal/app/server"
 	"borda/internal/app/setup"
-	"borda/internal/core/entities"
 
 	pdb "borda/pkg/postgres"
 	"context"
@@ -32,7 +31,7 @@ func Run() {
 		os.Exit(1)
 	}
 
-	logger := setup.GetLoggerInstance()
+	logger := setup.GetLogger()
 
 	logger.Info("Logs path: ", filepath.Join(cfg.Additional.LogDir, cfg.Additional.LogFileName))
 
@@ -52,11 +51,10 @@ func Run() {
 		logger.Error("Can't connect to database", err)
 	}
 
-	if err := db.AutoMigrate(entities.Task{}); err != nil {
-		logger.Fatal(err)
+	if err := setup.MigrateDB(db); err != nil {
+		logger.Fatal("Could not migrate: %v", err)
 	}
-
-	// // TODO: Initialize services
+	logger.Info("Migration did run successfully")
 
 	// Api handlers
 	handler := api.NewRoutes()
