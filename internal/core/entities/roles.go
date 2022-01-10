@@ -1,8 +1,14 @@
 package entities
 
 type Role struct {
-	Id   int    `json:"roleId"`
+	ID   int    `json:"roleId"`
 	Name string `json:"roleName"`
 }
 
-type UserRoles []Role
+type UserRole struct {
+	UserID int
+	User   User
+
+	RoleID int
+	Role   Role
+}
