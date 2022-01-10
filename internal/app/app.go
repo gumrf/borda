@@ -4,7 +4,9 @@ import (
 	"borda/internal/app/api"
 	"borda/internal/app/server"
 	"borda/internal/app/setup"
-	"borda/pkg/postgres"
+	"borda/internal/core/entities"
+
+	pdb "borda/pkg/postgres"
 	"context"
 	"errors"
 	"log"
@@ -14,6 +16,9 @@ import (
 	"path/filepath"
 	"syscall"
 	"time"
+
+	"gorm.io/driver/postgres"
+	"gorm.io/gorm"
 )
 
 func Run() {
@@ -34,11 +39,22 @@ func Run() {
 	// Database
 	logger.Info("Database URI: ", cfg.DatabaseURI())
 
-	db, err := postgres.NewPostgresDatabase(cfg.DatabaseURI())
+	dbConn, err := pdb.NewConnection(cfg.DatabaseURI())
 	if err != nil {
 		logger.Fatalw("Failed connecting to database:", err)
 	}
 	logger.Info("Connected to DB")
+
+	db, err := gorm.Open(postgres.New(postgres.Config{
+		Conn: dbConn,
+	}), &gorm.Config{})
+	if err != nil {
+		logger.Error("Can't connect to database", err)
+	}
+
+	if err := db.AutoMigrate(entities.Task{}); err != nil {
+		logger.Fatal(err)
+	}
 
 	// // TODO: Initialize services
 
@@ -71,7 +87,7 @@ func Run() {
 	}
 
 	// Close database connections
-	if err := db.Close(); err != nil {
+	if err := dbConn.Close(); err != nil {
 		logger.Fatal("Failed to stop database", err)
 	}
 }

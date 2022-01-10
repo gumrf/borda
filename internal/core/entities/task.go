@@ -2,43 +2,47 @@ package entities
 
 import (
 	"time"
+
+	"gorm.io/gorm"
 )
 
 type Task struct {
-	Id         int      `json:"id"`
-	Title      string   `json:"title"`
+	gorm.Model
+	// Id         int      `json:"id"`
+	Title      string   `json:"title" gorm:"not null"`
 	Decription string   `json:"description"`
 	Category   string   `json:"category"`
 	Complexity string   `json:"complexity"`
 	Pionts     int      `json:"points"`
 	Hint       string   `json:"hint"`
 	Flag       string   `json:"flag"`
-	IsActive   bool     `json:"isActive"`
+	// IsActive   bool     `json:"isActive"`
 	IsDisabled bool     `json:"isDisabled"`
-	Authors    []Author `json:"authors"`
+	AuthorID   int      `json:"-"`
+	Authors    []Author `json:"authors" gorm:"many2many:author_tasks;"`
 }
 
 type Author struct {
-	Id      int    `json:"authorId"`
+	ID      int    `json:"authorId" gorm:"primaryKey"`
 	Name    string `json:"name"`
 	Contact string `json:"contact"`
 }
 
 type SolvedTask struct {
-	TaskId    int       `json:"taskId"`
-	TeamId    int       `json:"teamId"`
+	TaskID    int       `json:"taskId" gorm:"foreignkey:taskId"`
+	TeamID    int       `json:"teamId"`
 	Timestamp time.Time `json:"timestemp"`
 }
 
 type SolvedTasks []SolvedTask
 
 type TaskSubmission struct {
-	TaskId        int       `json:"taskId"`
-	TeamId        int       `json:"teamId"`
-	SubmitionerId int       `json:"submitionerId"`
-	Submission    string    `json:"submission"`
-	IsCorrect     bool      `json:"isCorrect"`
-	Timestemp     time.Time `json:"timestemp"`
+	TaskID    int       `json:"taskId"`
+	TeamID    int       `json:"teamId"`
+	UserId    int       `json:"userId"`
+	Flag      string    `json:"flag"`
+	IsCorrect bool      `json:"isCorrect"`
+	Timestemp time.Time `json:"timestemp"`
 }
 
 type TaskSubmissions []TaskSubmission
