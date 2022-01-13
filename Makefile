@@ -7,3 +7,4 @@ build: dep
 
 run:
 	go run cmd/main.go
+	

@@ -15,6 +15,7 @@ type Task struct {
 	Flag       string   `json:"flag"`
 	IsActive   bool     `json:"isActive"`
 	IsDisabled bool     `json:"isDisabled"`
+	AuthorIDs  []int    `json:"-"`
 	Authors    []Author `json:"authors"`
 }
 
@@ -33,12 +34,12 @@ type SolvedTask struct {
 type SolvedTasks []SolvedTask
 
 type TaskSubmission struct {
-	TaskId        int       `json:"taskId"`
-	TeamId        int       `json:"teamId"`
-	SubmitionerId int       `json:"submitionerId"`
-	Submission    string    `json:"submission"`
-	IsCorrect     bool      `json:"isCorrect"`
-	Timestemp     time.Time `json:"timestemp"`
+	TaskId    int       `json:"taskId"`
+	TeamId    int       `json:"teamId"`
+	UserId    int       `json:"userId"`
+	Flag      string    `json:"flag"`
+	IsCorrect bool      `json:"isCorrect"`
+	Timestemp time.Time `json:"timestemp"`
 }
 
 type TaskSubmissions []TaskSubmission

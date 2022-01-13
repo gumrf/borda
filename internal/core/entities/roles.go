@@ -5,4 +5,7 @@ type Role struct {
 	Name string `json:"roleName"`
 }
 
-type UserRoles []Role
+type UserRoles struct {
+	UserId int `json:"userId"`
+	RoleId int `json:"roleId"`
+}

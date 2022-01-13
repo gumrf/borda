@@ -1,10 +1,11 @@
-package borda
+package app
 
 import (
 	"borda/internal/app/api"
 	"borda/internal/app/server"
 	"borda/internal/app/setup"
-	"borda/pkg/postgres"
+
+	pdb "borda/pkg/postgres"
 	"context"
 	"errors"
 	"log"
@@ -27,20 +28,23 @@ func Run() {
 		os.Exit(1)
 	}
 
-	logger := setup.GetLoggerInstance()
+	logger := setup.GetLogger()
 
 	logger.Info("Logs path: ", filepath.Join(cfg.Additional.LogDir, cfg.Additional.LogFileName))
 
 	// Database
 	logger.Info("Database URI: ", cfg.DatabaseURI())
 
-	db, err := postgres.NewPostgresDatabase(cfg.DatabaseURI())
+	db, err := pdb.NewConnection(cfg.DatabaseURI())
 	if err != nil {
 		logger.Fatalw("Failed connecting to database:", err)
 	}
 	logger.Info("Connected to DB")
 
-	// // TODO: Initialize services
+	if err := Migrate(db); err != nil {
+		logger.Fatal("Failed migration: ", err)
+	}
+	logger.Info("Migration did run successfully")
 
 	// Api handlers
 	handler := api.NewRoutes()
