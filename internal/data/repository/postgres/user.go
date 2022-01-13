@@ -18,7 +18,7 @@ func NewPostgresUserRepository(db *sqlx.DB) *PostgresUserRepository {
 
 //Создать нового юзера в бд
 func (user *PostgresUserRepository) Create(username, passwordHash, contact string, roleId int) (int, error) {
-	qwery := "INSERT INTO User (Name, Password, Contact) VALUES(?, ?, ?)"
+	qwery := "INSERT INTO user (name, password, contact) VALUES(?, ?, ?)"
 
 	result, err := user.db.Exec(qwery, username, passwordHash, contact)
 	if err != nil {
@@ -33,10 +33,10 @@ func (user *PostgresUserRepository) Create(username, passwordHash, contact strin
 	return int(id), nil
 }
 
-func (user *PostgresUserRepository) UpdatePassword(newHashPassword, oldHashPassword, username string) error {
-	qwery := "UPDATE User SET Password = $1 WHERE Name = $2, Password = $3 "
+func (user *PostgresUserRepository) UpdatePassword(newHashPassword string, id int) error {
+	qwery := "UPDATE user SET password = $1 WHERE id = $2"
 
-	_, err := user.db.Exec(qwery, newHashPassword, username, oldHashPassword)
+	_, err := user.db.Exec(qwery, newHashPassword, id)
 	if err != nil {
 		return err
 	}

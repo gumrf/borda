@@ -2,7 +2,6 @@ package postgres
 
 import (
 	"borda/internal/core/interfaces"
-	"database/sql"
 
 	"github.com/jmoiron/sqlx"
 )
@@ -17,18 +16,19 @@ func NewPostrgresRoleRepository(db *sqlx.DB) *PostrgresRoleRepository {
 	return &PostrgresRoleRepository{db: db}
 }
 
-func (role *PostrgresRoleRepository) Get(id int) (sql.Result, error) {
-	qwery := "SELECT RoleId FROM User_roles WHERE UserId = $1"
+func (role *PostrgresRoleRepository) Get(id int) (int, error) {
+	qwery := "SELECT role_id FROM user_roles WHERE user_Id = $1"
 
-	result, err := role.db.Exec(qwery, id)
+	var a int
+	err := role.db.QueryRowx(qwery, id).Scan(&a)
 	if err != nil {
-		return nil, err
+		return -1, err
 	}
-	return result, nil
+	return a, nil
 }
 
-func (role *PostrgresRoleRepository) Associate(userId, roleId int) error {
-	qwery := "INSERT INTO User_roles (UserId, RoleId) VALUES(?, ?)"
+func (role *PostrgresRoleRepository) GiveRole(userId, roleId int) error {
+	qwery := "INSERT INTO user_roles (user_id, role_id) VALUES(?, ?)"
 
 	_, err := role.db.Exec(qwery, userId, roleId)
 	if err != nil {
