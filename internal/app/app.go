@@ -1,4 +1,4 @@
-package borda
+package app
 
 import (
 	"borda/internal/app/api"
@@ -15,9 +15,6 @@ import (
 	"path/filepath"
 	"syscall"
 	"time"
-
-	"gorm.io/driver/postgres"
-	"gorm.io/gorm"
 )
 
 func Run() {
@@ -38,21 +35,14 @@ func Run() {
 	// Database
 	logger.Info("Database URI: ", cfg.DatabaseURI())
 
-	dbConn, err := pdb.NewConnection(cfg.DatabaseURI())
+	db, err := pdb.NewConnection(cfg.DatabaseURI())
 	if err != nil {
 		logger.Fatalw("Failed connecting to database:", err)
 	}
 	logger.Info("Connected to DB")
 
-	db, err := gorm.Open(postgres.New(postgres.Config{
-		Conn: dbConn,
-	}), &gorm.Config{})
-	if err != nil {
-		logger.Error("Can't connect to database", err)
-	}
-
-	if err := setup.MigrateDB(db); err != nil {
-		logger.Fatal("Could not migrate: %v", err)
+	if err := Migrate(db); err != nil {
+		logger.Fatal("Failed migration: ", err)
 	}
 	logger.Info("Migration did run successfully")
 
@@ -85,7 +75,7 @@ func Run() {
 	}
 
 	// Close database connections
-	if err := dbConn.Close(); err != nil {
+	if err := db.Close(); err != nil {
 		logger.Fatal("Failed to stop database", err)
 	}
 }
