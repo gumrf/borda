@@ -8,12 +8,7 @@ import (
 	"github.com/jmoiron/sqlx"
 )
 
-type DB struct {
-	*sqlx.DB
-	DataSourceName string
-}
-
-func NewPostgresDatabase(uri string) (*DB, error) {
+func NewConnection(uri string) (*sqlx.DB, error) {
 	db, err := sqlx.Open("pgx", uri)
 	if err != nil {
 		return nil, fmt.Errorf("sqlx.Open: %w", err)
@@ -38,27 +33,5 @@ func NewPostgresDatabase(uri string) (*DB, error) {
 		break
 	}
 
-	// for {
-	// 	err := db.Ping()
-
-	// 	if attempts >= DBMaxPingAttempts {
-	// 		return nil, fmt.Errorf("reach max ping attempts: %w", err)
-	// 	}
-
-	// 	if err != nil {
-	// 		time.Sleep(time.Duration(DBPingTimeout) * time.Second)
-	// 		attempts++
-	// 		fmt.Println("Retries left", DBMaxPingAttempts-attempts, fmt.Sprintf("[Error]: %v", err))
-	// 		continue
-	// 	}
-
-	// 	break
-	// }
-
-	database := DB{
-		DB:             db,
-		DataSourceName: uri,
-	}
-
-	return &database, nil
+	return db, nil
 }
