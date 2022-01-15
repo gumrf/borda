@@ -4,18 +4,14 @@ import (
 	"borda/internal/app/api"
 	"borda/internal/app/config"
 	"borda/internal/app/logger"
-	"borda/internal/app/server"
 	"fmt"
 
 	pdb "borda/pkg/postgres"
-	"context"
-	"errors"
-	"net/http"
 	"os"
 	"os/signal"
 	"path/filepath"
-	"syscall"
-	"time"
+
+	"github.com/gofiber/fiber/v2"
 )
 
 // Run initializes whole application.
@@ -47,36 +43,31 @@ func Run() {
 		logger.Log.Fatal("Failed migration: ", err)
 	}
 
-	// Api handlers
-	handler := api.NewRoutes()
+	app := fiber.New()
+	// Init api routes.
+	api.RegisterRoutes(app)
 
-	// HTTP Server
-	server := server.NewServer(handler, cfg.HTTP)
+	// Catch OS signals.
+	quit := make(chan os.Signal, 1)
+	signal.Notify(quit, os.Interrupt)
 
 	go func() {
-		if err := server.Run(); !errors.Is(err, http.ErrServerClosed) {
-			logger.Log.Fatal("Error occurred while running http server:", err)
+		_ = <-quit
+		logger.Log.Info("Gracefully shutting down...")
+		// Received an interrupt signal, shutdown.
+		if err := app.Shutdown(); err != nil {
+			// Error from closing listeners, or context timeout:
+			logger.Log.Errorf("Oops... Server is not shutting down! Reason: %w", err)
 		}
 	}()
 
-	// Graceful Shutdown
-	quit := make(chan os.Signal, 1)
-	signal.Notify(quit, syscall.SIGTERM, syscall.SIGINT)
-
-	// wait for signal
-	<-quit
-
-	const timeout = 5 * time.Second
-
-	ctx, shutdown := context.WithTimeout(context.Background(), timeout)
-	defer shutdown()
-
-	if err := server.Stop(ctx); err != nil {
-		logger.Log.Error("Failed to stop server", err)
+	// Run server.
+	if err := app.Listen(fmt.Sprintf("%s:%s", cfg.HTTP.Host, cfg.HTTP.Port)); err != nil {
+		logger.Log.Errorf("Oops... Server is not running! Reason: %w", err)
 	}
 
-	// Close database connections
+	// Close database connections.
 	if err := db.Close(); err != nil {
-		logger.Log.Error("Failed to stop database", err)
+		logger.Log.Errorf("Oops... Can't close database connections! Reason: %w", err)
 	}
 }

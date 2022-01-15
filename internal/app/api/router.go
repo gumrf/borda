@@ -1,31 +1,26 @@
 package api
 
 import (
-	"borda/internal/app/logger"
 	"time"
 
-	"github.com/gin-gonic/gin"
+	"github.com/gofiber/fiber/v2"
+	"github.com/gofiber/fiber/v2/middleware/logger"
 )
 
-type ApiHandler struct {
-	router *gin.Engine
-}
-
-func NewRoutes() *gin.Engine {
-	r := ApiHandler{
-		router: gin.Default(),
-	}
-	logger.Log.Debug("Route init")
-
-	r.router.GET("/", func(c *gin.Context) {
-
-		c.JSON(200, gin.H{
+// RegisterRoutes  registers api routes
+func RegisterRoutes(app *fiber.App) {
+	app.Use(logger.New())
+	app.Get("/", func(c *fiber.Ctx) error {
+		return c.JSON(fiber.Map{
 			"message": "OK",
 			"time":    time.Now().Format(time.UnixDate),
 		})
 	})
 
-	v1 := r.router.Group("/v1")
-	r.addHealCheck(v1)
-	return r.router
+	api := app.Group("/api")
+	v1 := api.Group("/v1")
+
+	initHealthCheckRoute(v1)
+	initUserRoutes(v1)
+	initTaskRoutes(v1)
 }
