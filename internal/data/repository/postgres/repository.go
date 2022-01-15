@@ -20,24 +20,24 @@ type repositories struct {
 // Verify interface compliance
 var _ interfaces.Repository = (*PostgresRepository)(nil)
 
-func NewPostgresRepository(db *sqlx.DB) PostgresRepository {
+func NewPostgresRepository(db *sqlx.DB) interfaces.Repository {
 	repository := PostgresRepository{db: db}
 
-	repository.repos.user = newPostgresUserRepository(db)
-	repository.repos.team = newPostgresTeamRepository(db)
-	repository.repos.task = newPostgresTaskRepository(db)
+	repository.repos.user = NewPostgresUserRepository(db)
+	repository.repos.team = NewPostgresTeamRepository(db)
+	repository.repos.task = NewPostgresTaskRepository(db)
 
 	return repository
 }
 
-func (r *PostgresRepository) Users() interfaces.UserRepository {
+func (r PostgresRepository) Users() interfaces.UserRepository {
 	return r.repos.user
 }
 
-func (r *PostgresRepository) Teams() interfaces.TeamRepository {
+func (r PostgresRepository) Teams() interfaces.TeamRepository {
 	return r.repos.team
 }
 
-func (r *PostgresRepository) Tasks() interfaces.TaskRepository {
+func (r PostgresRepository) Tasks() interfaces.TaskRepository {
 	return r.repos.task
 }

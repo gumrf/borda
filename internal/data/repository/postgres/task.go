@@ -13,7 +13,7 @@ type PostgresTaskRepository struct {
 
 var _ interfaces.TaskRepository = (*PostgresTaskRepository)(nil)
 
-func newPostgresTaskRepository(db *sqlx.DB) PostgresTaskRepository {
+func NewPostgresTaskRepository(db *sqlx.DB) interfaces.TaskRepository {
 	return PostgresTaskRepository{db: db}
 }
 

@@ -12,7 +12,7 @@ type PostgresUserRepository struct {
 
 var _ interfaces.UserRepository = (*PostgresUserRepository)(nil)
 
-func newPostgresUserRepository(db *sqlx.DB) PostgresUserRepository {
+func NewPostgresUserRepository(db *sqlx.DB) interfaces.UserRepository {
 	return PostgresUserRepository{db: db}
 }
 

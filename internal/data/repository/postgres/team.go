@@ -13,7 +13,7 @@ type PostgresTeamRepository struct {
 
 var _ interfaces.TeamRepository = (*PostgresTeamRepository)(nil)
 
-func newPostgresTeamRepository(db *sqlx.DB) PostgresTeamRepository {
+func NewPostgresTeamRepository(db *sqlx.DB) interfaces.TeamRepository {
 	return PostgresTeamRepository{db: db}
 }
 
