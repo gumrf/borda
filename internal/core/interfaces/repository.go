@@ -1,43 +1,29 @@
 package interfaces
 
-import "borda/internal/core/entities"
+import "borda/internal/core/entity"
 
-type TaskRepository interface {
-	// CreateNewTask создает новый такс
-	CreateNewTask(t entities.Task) (entities.Task, error)
-	// DeleteTask удаляет таск
-	DeleteTask(taskId int) error
-	// Update обновляет
-	UpdateTask(t entities.Task) (entities.Task, error)
-	// Show открывает все скрытые таски
-	Show()
-	// Открывает определенный таск
-	ShowOne(taskId int) error
-	// Close скрывает все таски
-	Close()
-	// CloseOne скрывает определенный таск
-	CloseOne(taskId int) error
-	// Disable убирает таск
-	Disable(taskId int) error
-	// Enable возвращает таск
-	Enable(taskId int) error
-	// Backup выгружает все таски в json формате
-	Backup() (filename string, err error)
-	// Import загружает таски из json или markdown файла
-	Import(file string) (taskCount int, err error)
-	// Getauthors return Authors associeted with task
-	GetAuthors(taskId int) ([]entities.Author, error)
+type UserRepository interface {
+	Create(username, password, contact string) (userId int, err error)
+	UpdatePassword(userId int, newPassword string) error
+	RequestRole(userId, roleId int) error
+	GetRole(userId int) (roleId int, err error)
+}
+type TeamRepository interface {
+	Create(teamLeaderId int, teamName string) (team entity.Team, err error)
+	AddMember(teamId, userId int) error
+	Get(teamId int) (team entity.Team, err error)
 }
 
-type UserRepository interface{}
-
-type TeamRepository interface{}
-
-type RoleRepository interface{}
+type TaskRepository interface {
+	Get(taskId int) (entity.Task, error)
+	GetMany(taskParams interface{}) ([]entity.Task, error)
+	Solve(taskId int) error
+	Save(task entity.Task) (taskId int, err error)
+	Update(oldTask, newTask entity.Task) error
+}
 
 type Repository interface {
-	Users() (UserRepository, error)
-	Roles() (RoleRepository, error)
-	Tasks() (TaskRepository, error)
-	Teams() (TeamRepository, error)
+	Users() UserRepository
+	Teams() TeamRepository
+	Tasks() TaskRepository
 }
