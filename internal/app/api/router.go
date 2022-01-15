@@ -1,7 +1,7 @@
 package api
 
 import (
-	"borda/internal/app/setup"
+	"borda/internal/app/logger"
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -15,8 +15,7 @@ func NewRoutes() *gin.Engine {
 	r := ApiHandler{
 		router: gin.Default(),
 	}
-	logger := setup.GetLogger()
-	logger.Debug("Route init")
+	logger.Log.Debug("Route init")
 
 	r.router.GET("/", func(c *gin.Context) {
 
