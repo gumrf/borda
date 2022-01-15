@@ -2,13 +2,14 @@ package app
 
 import (
 	"borda/internal/app/api"
+	"borda/internal/app/config"
+	"borda/internal/app/logger"
 	"borda/internal/app/server"
-	"borda/internal/app/setup"
+	"fmt"
 
 	pdb "borda/pkg/postgres"
 	"context"
 	"errors"
-	"log"
 	"net/http"
 	"os"
 	"os/signal"
@@ -17,34 +18,34 @@ import (
 	"time"
 )
 
+// Run initializes whole application.
 func Run() {
+	// Config
+	cfg := config.InitConfig()
+	fmt.Println("init config: OK")
 
-	// Config & logger
-	cfg := setup.InitConfig()
-	log.Println("Config initialized")
-
-	if err := setup.InitLogger(cfg.Additional.LogDir, cfg.Additional.LogFileName); err != nil {
-		log.Println("error on init logger:", err)
+	// Logger
+	if err := logger.InitLogger(cfg.Additional.LogDir, cfg.Additional.LogFileName); err != nil {
+		fmt.Println("init logger:", err)
 		os.Exit(1)
 	}
-
-	logger := setup.GetLogger()
-
-	logger.Info("Logs path: ", filepath.Join(cfg.Additional.LogDir, cfg.Additional.LogFileName))
+	fmt.Println("init logger: OK")
+	logger.Log.Info("Logs path: ", filepath.Join(cfg.Additional.LogDir, cfg.Additional.LogFileName))
 
 	// Database
-	logger.Info("Database URI: ", cfg.DatabaseURI())
+	logger.Log.Info("Database URI: ", cfg.DatabaseURI())
 
 	db, err := pdb.NewConnection(cfg.DatabaseURI())
 	if err != nil {
-		logger.Fatalw("Failed connecting to database:", err)
+		logger.Log.Fatalw("Failed connecting to database:", err)
 	}
-	logger.Info("Connected to DB")
 
+	logger.Log.Info("Connected to DB")
+
+	// Migrations
 	if err := Migrate(db); err != nil {
-		logger.Fatal("Failed migration: ", err)
+		logger.Log.Fatal("Failed migration: ", err)
 	}
-	logger.Info("Migration did run successfully")
 
 	// Api handlers
 	handler := api.NewRoutes()
@@ -54,7 +55,7 @@ func Run() {
 
 	go func() {
 		if err := server.Run(); !errors.Is(err, http.ErrServerClosed) {
-			logger.Fatal("Error occurred while running http server:", err)
+			logger.Log.Fatal("Error occurred while running http server:", err)
 		}
 	}()
 
@@ -71,11 +72,11 @@ func Run() {
 	defer shutdown()
 
 	if err := server.Stop(ctx); err != nil {
-		logger.Fatal("Failed to stop server", err)
+		logger.Log.Error("Failed to stop server", err)
 	}
 
 	// Close database connections
 	if err := db.Close(); err != nil {
-		logger.Fatal("Failed to stop database", err)
+		logger.Log.Error("Failed to stop database", err)
 	}
 }
