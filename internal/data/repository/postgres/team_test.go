@@ -61,7 +61,7 @@ func TestTeamRepositoryCreate(t *testing.T) {
 		panic("Test user not created")
 	}
 
-	// test
+	// tests
 
 	// Default
 	teamName := "ShrekTeam"
@@ -96,7 +96,7 @@ func TestTeamRepositoryGet(t *testing.T) {
 		panic("Test team not created")
 	}
 	
-	// test
+	// tests
 
 	// Default
 	teamAssert, err := repo.Get(team.Id)
