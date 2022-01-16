@@ -16,7 +16,15 @@ func NewPostgresUserRepository(db *sqlx.DB) interfaces.UserRepository {
 	return PostgresUserRepository{db: db}
 }
 
-func (r PostgresUserRepository) Create(username, password, contact string) (userId int, err error)
-func (r PostgresUserRepository) UpdatePassword(userId int, newPassword string) error
-func (r PostgresUserRepository) RequestRole(userId, roleId int) error
-func (r PostgresUserRepository) GetRole(userId int) (roleId int, err error)
+func (r PostgresUserRepository) Create(username, password, contact string) (userId int, err error) {
+	return 1, nil
+}
+func (r PostgresUserRepository) UpdatePassword(userId int, newPassword string) error {
+	return nil
+}
+func (r PostgresUserRepository) RequestRole(userId, roleId int) error {
+	return nil
+}
+func (r PostgresUserRepository) GetRole(userId int) (roleId int, err error) {
+	return 1, nil
+}

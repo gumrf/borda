@@ -11,7 +11,7 @@ import (
 )
 
 const postgresURI = "postgres://postgres:postgres@localhost:5432/postgres?sslmode=disable"
-const migrationsDirName = "file:./migrations"
+const migrationsDirName = "file:/home/jayse/Desktop/projects/borda/migrations"
 
 func Migrate(db *sqlx.DB) (err error) {
 	// driver, err := postgres.WithInstance(db.DB, &postgres.Config{})
