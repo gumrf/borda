@@ -22,6 +22,7 @@ type (
 		LogDir      string
 		LogFileName string
 		JWTExpTime  int
+		MigrationsDirName string
 	}
 
 	PostgresConfig struct {
@@ -66,6 +67,7 @@ func InitConfig() *Config {
 	config.Additional.JWTExpTime = 1800
 	config.Additional.LogDir = "logs"
 	config.Additional.LogFileName = "logs.txt"
+	config.Additional.MigrationsDirName = "file:./migrations"
 
 	config.Credentials.JWTKey = getEnv("JWT_KEY", "jwt_jwt_key_change_meee")
 

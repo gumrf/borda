@@ -40,10 +40,7 @@ func Run() {
 		logger.Log.Fatalw("Failed connecting to database:", err)
 	}
 
-	logger.Log.Info("Connected to DB")
-
-	// Migrations
-	if err := Migrate(db); err != nil {
+	if err := Migrate(db, cfg.DatabaseURI(), cfg.Additional.MigrationsDirName); err != nil {
 		logger.Log.Fatal("Failed migration: ", err)
 	}
 
