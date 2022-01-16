@@ -10,10 +10,7 @@ import (
 	"github.com/jmoiron/sqlx"
 )
 
-const postgresURI = "postgres://postgres:postgres@localhost:5432/postgres?sslmode=disable"
-const migrationsDirName = "file:./migrations"
-
-func Migrate(db *sqlx.DB) (err error) {
+func Migrate(db *sqlx.DB, databaseURI string, migrationsDirName string) (err error) {
 	// driver, err := postgres.WithInstance(db.DB, &postgres.Config{})
 	// if err != nil {
 	// 	return err
@@ -21,7 +18,7 @@ func Migrate(db *sqlx.DB) (err error) {
 	// m, err := migrate.NewWithDatabaseInstance(
 	// 	"file:///migrations",
 	// 	"postgres", driver)
-	m, err := migrate.New(migrationsDirName, postgresURI)
+	m, err := migrate.New(migrationsDirName, databaseURI)
 	if err != nil {
 		return fmt.Errorf("init migrations: %w", err)
 	}
