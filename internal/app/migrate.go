@@ -1,9 +1,7 @@
 package app
 
 import (
-	"borda/internal/app/logger"
 	"fmt"
-
 	"github.com/golang-migrate/migrate/v4"
 	_ "github.com/golang-migrate/migrate/v4/database/postgres"
 	_ "github.com/golang-migrate/migrate/v4/source/file"
@@ -31,14 +29,13 @@ func Migrate(db *sqlx.DB, databaseURI string, migrationsDirName string) (err err
 	// }
 	if err := m.Up(); err != nil {
 		switch err {
-		case migrate.ErrNoChange:
-			logger.Log.Info("Database is up to date")
-		default:
-			return fmt.Errorf("migrate up: %v", err)
+			case migrate.ErrNoChange:
+				fmt.Println("Database is up to date")
+			default:
+				return fmt.Errorf("migrate up: %v", err)
 		}
 	}
 
-	logger.Log.Info("Migrated successfully")
-
+	// fmt.Println("Migrated successfully")
 	return nil
 }
