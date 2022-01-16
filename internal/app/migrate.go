@@ -1,7 +1,7 @@
 package app
 
 import (
-	"errors"
+	"borda/internal/app/logger"
 	"fmt"
 
 	"github.com/golang-migrate/migrate/v4"
@@ -30,10 +30,15 @@ func Migrate(db *sqlx.DB, databaseURI string, migrationsDirName string) (err err
 	// 	return fmt.Errorf("Force: %w", err)
 	// }
 	if err := m.Up(); err != nil {
-		if !errors.Is(migrate.ErrNoChange, err) {
-			return fmt.Errorf("Up: %vx", err)
+		switch err {
+		case migrate.ErrNoChange:
+			logger.Log.Info("Database is up to date")
+		default:
+			return fmt.Errorf("migrate up: %v", err)
 		}
 	}
+
+	logger.Log.Info("Migrated successfully")
 
 	return nil
 }
