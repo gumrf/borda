@@ -5,6 +5,7 @@ import (
 	"borda/internal/core/interfaces"
 	"database/sql"
 	"fmt"
+
 	"github.com/google/uuid"
 	"github.com/jmoiron/sqlx"
 )
@@ -60,7 +61,8 @@ func (r PostgresTeamRepository) AddMember(teamId, userId int) error {
 		TeamMembersId sql.NullInt64 `db:"tm_id"`
 	}
 
-	// Get team_id, user_id for check
+	// Get team_id, user_id, team_members_id for check
+	// Select like this team_id | user_id | team_members_id
 	query := fmt.Sprintf(
 		`SELECT COALESCE((
 			SELECT id FROM public.%s
@@ -129,7 +131,6 @@ func (r PostgresTeamRepository) AddMember(teamId, userId int) error {
 		_err := fmt.Errorf("team repository addMember error: %v", err)
 		return _err
 	}
-
 	return nil
 }
 
@@ -151,6 +152,11 @@ func (r PostgresTeamRepository) Get(teamId int) (team entity.Team, err error) {
 
 	// Scan to struct, fill obj
 	err = r.db.QueryRowx(query, teamId).StructScan(&obj)
+	
+	if err == sql.ErrNoRows {
+		_err := fmt.Errorf("team repository get error: Team not found with id=%v", teamId)
+		return entity.Team{}, _err
+	}
 	if err != nil {
 		_err := fmt.Errorf("team repository get error: %v", err)
 		return entity.Team{}, _err

@@ -62,6 +62,8 @@ func TestTeamRepositoryCreate(t *testing.T) {
 	}
 
 	// test
+
+	// Default
 	teamName := "ShrekTeam"
 	team, err := repo.Create(user_id, teamName)
 	if err != nil {
@@ -71,6 +73,10 @@ func TestTeamRepositoryCreate(t *testing.T) {
 	assert.Equal(team.TeamLeaderId, user_id, "they should be equal")
 	assert.NotNil(team.Token, "must be not nil")
 	assert.NotNil(team.Id, "must be not nil")
+
+	// Duplicate name
+	team, err = repo.Create(user_id, teamName)
+	assert.Error(err)
 }
 
 func TestTeamRepositoryGet(t *testing.T) {
@@ -91,6 +97,8 @@ func TestTeamRepositoryGet(t *testing.T) {
 	}
 	
 	// test
+
+	// Default
 	teamAssert, err := repo.Get(team.Id)
 	if err != nil {
 		fmt.Printf("err: %v\n", err)
@@ -100,6 +108,10 @@ func TestTeamRepositoryGet(t *testing.T) {
 	assert.Equal(team.TeamLeaderId, teamAssert.TeamLeaderId, "they should be equal")
 	assert.Equal(team.Token, teamAssert.Token, "they should be equal")
 	assert.Equal(team.Id, teamAssert.Id, "they should be equal")
+
+	// Not found
+	teamAssert, err = repo.Get(1337)
+	assert.Error(err, "Team not found with id=1337", "they should be equal")
 }
 
 func TestTeamRepositoryAddMember(t *testing.T) {
@@ -138,5 +150,4 @@ func TestTeamRepositoryAddMember(t *testing.T) {
 	// Not team
 	err = repo.AddMember(1337, 1)
 	assert.Error(err, "Team with id=%v not found", "they should be equal")
-
 }
