@@ -5,8 +5,8 @@ import "borda/internal/core/entity"
 type UserRepository interface {
 	Create(username, password, contact string) (userId int, err error)
 	UpdatePassword(userId int, newPassword string) error
-	RequestRole(userId, roleId int) error
-	GetRole(userId int) (roleId int, err error)
+	AssignRole(userId, roleId int) error
+	GetRole(userId int) (role entity.Role, err error)
 }
 type TeamRepository interface {
 	Create(teamLeaderId int, teamName string) (team entity.Team, err error)
