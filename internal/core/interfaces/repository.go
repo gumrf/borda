@@ -10,8 +10,9 @@ type UserRepository interface {
 }
 type TeamRepository interface {
 	Create(teamLeaderId int, teamName string) (team entity.Team, err error)
-	AddMember(teamId, userId int) error
 	Get(teamId int) (team entity.Team, err error)
+	AddMember(teamId, userId int) error
+	GetMembers(teamId int) (users []entity.User, err error) // TODO implement
 }
 
 type TaskRepository interface {

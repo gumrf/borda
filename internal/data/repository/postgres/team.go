@@ -170,3 +170,5 @@ func (r PostgresTeamRepository) Get(teamId int) (team entity.Team, err error) {
 
 	return obj, nil
 }
+
+func (r PostgresTeamRepository) GetMembers(teamId int) (users []entity.User, err error)
