@@ -10,7 +10,7 @@ CREATE TABLE IF NOT EXISTS role (
    name varchar(256)
 );
 
-CREATE TABLE IF NOT EXISTS user_roles (
+CREATE TABLE IF NOT EXISTS user_role (
    user_id integer NOT NULL REFERENCES "user"(id),
    role_id integer NOT NULL REFERENCES role(id)
 );
@@ -22,7 +22,7 @@ CREATE TABLE IF NOT EXISTS team (
    team_leader_id integer NOT NULL REFERENCES "user"(id)
 );
 
-CREATE TABLE IF NOT EXISTS team_members (
+CREATE TABLE IF NOT EXISTS team_member (
    id serial NOT NULL PRIMARY KEY,
    team_id integer NOT NULL REFERENCES team(id),
    user_id integer NOT NULL REFERENCES "user"(id)
@@ -48,13 +48,13 @@ CREATE TABLE IF NOT EXISTS task (
    author_id integer NULL REFERENCES author(id)
 );
 
-CREATE TABLE IF NOT EXISTS solved_tasks (
+CREATE TABLE IF NOT EXISTS solved_task (
    task_id integer NOT NULL REFERENCES task(id),
    team_id integer NOT NULL REFERENCES team(id),
    timestamp timestamptz NOT NULL
 );
 
-CREATE TABLE IF NOT EXISTS task_submissions (
+CREATE TABLE IF NOT EXISTS task_submission (
    task_id integer NOT NULL REFERENCES task(id),
    team_id integer NOT NULL REFERENCES team(id),
    user_id integer NOT NULL REFERENCES "user"(id),
