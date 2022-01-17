@@ -5,6 +5,7 @@ import (
 	"borda/internal/core/interfaces"
 	"database/sql"
 	"fmt"
+	"strconv"
 
 	"github.com/google/uuid"
 	"github.com/jmoiron/sqlx"
@@ -15,16 +16,18 @@ type PostgresTeamRepository struct {
 	tableTeamName        string
 	tableUserName        string
 	tableTeamMembersName string
+	tableSettingsName    string
 }
 
 var _ interfaces.TeamRepository = (*PostgresTeamRepository)(nil)
 
 func NewPostgresTeamRepository(db *sqlx.DB) interfaces.TeamRepository {
 	return PostgresTeamRepository{
-		db: db,
-		tableTeamName: "team",
-		tableUserName: "\"user\"",
+		db:                   db,
+		tableTeamName:        "team",
+		tableUserName:        "\"user\"",
 		tableTeamMembersName: "team_member",
+		tableSettingsName:    "manage_settings",
 	}
 }
 
@@ -94,7 +97,6 @@ func (r PostgresTeamRepository) AddMember(teamId, userId int) error {
 	// Scan to struct, fill obj
 	err := r.db.QueryRowx(query, teamId, userId).StructScan(&result)
 	if err != nil {
-
 		return fmt.Errorf("team repository addMember error: %v", err)
 	}
 
@@ -114,6 +116,38 @@ func (r PostgresTeamRepository) AddMember(teamId, userId int) error {
 	}
 	if err != nil {
 		return fmt.Errorf("team repository addMember error: %v", err)
+	}
+
+	// Check limit
+	// Tested manual, it really works, trust me :)
+	var valueLimit string
+	query = fmt.Sprintf(
+		`SELECT value FROM %s
+		WHERE key=$1
+		`,
+		r.tableSettingsName,
+	)
+	err = r.db.QueryRowx(query, "team_limit").Scan(&valueLimit)
+	if err != nil {
+		return fmt.Errorf("team repository addMember error: Not found team_limit in db, %v", err)
+	}
+
+	memberLimit, err := strconv.Atoi(valueLimit)
+    if err != nil {
+        return fmt.Errorf("team repository addMember error: team_limit in db not converted to integer, %v", err)
+	}
+	var alreadyExistMembers int
+	query = fmt.Sprintf(
+		`SELECT COUNT(user_id) FROM %s
+		WHERE team_id=$1`,
+		r.tableTeamMembersName,
+	)
+	err = r.db.QueryRow(query, teamId).Scan(&alreadyExistMembers)
+	if err != nil {
+		return fmt.Errorf("team repository addMember error: %v", err)
+	}
+	if alreadyExistMembers + 1 > memberLimit {
+		return fmt.Errorf("team repository addMember Limit team error. Already members: %v, limit: %v", alreadyExistMembers, memberLimit)
 	}
 
 	// Write db
@@ -151,7 +185,7 @@ func (r PostgresTeamRepository) Get(teamId int) (team entity.Team, err error) {
 
 	// Scan to struct, fill obj
 	err = r.db.QueryRowx(query, teamId).StructScan(&obj)
-	
+
 	if err == sql.ErrNoRows {
 		return entity.Team{}, fmt.Errorf("team repository get error: Team not found with id=%v", teamId)
 	}
@@ -179,7 +213,7 @@ func (r PostgresTeamRepository) GetMembers(teamId int) (users []entity.User, err
 	if err != nil {
 		return []entity.User{}, fmt.Errorf("team repository getMembers error: Team not found with id=%v", teamId)
 	}
-	
+
 	// Get
 	query = fmt.Sprintf(
 		`SELECT * FROM %s 

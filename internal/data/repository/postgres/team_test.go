@@ -36,6 +36,19 @@ func makeTestUser(db *sqlx.DB, username string, password string, contact string)
 	return int(id), err
 }
 
+func uploadTeamSettings(db *sqlx.DB) error {
+	query := `
+	INSERT INTO manage_settings
+	(key, value)
+	VALUES($1, $2)
+	`
+	_, err := db.Query(query, "team_limit", "5")
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
 func setUp() (*sqlx.DB, interfaces.TeamRepository) {
 	db, err := pdb.NewConnection(DatabaseURI)
 	if err != nil {
@@ -48,6 +61,12 @@ func setUp() (*sqlx.DB, interfaces.TeamRepository) {
 		fmt.Printf("err: %v\n", err)
 		panic("Failed migration")
 	}
+
+	if err := uploadTeamSettings(db); err != nil {
+		fmt.Printf("err: %v\n", err)
+		panic("Failed load team settings")
+	}
+
 	var repo interfaces.TeamRepository = NewPostgresTeamRepository(db)
 
 	return db, repo
