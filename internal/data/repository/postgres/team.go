@@ -39,8 +39,7 @@ func (r PostgresTeamRepository) Create(teamLeaderId int, teamName string) (team 
 	id := -1
 	err = r.db.QueryRow(query, teamName, uuid, teamLeaderId).Scan(&id)
 	if err != nil || id == -1 {
-		_err := fmt.Errorf("team repository create error: %v", err)
-		return entity.Team{}, _err
+		return entity.Team{}, fmt.Errorf("team repository create error: %v", err)
 	}
 
 	// Build obj
@@ -90,30 +89,25 @@ func (r PostgresTeamRepository) AddMember(teamId, userId int) error {
 	// Scan to struct, fill obj
 	err := r.db.QueryRowx(query, teamId, userId).StructScan(&result)
 	if err != nil {
-		_err := fmt.Errorf("team repository addMember error: %v", err)
-		return _err
+		return fmt.Errorf("team repository addMember error: %v", err)
 	}
 
 	t_id, err := result.TeamId.Value()
 	if t_id == nil || err != nil {
-		_err := fmt.Errorf("team repository addMember error: Team with id=%v not found", teamId)
-		return _err
+		return fmt.Errorf("team repository addMember error: Team with id=%v not found", teamId)
 	}
 
 	u_id, err := result.UserId.Value()
 	if u_id == nil || err != nil {
-		_err := fmt.Errorf("team repository addMember error: User with id=%v not found", userId)
-		return _err
+		return fmt.Errorf("team repository addMember error: User with id=%v not found", userId)
 	}
 
 	tm, err := result.TeamMembersId.Value()
 	if tm != nil {
-		_err := fmt.Errorf("team repository addMember error: User id=%v already in team with id=%v", userId, teamId)
-		return _err
+		return fmt.Errorf("team repository addMember error: User id=%v already in team with id=%v", userId, teamId)
 	}
 	if err != nil {
-		_err := fmt.Errorf("team repository addMember error: %v", err)
-		return _err
+		return fmt.Errorf("team repository addMember error: %v", err)
 	}
 
 	// Write db
@@ -128,8 +122,7 @@ func (r PostgresTeamRepository) AddMember(teamId, userId int) error {
 	id := -1
 	err = r.db.QueryRow(query, teamId, userId).Scan(&id)
 	if err != nil || id == -1 {
-		_err := fmt.Errorf("team repository addMember error: %v", err)
-		return _err
+		return fmt.Errorf("team repository addMember error: %v", err)
 	}
 	return nil
 }
@@ -154,18 +147,15 @@ func (r PostgresTeamRepository) Get(teamId int) (team entity.Team, err error) {
 	err = r.db.QueryRowx(query, teamId).StructScan(&obj)
 	
 	if err == sql.ErrNoRows {
-		_err := fmt.Errorf("team repository get error: Team not found with id=%v", teamId)
-		return entity.Team{}, _err
+		return entity.Team{}, fmt.Errorf("team repository get error: Team not found with id=%v", teamId)
 	}
 	if err != nil {
-		_err := fmt.Errorf("team repository get error: %v", err)
-		return entity.Team{}, _err
+		return entity.Team{}, fmt.Errorf("team repository get error: %v", err)
 	}
 
 	// Check
 	if obj.Id == -1 || obj.TeamLeaderId == -1 || obj.Name == "" || obj.Token == "" {
-		_err := fmt.Errorf("team repository get error: Field of struct not filled")
-		return entity.Team{}, _err
+		return entity.Team{}, fmt.Errorf("team repository get error: Field of struct not filled")
 	}
 
 	return obj, nil
