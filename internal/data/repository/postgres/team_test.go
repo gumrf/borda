@@ -1,11 +1,13 @@
 package repository
 
 import (
-	"borda/internal/core/interfaces"
 	"borda/internal/app"
+	"borda/internal/core/entity"
+	"borda/internal/core/interfaces"
 	pdb "borda/pkg/postgres"
-	"testing"
 	"fmt"
+	"testing"
+
 	"github.com/jmoiron/sqlx"
 	"github.com/stretchr/testify/assert"
 )
@@ -55,7 +57,7 @@ func TestTeamRepositoryCreate(t *testing.T) {
 	// setup
 	db, repo := setUp()
 	assert := assert.New(t)
-	user_id, err := makeTestUser(db, "jayse", "test", "@jaysess")
+	userId, err := makeTestUser(db, "jayse", "test", "@jaysess")
 	if err != nil {
 		fmt.Printf("err: %v\n", err)
 		panic("Test user not created")
@@ -65,17 +67,17 @@ func TestTeamRepositoryCreate(t *testing.T) {
 
 	// Default
 	teamName := "ShrekTeam"
-	team, err := repo.Create(user_id, teamName)
+	team, err := repo.Create(userId, teamName)
 	if err != nil {
 		fmt.Printf("err: %v\n", err)
 	}
 	assert.Equal(team.Name, teamName, "they should be equal")
-	assert.Equal(team.TeamLeaderId, user_id, "they should be equal")
+	assert.Equal(team.TeamLeaderId, userId, "they should be equal")
 	assert.NotNil(team.Token, "must be not nil")
 	assert.NotNil(team.Id, "must be not nil")
 
 	// Duplicate name
-	team, err = repo.Create(user_id, teamName)
+	team, err = repo.Create(userId, teamName)
 	assert.Error(err)
 }
 
@@ -83,14 +85,14 @@ func TestTeamRepositoryGet(t *testing.T) {
 	// setup
 	db, repo := setUp()
 	assert := assert.New(t)
-	user_id, err := makeTestUser(db, "jayse", "test", "@jaysess")
+	userId, err := makeTestUser(db, "jayse", "test", "@jaysess")
 	if err != nil {
 		fmt.Printf("err: %v\n", err)
 		panic("Test user not created")
 	}
 
 	teamName := "ShrekTeam"
-	team, err := repo.Create(user_id, teamName)
+	team, err := repo.Create(userId, teamName)
 	if err != nil {
 		fmt.Printf("err: %v\n", err)
 		panic("Test team not created")
@@ -118,13 +120,13 @@ func TestTeamRepositoryAddMember(t *testing.T) {
 	// setup
 	db, repo := setUp()
 	assert := assert.New(t)
-	user_id, err := makeTestUser(db, "jayse", "test", "@jaysess")
+	userId, err := makeTestUser(db, "jayse", "test", "@jaysess")
 	if err != nil {
 		fmt.Printf("err: %v\n", err)
 		panic("Test user not created")
 	}
 	teamName := "ShrekTeam"
-	team, err := repo.Create(user_id, teamName)
+	team, err := repo.Create(userId, teamName)
 	if err != nil {
 		fmt.Printf("err: %v\n", err)
 		panic("Test team not created")
@@ -133,14 +135,14 @@ func TestTeamRepositoryAddMember(t *testing.T) {
 	// tests
 
 	// Default
-	err = repo.AddMember(team.Id, user_id)
+	err = repo.AddMember(team.Id, userId)
 	if err != nil {
 		fmt.Printf("err: %v\n", err)
 	}
 
 
 	// Duplicate
-	err = repo.AddMember(team.Id, user_id)
+	err = repo.AddMember(team.Id, userId)
 	assert.Error(err, "User id=1 already in team with id=1", "they should be equal")
 	
 	// Not user
@@ -149,5 +151,64 @@ func TestTeamRepositoryAddMember(t *testing.T) {
 
 	// Not team
 	err = repo.AddMember(1337, 1)
+	assert.Error(err, "Team with id=%v not found", "they should be equal")
+}
+
+func TestTeamRepositoryGetMembers(t *testing.T) {
+	// setup
+	db, repo := setUp()
+	assert := assert.New(t)
+	userId, err := makeTestUser(db, "jayse", "test", "@jaysess")
+	if err != nil {
+		fmt.Printf("err: %v\n", err)
+		panic("Test user not created")
+	}
+	userId2, err := makeTestUser(db, "jayseClone", "test", "@jaysessClone")
+	if err != nil {
+		fmt.Printf("err: %v\n", err)
+		panic("Test user not created")
+	}
+	teamName := "ShrekTeam"
+	team, err := repo.Create(userId, teamName)
+	if err != nil {
+		fmt.Printf("err: %v\n", err)
+		panic("Test team not created")
+	}
+
+	err = repo.AddMember(team.Id, userId)
+	if err != nil {
+		fmt.Printf("err: %v\n", err)
+	}
+
+	err = repo.AddMember(team.Id, userId2)
+	if err != nil {
+		fmt.Printf("err: %v\n", err)
+	}
+
+	// test
+
+	// Default
+	users, err := repo.GetMembers(team.Id)
+	if err != nil {
+		fmt.Printf("err: %v\n", err)
+	}
+	
+	assert.True(len(users) == 2)
+	var _user entity.User = users[0]
+	assert.Equal(_user.Username, "jayse")
+	assert.Equal(_user.Password, "test")
+	assert.Equal(_user.Contact, "@jaysess")
+	assert.Equal(_user.Id, 1)
+	assert.Equal(_user.TeamId, 1)
+
+	_user = users[1]
+	assert.Equal(_user.Username, "jayseClone")
+	assert.Equal(_user.Password, "test")
+	assert.Equal(_user.Contact, "@jaysessClone")
+	assert.Equal(_user.Id, 2)
+	assert.Equal(_user.TeamId, 1)
+
+	// Not found team by id
+	_, err = repo.GetMembers(1337)
 	assert.Error(err, "Team with id=%v not found", "they should be equal")
 }

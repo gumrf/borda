@@ -20,7 +20,12 @@ type PostgresTeamRepository struct {
 var _ interfaces.TeamRepository = (*PostgresTeamRepository)(nil)
 
 func NewPostgresTeamRepository(db *sqlx.DB) interfaces.TeamRepository {
-	return PostgresTeamRepository{db: db, tableTeamName: "team", tableUserName: "\"user\"", tableTeamMembersName: "team_members"}
+	return PostgresTeamRepository{
+		db: db,
+		tableTeamName: "team",
+		tableUserName: "\"user\"",
+		tableTeamMembersName: "team_member",
+	}
 }
 
 func (r PostgresTeamRepository) Create(teamLeaderId int, teamName string) (team entity.Team, err error) {
@@ -89,6 +94,7 @@ func (r PostgresTeamRepository) AddMember(teamId, userId int) error {
 	// Scan to struct, fill obj
 	err := r.db.QueryRowx(query, teamId, userId).StructScan(&result)
 	if err != nil {
+
 		return fmt.Errorf("team repository addMember error: %v", err)
 	}
 
@@ -161,4 +167,46 @@ func (r PostgresTeamRepository) Get(teamId int) (team entity.Team, err error) {
 	return obj, nil
 }
 
-func (r PostgresTeamRepository) GetMembers(teamId int) (users []entity.User, err error)
+func (r PostgresTeamRepository) GetMembers(teamId int) (users []entity.User, err error) {
+	// Check team exist
+	query := fmt.Sprintf(
+		`SELECT id FROM %s
+		WHERE id=$1`,
+		r.tableTeamMembersName,
+	)
+	var team_id int
+	err = r.db.QueryRowx(query, teamId).Scan(&team_id)
+	if err != nil {
+		return []entity.User{}, fmt.Errorf("team repository getMembers error: Team not found with id=%v", teamId)
+	}
+	
+	// Get
+	query = fmt.Sprintf(
+		`SELECT * FROM %s 
+		WHERE ID IN (
+			SELECT user_id FROM %s
+			WHERE team_id=$1
+		)`,
+		r.tableUserName,
+		r.tableTeamMembersName,
+	)
+
+	var _users = make([]entity.User, 0)
+
+	rows, err := r.db.Queryx(query, teamId)
+	if err != nil {
+		return []entity.User{}, fmt.Errorf("team repository getMembers error: Members not found in team with id=%v, %v", teamId, err)
+	}
+
+	for rows.Next() {
+		var user entity.User
+		err := rows.Scan(&user.Id, &user.Username, &user.Password, &user.Contact)
+		if err != nil {
+			return []entity.User{}, fmt.Errorf("team repository getMembers error: On convert to entity in team with id=%v, %v", teamId, err)
+		}
+		user.TeamId = teamId
+		_users = append(_users, user)
+	}
+
+	return _users, nil
+}
