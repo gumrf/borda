@@ -62,3 +62,8 @@ CREATE TABLE IF NOT EXISTS task_submission (
    is_correct bool NOT NULL,
    timestamp timestamptz NOT NULL
 );
+
+CREATE TABLE IF NOT EXISTS manage_settings (
+   key varchar(256) NOT NULL,
+   value varchar(256) NOT NULL
+);
