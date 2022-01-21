@@ -3,7 +3,7 @@ package interfaces
 import "borda/internal/core/entity"
 
 type UserRepository interface {
-	Create(username, password, contact string) (userId int, err error)
+	Create(username, password, contact string) (user entity.User, err error)
 	UpdatePassword(userId int, newPassword string) error
 	AssignRole(userId, roleId int) error
 	GetRole(userId int) (role entity.Role, err error)

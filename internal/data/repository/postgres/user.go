@@ -17,26 +17,21 @@ func NewPostgresUserRepository(db *sqlx.DB) interfaces.UserRepository {
 	return PostgresUserRepository{db: db}
 }
 
-func (r PostgresUserRepository) Create(username, password, contact string) (userId int, err error) {
-	qwery := "INSERT INTO user (name, password, contact) VALUES(?, ?, ?)"
+func (r PostgresUserRepository) Create(username, password, contact string) (user entity.User, err error) {
+	query := "INSERT INTO user (name, password, contact) VALUES(?, ?, ?)"
 
-	result, err := r.db.Exec(qwery, username, password, contact)
+	err = r.db.QueryRow(query, username, password, contact).Scan(&user)
 	if err != nil {
-		return -1, err
+		return user, err
 	}
 
-	id, err := result.LastInsertId()
-	if err != nil {
-		return -1, err
-	}
-
-	return int(id), nil
+	return user, nil
 }
 
 func (r PostgresUserRepository) UpdatePassword(userId int, newPassword string) error {
-	qwery := "UPDATE user SET password = $1 WHERE id = $2"
+	query := "UPDATE user SET password = $1 WHERE id = $2"
 
-	_, err := r.db.Exec(qwery, newPassword, userId)
+	_, err := r.db.Exec(query, newPassword, userId)
 	if err != nil {
 		return err
 	}
@@ -44,9 +39,9 @@ func (r PostgresUserRepository) UpdatePassword(userId int, newPassword string) e
 }
 
 func (r PostgresUserRepository) AssignRole(userId, roleId int) error {
-	qwery := "INSERT INTO user_roles (user_id, role_id) VALUES(?, ?)"
+	query := "INSERT INTO user_roles (user_id, role_id) VALUES(?, ?)"
 
-	_, err := r.db.Exec(qwery, userId, roleId)
+	_, err := r.db.Exec(query, userId, roleId)
 	if err != nil {
 		return err
 	}
@@ -55,20 +50,11 @@ func (r PostgresUserRepository) AssignRole(userId, roleId int) error {
 }
 
 func (r PostgresUserRepository) GetRole(userId int) (role entity.Role, err error) {
-	qwery := "SELECT role_id FROM user_roles WHERE user_id = $1"
+	query := "SELECT * FROM user_roles INNER JOIN role ON user_roles.role_id = role.role_id WHERE user_roles.user_id = $1"
 
-	var id int
-	err = r.db.QueryRowx(qwery, userId).Scan(&id)
+	err = r.db.QueryRowx(query, userId).Scan(&role)
 	if err != nil {
 		return role, err
 	}
-
-	qwery = "SELECT role_name FROM role WHERE Id = $1"
-
-	err = r.db.QueryRowx(qwery, id).Scan(&role)
-	if err != nil {
-		return role, err
-	}
-
 	return role, nil
 }
