@@ -1,4 +1,4 @@
-CREATE TABLE IF NOT EXISTS user (
+CREATE TABLE IF NOT EXISTS "user" (
    id serial NOT NULL PRIMARY KEY,
    name varchar(128) NOT NULL,
    password varchar(256) NOT NULL,
@@ -11,19 +11,21 @@ CREATE TABLE IF NOT EXISTS role (
 );
 
 CREATE TABLE IF NOT EXISTS user_role (
-   user_id integer NOT NULL REFERENCES user(id),
+   user_id integer NOT NULL REFERENCES "user"(id),
    role_id integer NOT NULL REFERENCES role(id)
 );
 
 CREATE TABLE IF NOT EXISTS team (
    id serial NOT NULL PRIMARY KEY,
-   name varchar(256) NOT NULL,
-   team_leader_id integer NOT NULL REFERENCES user(id)
+   name varchar(256) UNIQUE NOT NULL,
+   token varchar(256) UNIQUE NOT NULL,
+   team_leader_id integer NOT NULL REFERENCES "user"(id)
 );
 
 CREATE TABLE IF NOT EXISTS team_member (
-   team_id integer NOT NULL PRIMARY KEY REFERENCES team(id),
-   user_id integer NOT NULL REFERENCES user(id)
+   id serial NOT NULL PRIMARY KEY,
+   team_id integer NOT NULL REFERENCES team(id),
+   user_id integer NOT NULL REFERENCES "user"(id)
 );
 
 CREATE TABLE IF NOT EXISTS author (
@@ -55,8 +57,14 @@ CREATE TABLE IF NOT EXISTS solved_task (
 CREATE TABLE IF NOT EXISTS task_submission (
    task_id integer NOT NULL REFERENCES task(id),
    team_id integer NOT NULL REFERENCES team(id),
-   user_id integer NOT NULL REFERENCES user(id),
+   user_id integer NOT NULL REFERENCES "user"(id),
    submission varchar(256) NOT NULL,
    is_correct bool NOT NULL,
    timestamp timestamptz NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS manage_settings (
+   id serial NOT NULL PRIMARY KEY,
+   key varchar(256) UNIQUE NOT NULL,
+   value varchar(256) NOT NULL
 );

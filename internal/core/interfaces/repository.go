@@ -22,8 +22,14 @@ type TaskRepository interface {
 	Update(oldTask, newTask entity.Task) error
 }
 
+type SettingsRepository interface {
+	Get(key string) (value string, err error)
+	Set(key string, value string) (settingsId int, err error)
+}
+
 type Repository interface {
 	Users() UserRepository
+	Settings() SettingsRepository
 	Teams() TeamRepository
 	Tasks() TaskRepository
 }
