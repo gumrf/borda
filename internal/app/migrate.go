@@ -1,7 +1,7 @@
 package app
 
 import (
-	"errors"
+	"borda/internal/app/logger"
 	"fmt"
 
 	"github.com/golang-migrate/migrate/v4"
@@ -10,10 +10,7 @@ import (
 	"github.com/jmoiron/sqlx"
 )
 
-const postgresURI = "postgres://postgres:postgres@localhost:5432/postgres?sslmode=disable"
-const migrationsDirName = "file:./migrations"
-
-func Migrate(db *sqlx.DB) (err error) {
+func Migrate(db *sqlx.DB, databaseURI string, migrationsDirName string) (err error) {
 	// driver, err := postgres.WithInstance(db.DB, &postgres.Config{})
 	// if err != nil {
 	// 	return err
@@ -21,7 +18,7 @@ func Migrate(db *sqlx.DB) (err error) {
 	// m, err := migrate.NewWithDatabaseInstance(
 	// 	"file:///migrations",
 	// 	"postgres", driver)
-	m, err := migrate.New(migrationsDirName, postgresURI)
+	m, err := migrate.New(migrationsDirName, databaseURI)
 	if err != nil {
 		return fmt.Errorf("init migrations: %w", err)
 	}
@@ -33,10 +30,15 @@ func Migrate(db *sqlx.DB) (err error) {
 	// 	return fmt.Errorf("Force: %w", err)
 	// }
 	if err := m.Up(); err != nil {
-		if !errors.Is(migrate.ErrNoChange, err) {
-			return fmt.Errorf("Up: %vx", err)
+		switch err {
+		case migrate.ErrNoChange:
+			logger.Log.Info("Database is up to date")
+		default:
+			return fmt.Errorf("migrate up: %v", err)
 		}
 	}
+
+	logger.Log.Info("Migrated successfully")
 
 	return nil
 }

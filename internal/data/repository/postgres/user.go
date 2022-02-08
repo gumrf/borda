@@ -18,9 +18,9 @@ func NewPostgresUserRepository(db *sqlx.DB) interfaces.UserRepository {
 }
 
 func (r PostgresUserRepository) Create(username, password, contact string) (user entity.User, err error) {
-	query := "INSERT INTO user (name, password, contact) VALUES(?, ?, ?)"
+	query := "INSERT INTO user (name, password, contact) VALUES($1, $2, $3)"
 
-	err = r.db.QueryRow(query, username, password, contact).Scan(&user)
+	err = r.db.QueryRowx(query, username, password, contact).Scan(&user)
 	if err != nil {
 		return user, err
 	}
@@ -39,7 +39,7 @@ func (r PostgresUserRepository) UpdatePassword(userId int, newPassword string) e
 }
 
 func (r PostgresUserRepository) AssignRole(userId, roleId int) error {
-	query := "INSERT INTO user_roles (user_id, role_id) VALUES(?, ?)"
+	query := "INSERT INTO user_roles (user_id, role_id) VALUES($!, $2)"
 
 	_, err := r.db.Exec(query, userId, roleId)
 	if err != nil {
@@ -50,11 +50,12 @@ func (r PostgresUserRepository) AssignRole(userId, roleId int) error {
 }
 
 func (r PostgresUserRepository) GetRole(userId int) (role entity.Role, err error) {
-	query := "SELECT * FROM user_roles INNER JOIN role ON user_roles.role_id = role.role_id WHERE user_roles.user_id = $1"
+	query := "SELECT * FROM role INNER JOIN user_roles ON role.id = user_roles.role_id WHERE user_roles.user_id = $1"
 
 	err = r.db.QueryRowx(query, userId).Scan(&role)
 	if err != nil {
 		return role, err
 	}
 	return role, nil
+
 }

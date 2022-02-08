@@ -1,38 +1,38 @@
-CREATE TABLE IF NOT EXISTS users (
+CREATE TABLE IF NOT EXISTS user (
    id serial NOT NULL PRIMARY KEY,
    name varchar(128) NOT NULL,
    password varchar(256) NOT NULL,
    contact varchar(256) UNIQUE NULL
 );
 
-CREATE TABLE IF NOT EXISTS roles (
+CREATE TABLE IF NOT EXISTS role (
    id serial NOT NULL PRIMARY KEY,
    name varchar(256)
 );
 
-CREATE TABLE IF NOT EXISTS user_roles (
-   user_id integer NOT NULL REFERENCES users(id),
-   role_id integer NOT NULL REFERENCES roles(id)
+CREATE TABLE IF NOT EXISTS user_role (
+   user_id integer NOT NULL REFERENCES user(id),
+   role_id integer NOT NULL REFERENCES role(id)
 );
 
-CREATE TABLE IF NOT EXISTS teams (
+CREATE TABLE IF NOT EXISTS team (
    id serial NOT NULL PRIMARY KEY,
    name varchar(256) NOT NULL,
-   team_leader_id integer NOT NULL REFERENCES users(id)
+   team_leader_id integer NOT NULL REFERENCES user(id)
 );
 
-CREATE TABLE IF NOT EXISTS team_members (
-   team_id integer NOT NULL PRIMARY KEY REFERENCES teams(id),
-   user_id integer NOT NULL REFERENCES users(id)
+CREATE TABLE IF NOT EXISTS team_member (
+   team_id integer NOT NULL PRIMARY KEY REFERENCES team(id),
+   user_id integer NOT NULL REFERENCES user(id)
 );
 
-CREATE TABLE IF NOT EXISTS authors (
+CREATE TABLE IF NOT EXISTS author (
    id serial NOT NULL PRIMARY KEY,
    name varchar(256) NOT NULL,
    contact varchar(256)
 );
 
-CREATE TABLE IF NOT EXISTS tasks (
+CREATE TABLE IF NOT EXISTS task (
    id serial NOT NULL PRIMARY KEY,
    title varchar(256) NOT NULL,
    description text NOT NULL,
@@ -43,19 +43,19 @@ CREATE TABLE IF NOT EXISTS tasks (
    flag varchar(256) NOT NULL,
    is_active bool NOT NULL,
    is_disabled bool NOT NULL,
-   author_id integer NULL REFERENCES authors(id)
+   author_id integer NULL REFERENCES author(id)
 );
 
-CREATE TABLE IF NOT EXISTS solved_tasks (
-   task_id integer NOT NULL REFERENCES tasks(id),
-   team_id integer NOT NULL REFERENCES teams(id),
+CREATE TABLE IF NOT EXISTS solved_task (
+   task_id integer NOT NULL REFERENCES task(id),
+   team_id integer NOT NULL REFERENCES team(id),
    timestamp timestamptz NOT NULL
 );
 
-CREATE TABLE IF NOT EXISTS task_submissions (
-   task_id integer NOT NULL REFERENCES tasks(id),
-   team_id integer NOT NULL REFERENCES teams(id),
-   user_id integer NOT NULL REFERENCES users(id),
+CREATE TABLE IF NOT EXISTS task_submission (
+   task_id integer NOT NULL REFERENCES task(id),
+   team_id integer NOT NULL REFERENCES team(id),
+   user_id integer NOT NULL REFERENCES user(id),
    submission varchar(256) NOT NULL,
    is_correct bool NOT NULL,
    timestamp timestamptz NOT NULL
