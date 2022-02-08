@@ -14,7 +14,7 @@ var (
 )
 
 const (
-	_defaultLogLevel = zap.InfoLevel
+	defaultLogLevel = zap.InfoLevel
 )
 
 // InitLogger initialize logger with file
@@ -61,7 +61,7 @@ func InitLogger(logDir, logFileName string) error {
 		return zapcore.NewConsoleEncoder(encoderConfig)
 	}()
 
-	core := zapcore.NewCore(encoder, writerSyncer, _defaultLogLevel)
+	core := zapcore.NewCore(encoder, writerSyncer, defaultLogLevel)
 
 	Log = zap.New(core).Sugar()
 
