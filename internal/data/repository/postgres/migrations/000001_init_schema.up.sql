@@ -1,29 +1,37 @@
-CREATE TABLE IF NOT EXISTS user (
+-- Set timezone
+SET TIMEZONE="Europe/Moscow";
+
+-- Create users table
+CREATE TABLE IF NOT EXISTS "user" (
    id serial NOT NULL PRIMARY KEY,
    name varchar(128) NOT NULL,
    password varchar(256) NOT NULL,
    contact varchar(256) UNIQUE NULL
 );
 
+-- Create roles table
 CREATE TABLE IF NOT EXISTS role (
    id serial NOT NULL PRIMARY KEY,
    name varchar(256)
 );
 
+-- Create books table
 CREATE TABLE IF NOT EXISTS user_role (
-   user_id integer NOT NULL REFERENCES user(id),
+   user_id integer NOT NULL PRIMARY KEY REFERENCES "user"(id),
    role_id integer NOT NULL REFERENCES role(id)
 );
 
 CREATE TABLE IF NOT EXISTS team (
    id serial NOT NULL PRIMARY KEY,
-   name varchar(256) NOT NULL,
-   team_leader_id integer NOT NULL REFERENCES user(id)
+   name varchar(256) UNIQUE NOT NULL,
+   token varchar(256) UNIQUE NOT NULL,
+   team_leader_id integer NOT NULL REFERENCES "user"(id)
 );
 
 CREATE TABLE IF NOT EXISTS team_member (
-   team_id integer NOT NULL PRIMARY KEY REFERENCES team(id),
-   user_id integer NOT NULL REFERENCES user(id)
+   id serial NOT NULL PRIMARY KEY,
+   team_id integer NOT NULL REFERENCES team(id),
+   user_id integer NOT NULL REFERENCES "user"(id)
 );
 
 CREATE TABLE IF NOT EXISTS author (
@@ -46,17 +54,24 @@ CREATE TABLE IF NOT EXISTS task (
    author_id integer NULL REFERENCES author(id)
 );
 
-CREATE TABLE IF NOT EXISTS solved_task (
+CREATE TABLE IF NOT EXISTS solved_tasks (
    task_id integer NOT NULL REFERENCES task(id),
    team_id integer NOT NULL REFERENCES team(id),
-   timestamp timestamptz NOT NULL
+   timestamp timestamptz NOT NULL DEFAULT now()
 );
 
 CREATE TABLE IF NOT EXISTS task_submission (
    task_id integer NOT NULL REFERENCES task(id),
    team_id integer NOT NULL REFERENCES team(id),
-   user_id integer NOT NULL REFERENCES user(id),
-   submission varchar(256) NOT NULL,
+   user_id integer NOT NULL REFERENCES "user"(id),
+   flag varchar(256) NOT NULL,
    is_correct bool NOT NULL,
-   timestamp timestamptz NOT NULL
+   timestamp timestamptz NOT NULL DEFAULT now()
+);
+
+CREATE TABLE IF NOT EXISTS manage_settings (
+   id serial NOT NULL PRIMARY KEY,
+   key varchar(256) UNIQUE NOT NULL,
+   value varchar(256) NOT NULL,
+   timestamp timestamptz NOT NULL DEFAULT now()
 );
