@@ -1,12 +1,8 @@
 package entity
 
-import (
-	"github.com/google/uuid"
-)
-
 type Team struct {
-	Name         string    `json:"teamName"`
-	TeamLeaderId int       `json:"teamLeaderId"`
-	Token        uuid.UUID `json:"token"`
-	TeamMembers  []User    `json:"teamMembers" gorm:""`
+	Id           int    `json:"id" db:"id"`
+	Name         string `json:"teamName" db:"name"`
+	TeamLeaderId int    `json:"teamLeaderId" db:"team_leader_id"`
+	Token        string `json:"token" db:"token"`
 }

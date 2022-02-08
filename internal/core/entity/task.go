@@ -4,25 +4,41 @@ import (
 	"time"
 )
 
+// Task is task
 type Task struct {
-	Id         int      `json:"id"`
-	Title      string   `json:"title"`
-	Decription string   `json:"description"`
-	Category   string   `json:"category"`
-	Complexity string   `json:"complexity"`
-	Pionts     int      `json:"points"`
-	Hint       string   `json:"hint"`
-	Flag       string   `json:"flag"`
-	IsActive   bool     `json:"isActive"`
-	IsDisabled bool     `json:"isDisabled"`
-	AuthorIDs  []int    `json:"-"`
-	Authors    []Author `json:"authors"`
+	Id          int    `json:"id" db:"id"`
+	Title       string `json:"title" db:"title"`
+	Description string `json:"description" db:"description"`
+	Category    string `json:"category" db:"category"`
+	Complexity  string `json:"complexity" db:"complexity"`
+	Points      int    `json:"points" db:"points"`
+	Hint        string `json:"hint" db:"hint"`
+	Flag        string `json:"flag" db:"flag"`
+	IsActive    bool   `json:"isActive" db:"is_active"`
+	IsDisabled  bool   `json:"isDisabled" db:"is_disabled"`
+	Author      Author `json:"author" db:"author"`
+}
+
+// TaskFilter represents a filter passed to FindTasks().
+type TaskFilter struct {
+	// Filtering fields.
+	Id         int    `json:"id,omitempty"`
+	Category   string `json:"category,omitempty"`
+	Complexity string `json:"complexity,omitempty"`
+	Points     string `json:"points,omitempty"`
+	IsActive   bool   `json:"is_active,omitempty"`
+	IsDisabled bool   `json:"is_disabled,omitempty"`
+	AuthorId   int    `json:"author_id,omitempty"`
+
+	// Restrict to subset of results.
+	Offset int `json:"offset"`
+	Limit  int `json:"limit"`
 }
 
 type Author struct {
-	Id      int    `json:"authorId"`
-	Name    string `json:"name"`
-	Contact string `json:"contact"`
+	Id      int    `json:"id" db:"id"`
+	Name    string `json:"name" db:"name"`
+	Contact string `json:"contact" db:"contact"`
 }
 
 type SolvedTask struct {
