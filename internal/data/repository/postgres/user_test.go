@@ -123,5 +123,4 @@ func Test_UserRepository_GetRole(t *testing.T) {
 	assert.Equal(nil, err, "should be nil")
 	assert.Equal(role.Id, roleId, "should be equal")
 	assert.Equal(role.Name, roleName, "should be equal")
-
 }

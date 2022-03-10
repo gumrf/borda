@@ -4,8 +4,8 @@ import (
 	"borda/internal/core"
 	"borda/internal/core/entity"
 
+	"context"
 	"database/sql"
-	"encoding/json"
 	"errors"
 	"fmt"
 	"strings"
@@ -22,8 +22,6 @@ type TaskRepository struct {
 	solvedTasksTableName string
 }
 
-var _ core.TaskRepository = (*TaskRepository)(nil)
-
 func NewTaskRepository(db *sqlx.DB) core.TaskRepository {
 	return TaskRepository{
 		db:                   db,
@@ -33,154 +31,215 @@ func NewTaskRepository(db *sqlx.DB) core.TaskRepository {
 	}
 }
 
-func (r TaskRepository) Create(task entity.Task) (int, error) {
-	// Create a helper function for preparing failure results.
-	fail := func(err error) (int, error) {
-		return -1, fmt.Errorf("Create: %v", err)
-	}
-	// begin transaction
+func (r TaskRepository) CreateNewTask(task entity.Task) (int, error) {
+
 	tx, err := r.db.Beginx()
 	if err != nil {
-		return fail(err)
+		return -1, fmt.Errorf("TaskRepository.Create: beginx: %w", err)
 	}
 	defer tx.Rollback() //nolint
 
-	queryAuthor := fmt.Sprintf("SELECT id FROM public.%s WHERE name = $1 AND contact = $2 LIMIT 1", r.authorTableName)
-
-	var authorId int
-	if err := r.db.QueryRowx(queryAuthor, task.Author.Name, task.Author.Contact).Scan(&authorId); err != nil {
-		if errors.Is(err, sql.ErrNoRows) {
-			query := fmt.Sprintf("INSERT INTO public.%s (name, contact) VALUES ($1, $2) RETURNING id", r.authorTableName)
-
-			resultRow := tx.QueryRowx(query, task.Author.Name, task.Author.Contact)
-			if err := resultRow.Scan(&authorId); err != nil {
-				return fail(fmt.Errorf("insert author: %w", err))
-			}
-		} else {
-			return fail(fmt.Errorf("select author: %w", err))
-		}
+	_, err = r.findOrCreateAuthor(tx, &task.Author)
+	if err != nil {
+		return -1, fmt.Errorf("TaskRepository.Create: findOrCreateAuthor: %w", err)
 	}
 
-	queryTask := fmt.Sprintf(`
-		INSERT INTO public.%s
-		(title, description, category, complexity, points, hint, flag, is_active, is_disabled, author_id)
+	query := fmt.Sprintf(`
+		INSERT INTO public.%s (
+			title, 
+			description, 
+			category, 
+			complexity, 
+			points, 
+			hint, 
+			flag, 
+			is_active, 
+			is_disabled, 
+			author_id
+		)
 		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
-		RETURNING id`, r.taskTableName)
+		RETURNING id`,
+		r.taskTableName)
 
-	var taskId int
-	if err = tx.QueryRowx(queryTask, task.Title, task.Description, task.Category,
-		task.Complexity, task.Points, task.Hint, task.Flag, task.IsActive,
-		task.IsDisabled, authorId).Scan(&taskId); err != nil {
-		return fail(fmt.Errorf("insert task %w", err))
+	result := tx.QueryRowx(
+		query,
+		task.Title, task.Description, task.Category, task.Complexity,
+		task.Points, task.Hint, task.Flag, task.IsActive, task.IsDisabled,
+		task.Author.Id)
+
+	if err := result.Scan(&task.Id); err != nil {
+		return -1, fmt.Errorf("TaskRepository.Create: scan: %w", err)
 	}
 
 	if err := tx.Commit(); err != nil {
-		return fail(err)
+		return -1, fmt.Errorf("TaskRepository.Create: commit: %w", err)
 	}
 
-	return taskId, nil
+	return task.Id, nil
 }
 
-// Get returns one task
-func (r TaskRepository) Get(taskId int) (entity.Task, error) {
+func (r TaskRepository) findOrCreateAuthor(tx *sqlx.Tx, author *entity.Author) (int, error) {
 	query := fmt.Sprintf(`
-		SELECT t.id, t.title, t.description, t.category, t.complexity, t.points,
-			   t.hint, t.flag, t.is_active, t.is_disabled, a.id AS "author.id",
-			   a.name AS "author.name", a.contact AS "author.contact"
-		FROM public.%s t, public.%s a
-		WHERE t.id = $1 AND t.author_id = a.id
+		SELECT id
+		FROM public.%s
+		WHERE name = $1
 		LIMIT 1`,
-		r.taskTableName, r.authorTableName)
+		r.authorTableName,
+	)
 
-	var task entity.Task
-	if err := r.db.Get(&task, query, taskId); err != nil {
+	result := tx.QueryRowx(query, author.Name)
+	err := result.Scan(&author.Id)
+	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
-			return entity.Task{}, fmt.Errorf("no such task: %v", err)
+			_query := fmt.Sprintf(`
+				INSERT INTO public.%s (
+					name,
+					contact
+				)
+				VALUES ($1, $2)
+				RETURNING id`,
+				r.authorTableName)
+
+			_result := tx.QueryRowx(_query, author.Name, author.Contact)
+			if err := _result.Scan(&author.Id); err != nil {
+				return -1, err
+			}
+		} else {
+			return -1, err
 		}
-		return entity.Task{}, err
 	}
-	return task, nil
+
+	return author.Id, nil
 }
 
-// GetMany returns several task
-func (r TaskRepository) FindTasks(filter entity.TaskFilter) ([]entity.Task, error) {
-	var filterMap map[string]interface{} = make(map[string]interface{})
+// Find returns a list of tasks based on a filter.
+func (r TaskRepository) GetTasks(filter entity.TaskFilter) ([]*entity.Task, error) {
+	ctx := context.Background()
 
-	filterJson, err := json.Marshal(filter)
+	tx, err := r.db.BeginTxx(ctx, nil)
 	if err != nil {
-		return []entity.Task{}, fmt.Errorf("wrong filter fields: %w", err)
+		return nil, err
 	}
+	defer tx.Rollback() // nolint
 
-	if err := json.Unmarshal(filterJson, &filterMap); err != nil {
-		return []entity.Task{}, fmt.Errorf("wrong filter fields: %w", err)
-	}
-
-	params, args := []string{"1 = 1"}, make([]interface{}, 0)
-	var index int = 1
-	// iterate through filter and build query
-	for field, value := range filterMap {
-		if field != "offset" && field != "limit" {
-			params = append(params, fmt.Sprintf("t.%s = $%d", field, index))
-			args = append(args, value)
-			index++
-		}
-	}
-
-	query := fmt.Sprintf(`
-		SELECT t.id, t.title, t.description, t.category, t.complexity, t.points,
-			   t.hint, t.flag, t.is_active, t.is_disabled, a.id AS "author.id",
-			   a.name AS "author.name", a.contact AS "author.contact"
-		FROM public.%s t, public.%s a
-		WHERE %s AND t.author_id = a.id`,
-		r.taskTableName, r.authorTableName, strings.Join(params, " AND "))
-
-	var tasks []entity.Task = make([]entity.Task, 0)
-
-	if err := r.db.Select(&tasks, query, args...); err != nil {
-		return tasks, fmt.Errorf("failed select tasks: %w", err)
-	}
-
-	if len(tasks) <= 0 {
-		return tasks, ErrNotFound
+	tasks, err := r.findTasks(tx, filter)
+	if err != nil {
+		return tasks, err
 	}
 
 	return tasks, nil
 }
 
-func (r TaskRepository) Update(taskId int, newTask entity.Task) error {
-	var taskMap map[string]interface{} = make(map[string]interface{})
+// FindById searchs for task with specified id
+func (r TaskRepository) GetTaskById(taskId int) (*entity.Task, error) {
+	ctx := context.Background()
 
-	jsonTask, err := json.Marshal(newTask)
+	tx, err := r.db.BeginTxx(ctx, nil)
 	if err != nil {
-		return fmt.Errorf("bad fields: %w", err)
+		return nil, err
 	}
+	defer tx.Rollback() // nolint
 
-	if err := json.Unmarshal(jsonTask, &taskMap); err != nil {
-		return fmt.Errorf("wrong filter fields: %w", err)
-	}
-
-	params, args := []string{"1 = 1"}, make([]interface{}, 0)
-	var index int = 1
-	// iterate through filter and build query
-	for field, value := range taskMap {
-		if field != "id" && field != "author_id" && field != "author_name" && field != "author_contact" {
-			params = append(params, fmt.Sprintf("t.%s = $%d", field, index))
-			args = append(args, value)
-			index++
+	tasks, err := r.findTasks(tx, entity.TaskFilter{Id: taskId})
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, fmt.Errorf("can't find task with id=%d", taskId)
 		}
+		return nil, err
 	}
 
-	//TODO: Update Author if author with name and contact doesn't exist.
+	return tasks[0], nil
+}
 
-	query := fmt.Sprintf("UPDATE public.%s SET %s WHERE id = $%d", r.taskTableName, strings.Join(params, ", "), index)
-	fmt.Println(query)
+// findTaks returns a list of matching tasks.
+func (r TaskRepository) findTasks(tx *sqlx.Tx, filter entity.TaskFilter) (_ []*entity.Task, err error) {
+	f, err := filter.ToMap()
+	if err != nil {
+		return nil, err
+	}
+
+	index, params, args := 1, []string{"1 = 1"}, make([]interface{}, 0)
+
+	for filter, value := range f {
+		params = append(params, fmt.Sprintf("task.%s = $%d", filter, index))
+		args = append(args, value)
+		index++
+	}
+
+	query := fmt.Sprintf(`
+		SELECT
+			task.id, 
+			task.title,
+			task.description,
+			task.category, 
+			task.complexity,  
+			task.points,
+			task.hint,   
+			task.flag, 
+			task.is_active, 
+			task.is_disabled, 
+			author.id AS "author.id",
+			author.name AS "author.name",
+			author.contact AS "author.contact"
+		FROM public.%s
+		LEFT JOIN public.%s ON task.author_id = author.id
+		WHERE %s
+		ORDER BY id 
+		`+formatLimitOffset(filter.Limit, filter.Offset),
+		r.taskTableName, r.authorTableName, strings.Join(params, " AND "))
+
+	tasks := make([]*entity.Task, 0)
+	if err := tx.Select(&tasks, query, args...); err != nil {
+		return nil, err
+	}
+
+	return tasks, nil
+}
+
+func (r TaskRepository) UpdateTask(taskId int, update entity.TaskUpdate) error {
+	updateFields, err := update.ToMap()
+	if err != nil {
+		return err
+	}
 
 	tx, err := r.db.Begin()
 	if err != nil {
 		return err
 	}
+	defer tx.Rollback() // nolint
 
-	if _, err := tx.Exec(query, args, taskId); err != nil {
+	// init query params & args
+	params, args := []string{"1 = 1"}, make([]interface{}, 0)
+	// index = 1 is reserved for task id.
+	index := 2
+
+	for field, value := range updateFields {
+		params = append(params, fmt.Sprintf("t.%s = $%d", field, index))
+		args = append(args, value)
+		index++
+	}
+
+	//TODO: Update Author if author with name and contact doesn't exist.
+
+	query := fmt.Sprintf(`
+		UPDATE public.%s
+		SET %s
+		WHERE id = $1`,
+		r.taskTableName, strings.Join(params, ", "))
+
+	if _, err := tx.Exec(query, taskId, args); err != nil {
+		return err
+	}
+
+	_, err = tx.Exec(fmt.Sprintf(`
+		UPDATE public.%[1]s
+		SET name = $1, contact = $2
+		WHERE id = (SELECT id
+			FROM public.%[1]s
+			WHERE name = $1 AND contact = $2)`,
+		r.authorTableName),
+		update.AuthorName, update.AuthorContact, 100)
+	if err != nil {
 		return err
 	}
 
@@ -188,8 +247,14 @@ func (r TaskRepository) Update(taskId int, newTask entity.Task) error {
 }
 
 // Solve creates a record that the team solved the task
-func (r TaskRepository) Solve(taskId, teamId int) error {
-	query := fmt.Sprintf("INSERT INTO public.%s (task_id, team_id) VALUES ($1, $2)", r.solvedTasksTableName)
+func (r TaskRepository) SolveTask(taskId, teamId int) error {
+	query := fmt.Sprintf(`
+		INSERT INTO public.%s (
+			task_id,
+			team_id
+		)
+		VALUES ($1, $2)`,
+		r.solvedTasksTableName)
 
 	if _, err := r.db.Exec(query, taskId, teamId); err != nil {
 		return err

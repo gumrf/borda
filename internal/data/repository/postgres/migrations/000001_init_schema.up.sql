@@ -37,21 +37,22 @@ CREATE TABLE IF NOT EXISTS team_member (
 CREATE TABLE IF NOT EXISTS author (
    id serial NOT NULL PRIMARY KEY,
    name varchar(256) NOT NULL,
-   contact varchar(256)
+   contact varchar(256),
+   UNIQUE(name)
 );
 
 CREATE TABLE IF NOT EXISTS task (
-   id serial NOT NULL PRIMARY KEY,
-   title varchar(256) NOT NULL,
-   description text NOT NULL,
-   category varchar(256) NOT NULL,
-   complexity varchar(256) NOT NULL,
-   points integer NOT NULL,
-   hint text,
-   flag varchar(256) NOT NULL,
-   is_active bool NOT NULL,
+   id          serial PRIMARY KEY,
+   title       VARCHAR(256) NOT NULL,
+   description TEXT NOT NULL,
+   category    VARCHAR(256) NOT NULL,
+   complexity  VARCHAR(256),
+   points      INTEGER NOT NULL,
+   hint        TEXT,
+   flag        VARCHAR(256) NOT NULL,
+   is_active   bool NOT NULL,
    is_disabled bool NOT NULL,
-   author_id integer NULL REFERENCES author(id)
+   author_id   INTEGER REFERENCES author(id)
 );
 
 CREATE TABLE IF NOT EXISTS solved_tasks (
@@ -69,7 +70,7 @@ CREATE TABLE IF NOT EXISTS task_submission (
    timestamp timestamptz NOT NULL DEFAULT now()
 );
 
-CREATE TABLE IF NOT EXISTS manage_settings (
+CREATE TABLE IF NOT EXISTS settings (
    id serial NOT NULL PRIMARY KEY,
    key varchar(256) UNIQUE NOT NULL,
    value varchar(256) NOT NULL,

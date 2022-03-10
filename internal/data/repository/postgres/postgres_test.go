@@ -11,7 +11,7 @@ import (
 const (
 	dsn            string = "postgres://postgres:postgres@127.0.0.1:5432/postgres?sslmode=disable"
 	migrationsPath string = "file://migrations"
-	dropStmt              = "DROP SCHEMA public CASCADE; CREATE SCHEMA public;"
+	dropStmt       string = "DROP SCHEMA public CASCADE; CREATE SCHEMA public;"
 )
 
 // Ensure the Postgres database can open & close.
@@ -28,17 +28,24 @@ func Test_Connect(t *testing.T) {
 func MustConnectAndMigrate(t *testing.T) *sqlx.DB {
 	db, err := postgres.Connect(dsn)
 	if err != nil {
-		t.Fatal("Oops.. can't connect to DB: ", err)
+		t.Fatal(err)
 	}
 
 	if _, err := db.Exec(dropStmt); err != nil {
-		t.Fatal("Oops.. reset shema failed: ", err)
+		t.Fatal(err)
 	}
 
-	err = postgres.RunMigrations(db, migrationsPath)
-	if err != nil {
-		t.Fatal("Oops.. migrations failed: ", err)
+	if err := postgres.RunMigrations(db, migrationsPath); err != nil {
+		t.Fatal(err)
 	}
 
 	return db
+}
+
+// MustCloseDB closes the DB. Fatal on error.
+func MustCloseDB(t *testing.T, db *sqlx.DB) {
+	t.Helper()
+	if err := db.Close(); err != nil {
+		t.Fatal(err)
+	}
 }

@@ -18,12 +18,16 @@ var _ core.SettingsRepository = (*SettingsRepository)(nil)
 func NewSettingsRepository(db *sqlx.DB) core.SettingsRepository {
 	return SettingsRepository{
 		db:                db,
-		tableSettingsName: "manage_settings",
+		tableSettingsName: "settings",
 	}
 }
 
 func (r SettingsRepository) Get(key string) (value string, err error) {
-	query := fmt.Sprintf(`SELECT * FROM public.%s WHERE key=$1 LIMIT 1`, r.tableSettingsName)
+	query := fmt.Sprintf(`
+		SELECT *
+		FROM public.%s
+		WHERE key=$1
+		LIMIT 1`, r.tableSettingsName)
 
 	err = r.db.QueryRowx(query, key).Scan(&value)
 
@@ -40,12 +44,15 @@ func (r SettingsRepository) Get(key string) (value string, err error) {
 }
 
 func (r SettingsRepository) Set(key string, value string) (settingsId int, err error) {
-	query := fmt.Sprintf(
-		`INSERT INTO public.%s (key, value) 
-				VALUES ($1, $2)
-				ON CONFLICT (key) DO UPDATE 
-				SET key = excluded.key, value = excluded.value
-				RETURNING id`,
+	query := fmt.Sprintf(`
+		INSERT INTO public.%s (
+			key,
+			value
+		) 
+		VALUES ($1, $2)
+		ON CONFLICT (key) DO UPDATE 
+		SET key = excluded.key, value = excluded.value
+		RETURNING id`,
 		r.tableSettingsName)
 	id := -1
 	err = r.db.QueryRowx(query, value, key).Scan(&id)

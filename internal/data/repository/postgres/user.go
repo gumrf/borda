@@ -3,6 +3,7 @@ package postgres
 import (
 	"borda/internal/core"
 	"borda/internal/core/entity"
+
 	"fmt"
 
 	"github.com/jmoiron/sqlx"
@@ -27,10 +28,14 @@ func NewUserRepository(db *sqlx.DB) core.UserRepository {
 }
 
 func (r UserRepository) Create(username, password, contact string) (userId int, err error) {
-	query := fmt.Sprintf(
-		`INSERT INTO public.%s (name, password, contact) 
-		 VALUES($1, $2, $3)
-		 RETURNING id`,
+	query := fmt.Sprintf(`
+		INSERT INTO public.%s (
+			name,
+			password,
+			contact
+		) 
+		VALUES($1, $2, $3)
+		RETURNING id`,
 		r.userTableName)
 
 	var id int = -1
@@ -43,8 +48,10 @@ func (r UserRepository) Create(username, password, contact string) (userId int, 
 }
 
 func (r UserRepository) UpdatePassword(userId int, newPassword string) error {
-	query := fmt.Sprintf(
-		`UPDATE public.%s SET password = $1 WHERE id = $2`,
+	query := fmt.Sprintf(`
+		UPDATE public.%s
+		SET password = $1
+		WHERE id = $2`,
 		r.userTableName)
 
 	_, err := r.db.Exec(query, newPassword, userId)
@@ -56,8 +63,12 @@ func (r UserRepository) UpdatePassword(userId int, newPassword string) error {
 }
 
 func (r UserRepository) AssignRole(userId, roleId int) error {
-	query := fmt.Sprintf(
-		`INSERT INTO public.%s (user_id, role_id) VALUES($1, $2)`,
+	query := fmt.Sprintf(`
+		INSERT INTO public.%s (
+			user_id,
+			role_id
+		)
+		VALUES($1, $2)`,
 		r.userRolesTableName)
 
 	_, err := r.db.Exec(query, userId, roleId)
@@ -69,8 +80,6 @@ func (r UserRepository) AssignRole(userId, roleId int) error {
 }
 
 func (r UserRepository) GetRole(userId int) (entity.Role, error) {
-	// query := "SELECT * FROM role INNER JOIN user_roles ON role.id = user_roles.role_id WHERE user_roles.user_id = $1"
-
 	query := fmt.Sprintf(`
 		SELECT r.id, r.name
 		FROM public.%s AS r

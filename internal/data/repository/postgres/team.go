@@ -70,8 +70,8 @@ func (r TeamRepository) AddMember(teamId, userId int) error {
 
 	// Get team_id, user_id, team_members_id for check
 	// Select like this team_id | user_id | team_members_id
-	query := fmt.Sprintf(
-		`SELECT COALESCE((
+	query := fmt.Sprintf(`
+		SELECT COALESCE((
 			SELECT id FROM public.%s
 			WHERE id=$1), NULL
 		) as team_id, 
@@ -121,10 +121,10 @@ func (r TeamRepository) AddMember(teamId, userId int) error {
 	// Check limit
 	// Tested manual, it really works, trust me :)
 	var valueLimit string
-	query = fmt.Sprintf(
-		`SELECT value FROM %s
-		WHERE key=$1
-		`,
+	query = fmt.Sprintf(`
+		SELECT value 
+		FROM %s
+		WHERE key=$1`,
 		r.tableSettingsName,
 	)
 	err = r.db.QueryRowx(query, "team_limit").Scan(&valueLimit)
@@ -137,8 +137,9 @@ func (r TeamRepository) AddMember(teamId, userId int) error {
 		return fmt.Errorf("team repository addMember error: team_limit in db not converted to integer, %v", err)
 	}
 	var alreadyExistMembers int
-	query = fmt.Sprintf(
-		`SELECT COUNT(user_id) FROM %s
+	query = fmt.Sprintf(`
+		SELECT COUNT(user_id)
+		FROM %s
 		WHERE team_id=$1`,
 		r.tableTeamMembersName,
 	)
@@ -151,9 +152,11 @@ func (r TeamRepository) AddMember(teamId, userId int) error {
 	}
 
 	// Write db
-	query = fmt.Sprintf(
-		`INSERT INTO public.%s 
-		(team_id, user_id) 
+	query = fmt.Sprintf(`
+		INSERT INTO public.%s (
+			team_id, 
+			user_id
+		) 
 		VALUES($1, $2)
 		RETURNING id`,
 		r.tableTeamMembersName,
@@ -169,8 +172,9 @@ func (r TeamRepository) AddMember(teamId, userId int) error {
 
 func (r TeamRepository) Get(teamId int) (team entity.Team, err error) {
 	// Get
-	query := fmt.Sprintf(
-		`SELECT * FROM public.%s 
+	query := fmt.Sprintf(`
+		SELECT * 
+		FROM public.%s 
 		WHERE id=$1`,
 		r.tableTeamName,
 	)
@@ -203,8 +207,9 @@ func (r TeamRepository) Get(teamId int) (team entity.Team, err error) {
 
 func (r TeamRepository) GetMembers(teamId int) (users []entity.User, err error) {
 	// Check team exist
-	query := fmt.Sprintf(
-		`SELECT id FROM %s
+	query := fmt.Sprintf(`
+		SELECT id
+		FROM %s
 		WHERE id=$1`,
 		r.tableTeamMembersName,
 	)
@@ -215,10 +220,12 @@ func (r TeamRepository) GetMembers(teamId int) (users []entity.User, err error) 
 	}
 
 	// Get
-	query = fmt.Sprintf(
-		`SELECT * FROM %s 
+	query = fmt.Sprintf(`
+		SELECT *
+		FROM %s 
 		WHERE ID IN (
-			SELECT user_id FROM %s
+			SELECT user_id 
+			FROM %s
 			WHERE team_id=$1
 		)`,
 		r.tableUserName,

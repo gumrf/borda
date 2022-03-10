@@ -1,6 +1,7 @@
 package entity
 
 import (
+	"encoding/json"
 	"time"
 )
 
@@ -19,9 +20,42 @@ type Task struct {
 	Author      Author `json:"author" db:"author"`
 }
 
+type Author struct {
+	Id      int    `json:"id" db:"id"`
+	Name    string `json:"name" db:"name"`
+	Contact string `json:"contact" db:"contact"`
+}
+
+type TaskUpdate struct {
+	Title         string `json:"title"`
+	Description   string `json:"description"`
+	Category      string `json:"category"`
+	Complexity    string `json:"complexity"`
+	Points        int    `json:"points"`
+	Hint          string `json:"hint"`
+	Flag          string `json:"flag"`
+	AuthorName    string `json:"-"`
+	AuthorContact string `json:"-"`
+}
+
+func (f *TaskUpdate) ToMap() (map[string]interface{}, error) {
+	bytes, err := json.Marshal(f)
+	if err != nil {
+		return nil, err
+	}
+
+	result := make(map[string]interface{})
+
+	err = json.Unmarshal(bytes, &result)
+	if err != nil {
+		return nil, err
+	}
+
+	return result, nil
+}
+
 // TaskFilter represents a filter passed to FindTasks().
 type TaskFilter struct {
-	// Filtering fields.
 	Id         int    `json:"id,omitempty"`
 	Category   string `json:"category,omitempty"`
 	Complexity string `json:"complexity,omitempty"`
@@ -30,15 +64,24 @@ type TaskFilter struct {
 	IsDisabled bool   `json:"is_disabled,omitempty"`
 	AuthorId   int    `json:"author_id,omitempty"`
 
-	// Restrict to subset of results.
-	Offset int `json:"offset"`
-	Limit  int `json:"limit"`
+	Offset int `json:"-"`
+	Limit  int `json:"-"`
 }
 
-type Author struct {
-	Id      int    `json:"id" db:"id"`
-	Name    string `json:"name" db:"name"`
-	Contact string `json:"contact" db:"contact"`
+func (f *TaskFilter) ToMap() (map[string]interface{}, error) {
+	bytes, err := json.Marshal(f)
+	if err != nil {
+		return nil, err
+	}
+
+	result := make(map[string]interface{})
+
+	err = json.Unmarshal(bytes, &result)
+	if err != nil {
+		return nil, err
+	}
+
+	return result, nil
 }
 
 type SolvedTask struct {

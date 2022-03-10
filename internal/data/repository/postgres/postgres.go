@@ -1,6 +1,7 @@
 package postgres
 
 import (
+	"errors"
 	"fmt"
 	"time"
 
@@ -27,14 +28,15 @@ func Connect(connectionURL string) (*sqlx.DB, error) {
 	for {
 		// Try to ping Postgres DB.
 		if err := db.Ping(); err != nil {
-			if retries > 0 {
-				fmt.Printf("ping: %v\nRetries left: %d\n", err, retries)
+			if retries >= 0 {
+				fmt.Printf("%v [retries left: %d]\n", err, retries)
 				retries--
 				time.Sleep(time.Duration(timeout) * time.Second)
 				continue
 			}
-			return nil, fmt.Errorf("postgres is down: %w", err)
-			// Connecting to Postgres failed after maximum attempts
+
+			return nil, errors.New("Connecting to Postgres failed after maximum attempts")
+
 		}
 		break
 	}

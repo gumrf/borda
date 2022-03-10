@@ -4,9 +4,10 @@ import (
 	"borda/internal/core/entity"
 )
 
-// UserRepository represent op
+// UserRepository
 type UserRepository interface {
-	Create(username, password, contact string) (userId int, err error)
+	Create(username, password, contact string) (int, error)
+	// Find(username, password string) (*entity.User, error)
 	UpdatePassword(userId int, newPassword string) error
 	AssignRole(userId, roleId int) error
 	GetRole(userId int) (entity.Role, error)
@@ -14,26 +15,28 @@ type UserRepository interface {
 
 // TemaRepository
 type TeamRepository interface {
-	Create(teamLeaderId int, teamName string) (team entity.Team, err error)
+	Create(teamLeaderId int, teamName string) (entity.Team, error)
 	Get(teamId int) (team entity.Team, err error)
 	AddMember(teamId, userId int) error
-	GetMembers(teamId int) (users []entity.User, err error) // TODO implement
+	GetMembers(teamId int) (users []entity.User, err error)
 }
 
-// Taskrepository
+// TaskRepository
 type TaskRepository interface {
-	Get(taskId int) (entity.Task, error)
-	FindTasks(entity.TaskFilter) ([]entity.Task, error)
-	Solve(taskId, teamId int) error
-	Create(task entity.Task) (taskId int, err error)
-	Update(taskId int, newTask entity.Task) error
+	CreateNewTask(task entity.Task) (int, error)
+	GetTaskById(id int) (*entity.Task, error)
+	GetTasks(entity.TaskFilter) ([]*entity.Task, error)
+	UpdateTask(id int, update entity.TaskUpdate) error
+	SolveTask(taskId, teamId int) error
 }
 
+// SettingsRepository
 type SettingsRepository interface {
 	Get(key string) (value string, err error)
-	Set(key string, value string) (settingsId int, err error)
+	Set(key string, value string) (settingId int, err error)
 }
 
+// Repository
 type Repository interface {
 	Users() UserRepository
 	Settings() SettingsRepository
