@@ -24,3 +24,7 @@ func RegisterRoutes(app *fiber.App) {
 	initUserRoutes(v1)
 	initTaskRoutes(v1)
 }
+
+// func setUserFromCtx(c *fiber.Ctx) error {
+// 	c.Set
+// }

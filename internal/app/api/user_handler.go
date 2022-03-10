@@ -7,7 +7,9 @@ import (
 func initUserRoutes(router fiber.Router) {
 	users := router.Group("/users")
 	users.Get("", getAllUsers)
-	users.Get("/:id", getUserById)
+
+	user := users.Group("/:id")
+	user.Get("", getUserById)
 }
 
 func getUserById(c *fiber.Ctx) error {
