@@ -3,7 +3,7 @@ services:
 
   postgres:
     container_name: postgres
-    restart: always
+    # restart: always
     image: postgres:latest
     volumes:
       - ./.pgdata:/var/lib/postgresql/data:z
@@ -14,7 +14,7 @@ services:
 
   pgweb:
     container_name: pgweb
-    restart: always
+    # restart: always
     image: sosedoff/pgweb
     ports: 
       - "8081:8081" 
