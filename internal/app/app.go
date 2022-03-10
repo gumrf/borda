@@ -4,76 +4,60 @@ import (
 	"borda/internal/app/api"
 	"borda/internal/app/config"
 	"borda/internal/app/logger"
-	"borda/internal/app/server"
+	"borda/internal/data/repository/postgres"
+
 	"fmt"
 
-	pdb "borda/pkg/postgres"
-	"context"
-	"errors"
-	"net/http"
 	"os"
 	"os/signal"
-	"path/filepath"
-	"syscall"
-	"time"
+
+	"github.com/gofiber/fiber/v2"
 )
 
 // Run initializes whole application.
 func Run() {
 	// Config
-	cfg := config.InitConfig()
-	fmt.Println("init config: OK")
+	conf := config.Config()
 
 	// Logger
-	if err := logger.InitLogger(cfg.Additional.LogDir, cfg.Additional.LogFileName); err != nil {
+	if err := logger.InitLogger(conf.GetString("logger.path"), conf.GetString("logger.file_name")); err != nil {
 		fmt.Println("init logger:", err)
 		os.Exit(1)
 	}
-	fmt.Println("init logger: OK")
-	logger.Log.Info("Logs path: ", filepath.Join(cfg.Additional.LogDir, cfg.Additional.LogFileName))
 
 	// Database
-	logger.Log.Info("Database URI: ", cfg.DatabaseURI())
+	logger.Log.Info("Connecting to Postgres...: ", config.DatabaseUrl())
 
-	db, err := pdb.NewConnection(cfg.DatabaseURI())
+	db, err := postgres.Connect(config.DatabaseUrl())
 	if err != nil {
 		logger.Log.Fatalw("Failed connecting to database:", err)
 	}
 
-	if err := Migrate(db, cfg.DatabaseURI(), cfg.Additional.MigrationsDirName); err != nil {
-		logger.Log.Fatal("Failed migration: ", err)
-	}
+	app := fiber.New()
+	// Init api routes.
+	api.RegisterRoutes(app)
 
-	// Api handlers
-	handler := api.NewRoutes()
-
-	// HTTP Server
-	server := server.NewServer(handler, cfg.HTTP)
+	// Catch OS signals.
+	quit := make(chan os.Signal, 1)
+	signal.Notify(quit, os.Interrupt)
 
 	go func() {
-		if err := server.Run(); !errors.Is(err, http.ErrServerClosed) {
-			logger.Log.Fatal("Error occurred while running http server:", err)
+		<-quit
+		logger.Log.Info("Gracefully shutting down...")
+		// Received an interrupt signal, shutdown.
+		if err := app.Shutdown(); err != nil {
+			// Error from closing listeners, or context timeout:
+			logger.Log.Errorf("Oops... Server is not shutting down! Reason: %w", err)
 		}
 	}()
 
-	// Graceful Shutdown
-	quit := make(chan os.Signal, 1)
-	signal.Notify(quit, syscall.SIGTERM, syscall.SIGINT)
-
-	// wait for signal
-	<-quit
-
-	const timeout = 5 * time.Second
-
-	ctx, shutdown := context.WithTimeout(context.Background(), timeout)
-	defer shutdown()
-
-	if err := server.Stop(ctx); err != nil {
-		logger.Log.Error("Failed to stop server", err)
+	// Run server.
+	if err := app.Listen(config.ServerAddr()); err != nil {
+		logger.Log.Errorf("Oops... Server is not running! Reason: %w", err)
 	}
 
-	// Close database connections
+	// Close database connections.
 	if err := db.Close(); err != nil {
-		logger.Log.Error("Failed to stop database", err)
+		logger.Log.Errorf("Oops... Can't close database connections! Reason: %w", err)
 	}
 }
