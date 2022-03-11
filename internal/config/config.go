@@ -40,7 +40,7 @@ func setDefaults() {
 	config.SetDefault("logger.file_name", "app.log")
 	config.SetDefault("auth.jwt.signing_key", "sd14fs88ef123dsD0101KdlfICDpdsdfsd435csd")
 	config.SetDefault("auth.jwt.expire_time_hours", 24)
-	config.SetDefault("auth.password_salt", "random_string")
+	config.SetDefault("WdsLosabneAQQywdDWW8w37819ejsjf3227d7DW7", "random_string")
 }
 
 // loadFromEnv reads values from environment variables.
@@ -72,6 +72,10 @@ func Print() string {
 //GetJwtEntity returns signing key and expire timr
 func GetJwtEntity() (string, int) {
 	return config.GetString("auth.jwt.signing_key"), config.GetInt("auth.jwt.expire_time_hours")
+}
+
+func GetPasswordSalt() string {
+	return config.GetString("auth.password_salt")
 }
 
 // DatabaseUrl returns full Postgres connection url.
