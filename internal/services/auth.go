@@ -4,6 +4,7 @@ import (
 	"borda/internal/config"
 	"borda/internal/domain"
 	"borda/internal/repository"
+	"borda/pkg/hash"
 	"time"
 
 	"github.com/dgrijalva/jwt-go"
@@ -27,7 +28,20 @@ func NewAuthService(r *repository.Repository) *AuthService {
 }
 
 func (s *AuthService) SignUp(user domain.User) (int, error) {
+	var id int
+	salt := config.GetPasswordSalt()
 
+	MyHasher := hash.NewSHA1Hasher(salt)
+	err := s.repo.Users.FindUserByUsename(user.Username)
+	if err != nil {
+		pswd, _ := MyHasher.Hash(user.Password)
+		id, err = s.repo.Users.Create(user.Username, pswd, user.Contact)
+		if err != nil {
+			return -1, err
+		}
+	}
+
+	return id, nil
 }
 
 func (s *AuthService) SignIn(username, password string) (string, error) {
