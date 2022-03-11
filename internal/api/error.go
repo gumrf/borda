@@ -1,19 +1,25 @@
 package api
 
 type ErrorResponse struct {
-	Errors []*APIError
+	Errors []ErrorObject `json:"errors"`
 }
 
-type APIError struct {
-	Status string
-	Code   string
-	Title  string
-	Detail string
-	Source ErrorSource `json:"omitempty"`
+type ErrorObject struct {
+	Status string        `json:"status"`
+	Code   string        `json:"code"`
+	Title  string        `json:"title,omitempty"`
+	Detail string        `json:"detail,omitempty"`
+	Source *SourceObject `json:"source,omitempty"`
 }
 
-type ErrorSource struct {
-	Parameter Parameter
+type SourceObject struct {
+	Parameter Parameter `json:"parametr"`
 }
 
 type Parameter string
+
+func NewAPIErrorResponse(errors ...ErrorObject) *ErrorResponse {
+	return &ErrorResponse{
+		Errors: errors,
+	}
+}

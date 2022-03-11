@@ -34,4 +34,19 @@ func (h *Handler) Init(app *fiber.App) {
 	h.initAuthRoutes(v1)
 	h.initUserRoutes(v1)
 	h.initTaskRoutes(v1)
+
+	// 404 Handler
+	app.Use(func(c *fiber.Ctx) error {
+		return c.Status(404).JSON(
+			NewAPIErrorResponse(ErrorObject{
+				Status: "404",
+				Code:   "NOT_FOUND",
+			}),
+		)
+	})
+}
+
+func AuthRequired(c *fiber.Ctx) error {
+	
+	return c.Next()
 }
