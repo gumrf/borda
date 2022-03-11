@@ -56,6 +56,13 @@ func (r UserRepository) FindUser(username, password string) (*domain.User, error
 	return &user, nil
 }
 
+func (r UserRepository) FindUserByUsename(username string) error {
+	query := fmt.Sprintf(
+		`SELECT * FROM public.%s WHERE username=$1`, r.userTableName)
+	err := r.db.Get(query, username)
+	return err
+}
+
 func (r UserRepository) UpdatePassword(userId int, newPassword string) error {
 	query := fmt.Sprintf(`
 		UPDATE public.%s

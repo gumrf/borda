@@ -10,6 +10,7 @@ import (
 type UserRepository interface {
 	Create(username, password, contact string) (int, error)
 	FindUser(username, password string) (*domain.User, error)
+	FindUserByUsename(username string) error
 	UpdatePassword(userId int, newPassword string) error
 	AssignRole(userId, roleId int) error
 	GetRole(userId int) (domain.Role, error)
