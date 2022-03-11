@@ -28,7 +28,7 @@ func NewAuthService(r *repository.Repository) *AuthService {
 }
 
 func (s *AuthService) SignUp(user domain.User) (int, error) {
-	var id int
+	id := -1
 	salt := config.GetPasswordSalt()
 
 	MyHasher := hash.NewSHA1Hasher(salt)
@@ -37,11 +37,11 @@ func (s *AuthService) SignUp(user domain.User) (int, error) {
 		pswd, _ := MyHasher.Hash(user.Password)
 		id, err = s.repo.Users.Create(user.Username, pswd, user.Contact)
 		if err != nil {
-			return -1, err
+			return id, err
 		}
 	}
 
-	return id, nil
+	return id, err
 }
 
 func (s *AuthService) SignIn(username, password string) (string, error) {
