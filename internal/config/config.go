@@ -38,8 +38,8 @@ func setDefaults() {
 	config.SetDefault("db.postgres.migrations_path", "file://../migrations/")
 	config.SetDefault("logger.path", "logs")
 	config.SetDefault("logger.file_name", "app.log")
-	config.SetDefault("auth.jwt.signing_key", "jwt_key_change_me")
-	config.SetDefault("auth.jwt.expire_time", 1800)
+	config.SetDefault("auth.jwt.signing_key", "sd14fs88ef123dsD0101KdlfICDpdsdfsd435csd")
+	config.SetDefault("auth.jwt.expire_time_hours", 24)
 	config.SetDefault("auth.password_salt", "random_string")
 }
 
@@ -67,6 +67,11 @@ func Print() string {
 	}
 
 	return "Configuration: " + string(configJSON)
+}
+
+//GetJwtEntity returns signing key and expire timr
+func GetJwtEntity() (string, int) {
+	return config.GetString("auth.jwt.signing_key"), config.GetInt("auth.jwt.expire_time_hours")
 }
 
 // DatabaseUrl returns full Postgres connection url.
