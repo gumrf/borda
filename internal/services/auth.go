@@ -5,63 +5,60 @@ import (
 	"borda/internal/domain"
 	"borda/internal/repository"
 	"borda/pkg/hash"
+
+	"errors"
+	"strconv"
 	"time"
 
 	"github.com/dgrijalva/jwt-go"
 )
 
-// TODO: Service for generating statistics based on competition results (image or pdf)
-
 type AuthService struct {
-	repo *repository.Repository
+	repo   repository.UserRepository
+	hasher hash.PasswordHasher
 }
 
-type tokenClaims struct {
-	jwt.StandardClaims
-	UserId int `json:"user_id"`
-}
-
-func NewAuthService(r *repository.Repository) *AuthService {
+func NewAuthService(repo repository.UserRepository, hasher hash.PasswordHasher) *AuthService {
 	return &AuthService{
-		repo: r,
+		repo:   repo,
+		hasher: hasher,
 	}
 }
 
-func (s *AuthService) SignUp(user domain.User) (int, error) {
-	id := -1
-	salt := config.GetPasswordSalt()
-
-	MyHasher := hash.NewSHA1Hasher(salt)
-	err := s.repo.Users.FindUserByUsename(user.Username)
+func (s *AuthService) SignUp(input domain.UserSignUpInput) error {
+	passwordHash, err := s.hasher.Hash(input.Password)
 	if err != nil {
-		pswd, _ := MyHasher.Hash(user.Password)
-		id, err = s.repo.Users.Create(user.Username, pswd, user.Contact)
-		if err != nil {
-			return id, err
-		}
+		return err
 	}
 
-	return id, err
+	_, err = s.repo.Create(input.Username, passwordHash, input.Contact)
+	if err != nil {
+		if errors.Is(err, domain.ErrUserAlreadyExists) {
+			// 400
+			return err
+		}
+		// 500
+		return err
+	}
+
+	return nil
 }
 
 func (s *AuthService) SignIn(username, password string) (string, error) {
-	key, hours := config.GetJwtEntity()
 
-	user, err := s.repo.Users.FindUser(username, password)
+	user, err := s.repo.FindUser(username, password)
 	if err != nil {
 		return "", err
 	}
 
-	id := user.Id
+	jwtConf := config.JWT()
 
-	token := jwt.NewWithClaims(jwt.SigningMethodES256, &tokenClaims{
-		StandardClaims: jwt.StandardClaims{
-			ExpiresAt: time.Now().Add(time.Duration(hours) * time.Hour).Unix(),
-			IssuedAt:  time.Now().Unix(),
-		},
-		UserId: id,
+	token := jwt.NewWithClaims(jwt.SigningMethodES256, jwt.StandardClaims{
+		ExpiresAt: time.Now().Add(jwtConf.ExpireTime).Unix(),
+		IssuedAt:  time.Now().Unix(),
+		Subject:   strconv.Itoa(user.Id),
 	})
 
-	return token.SignedString([]byte(key))
-
+	// TODO: save token somewhere
+	return token.SignedString([]byte(jwtConf.SigningKey))
 }
