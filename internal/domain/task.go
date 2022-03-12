@@ -25,7 +25,7 @@ type Task struct {
 
 func (t *Task) Validate() error {
 	return validation.ValidateStruct(&t,
-		validation.Field(&t.Flag, validation.Required, validation.Match(regexp.MustCompile("^MACTF{[0-9a-zA-Z{_}]+$"))),
+		validation.Field(&t.Flag, validation.Required, validation.Match(regexp.MustCompile("^MACTF{[0-9A-Za-z_]+}$"))),
 	)
 
 }
