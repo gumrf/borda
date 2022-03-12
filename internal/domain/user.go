@@ -15,6 +15,7 @@ type User struct {
 	TeamId   int    `json:"teamId" db:"team_id"`
 }
 
+<<<<<<< HEAD
 type UserSignUpInput struct {
 	Username string `json:"username"`
 	Password string `json:"password"`
@@ -32,9 +33,12 @@ type UserSignInInput struct {
 }
 
 func (t *User) validate() error {
+=======
+func (t *User) Validate() error {
+>>>>>>> b9359c4 (fix user validate)
 	return validation.ValidateStruct(&t,
-		// Username cannot be empty, and the length must between 5 and 20, may contains letters, numbers and '_'
-		validation.Field(&t.Username, validation.Required, validation.Length(5, 20), validation.Match(regexp.MustCompile("^[0-9A-Za-z_]+$"))),
+		// Username cannot be empty, and the length must between 2 and 20, may contains letters, numbers and '_'
+		validation.Field(&t.Username, validation.Required, validation.Length(2, 20), validation.Match(regexp.MustCompile("^[0-9A-Za-z_]+$"))),
 		// Password cannot be empty, and the length must between 4 and 100, and must contain Uppercase letter, lowcase letter, and numbers
 		validation.Field(&t.Password, validation.Required, validation.Length(4, 100), is.Digit, is.LowerCase, is.UpperCase, validation.Match(regexp.MustCompile("^[^ ]+$"))),
 	)
