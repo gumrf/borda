@@ -24,6 +24,8 @@ func NewUserRepository(db *sqlx.DB) *UserRepository {
 	}
 }
 
+// TODO: check if user already in database. Return ErrUserAlreadyExists
+// TODO: pass user object when create user
 func (r UserRepository) Create(username, password, contact string) (userId int, err error) {
 	query := fmt.Sprintf(`
 		INSERT INTO public.%s (
