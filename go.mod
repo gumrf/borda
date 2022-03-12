@@ -15,12 +15,10 @@ require (
 
 )
 
-require (
-	github.com/asaskevich/govalidator v0.0.0-20200108200545-475eaeb16496 // indirect
-	github.com/go-ozzo/ozzo-validation v3.6.0+incompatible // indirect
-)
+
 
 require (
+	github.com/asaskevich/govalidator v0.0.0-20200108200545-475eaeb16496 // indirect
 	github.com/andybalholm/brotli v1.0.4 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect; indirect/ indirect
 	github.com/fsnotify/fsnotify v1.5.1 // indirect
