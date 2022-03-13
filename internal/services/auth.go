@@ -36,7 +36,7 @@ func (s *AuthService) SignUp(input domain.UserSignUpInput) error {
 	//		Attach user to the team.
 	//		If parsing token or creating new team fails, user should't be created.
 	// 		To achive prosess  should be run in transaction.
-	_, err = s.repo.Create(input.Username, passwordHash, input.Contact)
+	_, err = s.repo.CreateNewUser(input.Username, passwordHash, input.Contact)
 	if err != nil {
 		if errors.Is(err, domain.ErrUserAlreadyExists) {
 			return err
@@ -55,7 +55,7 @@ func (s *AuthService) SignIn(input domain.UserSignInInput) (string, error) {
 
 	fmt.Println(passwordHash)
 
-	user, err := s.repo.FindUser(input.Username, passwordHash)
+	user, err := s.repo.FindUserByCredentials(input.Username, passwordHash)
 	if err != nil {
 		return "", err
 	}

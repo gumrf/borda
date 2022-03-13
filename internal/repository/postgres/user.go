@@ -25,7 +25,12 @@ func NewUserRepository(db *sqlx.DB) *UserRepository {
 }
 
 // TODO: pass user object when create user
-func (r UserRepository) Create(username, password, contact string) (userId int, err error) {
+func (r UserRepository) CreateNewUser(username, password, contact string) (int, error) {
+	tx, err := r.db.Beginx()
+	if err != nil {
+		return -1, err
+	}
+
 	query := fmt.Sprintf(`
 		SELECT EXISTS (
 			SELECT 1
@@ -36,7 +41,7 @@ func (r UserRepository) Create(username, password, contact string) (userId int, 
 		r.userTableName)
 
 	var isUserExist bool
-	err = r.db.QueryRow(query, username).Scan(&isUserExist)
+	err = tx.QueryRow(query, username).Scan(&isUserExist)
 	if err != nil {
 		return -1, err
 	}
@@ -50,21 +55,23 @@ func (r UserRepository) Create(username, password, contact string) (userId int, 
 			name,
 			password,
 			contact
-		) 
+		)
 		VALUES($1, $2, $3)
 		RETURNING id`,
-		r.userTableName)
+		r.userTableName,
+	)
 
-	var id int = -1
-	err = r.db.QueryRowx(query, username, password, contact).Scan(&id)
+	var userId int
+	err = tx.Get(&userId, query, username, password, contact)
+
 	if err != nil {
-		return id, err
+		return -1, err
 	}
 
-	return id, nil
+	return userId, nil
 }
 
-func (r UserRepository) FindUser(username, password string) (*domain.User, error) {
+func (r UserRepository) FindUserByCredentials(username, password string) (*domain.User, error) {
 	query := fmt.Sprintf(`
 		SELECT *
 		FROM public.%s
@@ -78,17 +85,6 @@ func (r UserRepository) FindUser(username, password string) (*domain.User, error
 	}
 
 	return &user, nil
-}
-
-func (r UserRepository) FindUserByUsename(username string) error {
-	query := fmt.Sprintf(`
-		SELECT * 
-		FROM public.%s
-		WHERE name=$1`,
-		r.userTableName)
-
-	err := r.db.Get(query, username)
-	return err
 }
 
 func (r UserRepository) UpdatePassword(userId int, newPassword string) error {
