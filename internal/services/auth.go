@@ -5,6 +5,7 @@ import (
 	"borda/internal/domain"
 	"borda/internal/repository"
 	"borda/pkg/hash"
+	"fmt"
 
 	"errors"
 	"strconv"
@@ -31,29 +32,39 @@ func (s *AuthService) SignUp(input domain.UserSignUpInput) error {
 		return err
 	}
 
+	// TODO:
+	//		Attach user to the team.
+	//		If parsing token or creating new team fails, user should't be created.
+	// 		To achive prosess  should be run in transaction.
 	_, err = s.repo.Create(input.Username, passwordHash, input.Contact)
 	if err != nil {
 		if errors.Is(err, domain.ErrUserAlreadyExists) {
-			// 400
 			return err
 		}
-		// 500
 		return err
 	}
 
 	return nil
 }
 
-func (s *AuthService) SignIn(username, password string) (string, error) {
+func (s *AuthService) SignIn(input domain.UserSignInInput) (string, error) {
+	passwordHash, err := s.hasher.Hash(input.Password)
+	if err != nil {
+		return "", err
+	}
 
-	user, err := s.repo.FindUser(username, password)
+	fmt.Println(passwordHash)
+
+	user, err := s.repo.FindUser(input.Username, passwordHash)
 	if err != nil {
 		return "", err
 	}
 
 	jwtConf := config.JWT()
 
-	token := jwt.NewWithClaims(jwt.SigningMethodES256, jwt.StandardClaims{
+	fmt.Println(jwtConf)
+
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.StandardClaims{
 		ExpiresAt: time.Now().Add(jwtConf.ExpireTime).Unix(),
 		IssuedAt:  time.Now().Unix(),
 		Subject:   strconv.Itoa(user.Id),

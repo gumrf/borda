@@ -25,40 +25,17 @@ type ErrorObject struct {
 
 // type Parameter string
 
-// TODO: error responses for common http errors
-
-func NewAPIErrorResponse(errors ...ErrorObject) *ErrorResponse {
-	return &ErrorResponse{
-		Errors: errors,
-	}
-}
-
-func APIErrorResponse(c *fiber.Ctx, errors ...ErrorObject) error {
-	return c.Status(fiber.StatusNotFound).JSON(&ErrorResponse{
-		Errors: errors,
-	},
-
-	// NewAPIErrorResponse(ErrorObject{
-	// 	Status: strconv.Itoa(fiber.StatusNotFound),
-	// 	Code:   http.StatusText(fiber.StatusNotFound),
-	// }),
-	)
-}
-
-func BadRequest(title, detail string) ErrorObject {
-	return ErrorObject{
-		Status: strconv.Itoa(fiber.StatusBadRequest),
-		Code:   http.StatusText(fiber.StatusBadRequest),
-		Title:  title,
-		Detail: detail,
-	}
-}
-
-func NotFound(title, detail string) ErrorObject {
-	return ErrorObject{
-		Status: strconv.Itoa(fiber.StatusNotFound),
-		Code:   http.StatusText(fiber.StatusNotFound),
-		Title:  title,
-		Detail: detail,
-	}
+// TODO: adopt NewErrorResponse to acept custom error compatible with
+// 		 interface. It should replaces title and detail.
+func NewErrorResponse(c *fiber.Ctx, status int, title string) error {
+	return c.Status(status).JSON(
+		ErrorResponse{
+			Errors: []ErrorObject{
+				ErrorObject{
+					Status: strconv.Itoa(status),
+					Code:   http.StatusText(status),
+					Title:  title,
+				},
+			},
+		})
 }
