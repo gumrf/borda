@@ -65,20 +65,28 @@ func (r UserRepository) Create(username, password, contact string) (userId int, 
 }
 
 func (r UserRepository) FindUser(username, password string) (*domain.User, error) {
-	query := fmt.Sprintf(
-		`SELECT id FROM public.%s WHERE username=$1 AND password=$2`, r.userTableName)
+	query := fmt.Sprintf(`
+		SELECT *
+		FROM public.%s
+		WHERE name=$1 AND password=$2`,
+		r.userTableName)
+
 	var user domain.User
 	err := r.db.Get(&user, query, username, password)
 	if err != nil {
-		return &domain.User{}, err
+		return nil, err
 	}
 
 	return &user, nil
 }
 
 func (r UserRepository) FindUserByUsename(username string) error {
-	query := fmt.Sprintf(
-		`SELECT * FROM public.%s WHERE username=$1`, r.userTableName)
+	query := fmt.Sprintf(`
+		SELECT * 
+		FROM public.%s
+		WHERE name=$1`,
+		r.userTableName)
+
 	err := r.db.Get(query, username)
 	return err
 }
