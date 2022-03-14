@@ -2,6 +2,7 @@ package api
 
 import (
 	"borda/internal/domain"
+	"fmt"
 
 	"github.com/gofiber/fiber/v2"
 )
@@ -31,7 +32,7 @@ func (h *Handler) handleSignUp(ctx *fiber.Ctx) error {
 	if err != nil {
 		// TODO: send specific error depending on error type returned by SignUp
 		return NewErrorResponse(ctx,
-			fiber.StatusInternalServerError, "Error occurred on the server.",
+			fiber.StatusInternalServerError, fmt.Sprintf("Error occurred on the server. Error: %s", err.Error()),
 		)
 	}
 

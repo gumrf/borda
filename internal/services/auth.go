@@ -15,14 +15,18 @@ import (
 )
 
 type AuthService struct {
-	repo   repository.UserRepository
-	hasher hash.PasswordHasher
+	userRepo repository.UserRepository
+	teamRepo repository.TeamRepository
+	hasher   hash.PasswordHasher
 }
 
-func NewAuthService(repo repository.UserRepository, hasher hash.PasswordHasher) *AuthService {
+func NewAuthService(ur repository.UserRepository, tr repository.TeamRepository,
+	hasher hash.PasswordHasher) *AuthService {
+
 	return &AuthService{
-		repo:   repo,
-		hasher: hasher,
+		userRepo: ur,
+		teamRepo: tr,
+		hasher:   hasher,
 	}
 }
 
@@ -36,12 +40,30 @@ func (s *AuthService) SignUp(input domain.UserSignUpInput) error {
 	//		Attach user to the team.
 	//		If parsing token or creating new team fails, user should't be created.
 	// 		To achive prosess  should be run in transaction.
-	_, err = s.repo.CreateNewUser(input.Username, passwordHash, input.Contact)
+	userId, err := s.userRepo.CreateNewUser(input.Username, passwordHash, input.Contact)
 	if err != nil {
 		if errors.Is(err, domain.ErrUserAlreadyExists) {
 			return err
 		}
 		return err
+	}
+
+	switch input.AttachTeamMethod {
+	case "create":
+		_, err = s.teamRepo.CreateNewTeam(userId, input.AttachTeamAttribute)
+		if err != nil {
+			return err
+		}
+	case "join":
+		team, err := s.teamRepo.GetTeamByToken(input.AttachTeamAttribute)
+		if err != nil {
+			return err
+		}
+
+		err = s.teamRepo.AddMember(team.Id, userId)
+		if err != nil {
+			return err
+		}
 	}
 
 	return nil
@@ -55,7 +77,7 @@ func (s *AuthService) SignIn(input domain.UserSignInInput) (string, error) {
 
 	fmt.Println(passwordHash)
 
-	user, err := s.repo.FindUserByCredentials(input.Username, passwordHash)
+	user, err := s.userRepo.FindUserByCredentials(input.Username, passwordHash)
 	if err != nil {
 		return "", err
 	}

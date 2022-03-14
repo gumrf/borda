@@ -32,8 +32,8 @@ func Run() {
 	logger.Log.Info("Connected to Postgres: ", config.DatabaseUrl())
 
 	repository := repository.NewRepository(db)
-	authService := services.NewAuthService(
-		repository.Users, hash.NewSHA1Hasher(config.PasswordSalt()),
+	authService := services.NewAuthService(repository.Users, repository.Teams,
+		hash.NewSHA1Hasher(config.PasswordSalt()),
 	)
 
 	app := fiber.New()
