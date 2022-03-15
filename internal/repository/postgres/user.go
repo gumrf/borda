@@ -68,6 +68,10 @@ func (r UserRepository) CreateNewUser(username, password, contact string) (int, 
 		return -1, err
 	}
 
+	if err := tx.Commit(); err != nil{
+		return -1, err
+	}
+
 	return userId, nil
 }
 
