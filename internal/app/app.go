@@ -31,6 +31,10 @@ func Run() {
 	}
 	logger.Log.Info("Connected to Postgres: ", config.DatabaseUrl())
 
+	if err := pg.Migrate(db, config.MigrationsPath()); err != nil {
+		logger.Log.Fatalw("Failed to run migrations: %w", err)
+	}
+
 	repository := repository.NewRepository(db)
 	authService := services.NewAuthService(repository.Users, repository.Teams,
 		hash.NewSHA1Hasher(config.PasswordSalt()),
