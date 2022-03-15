@@ -37,7 +37,7 @@ func setDefaults() {
 	config.SetDefault("db.postgres.user", "postgres")
 	config.SetDefault("db.postgres.password", "postgres")
 	config.SetDefault("db.postgres.name", "postgres")
-	config.SetDefault("db.postgres.migrations_path", "file://../migrations/")
+	config.SetDefault("db.postgres.migrations_path", "file://./migrations")
 
 	config.SetDefault("logger.path", "logs")
 	config.SetDefault("logger.file_name", "app.log")
