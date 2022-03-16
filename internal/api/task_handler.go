@@ -8,7 +8,7 @@ import (
 
 func (h *Handler) initTaskRoutes(router fiber.Router) {
 	tasks := router.Group("/tasks", AuthRequired)
-	tasks.Get("", h.getAllTasks)    // Users вернуть массив тасков для отображения
+	tasks.Get("", h.getAllTasks)    // ++
 	tasks.Post("", h.createNewTask) //Only admin просто создать новый таск
 
 	task := router.Group("/tasks/:id")
@@ -19,31 +19,28 @@ func (h *Handler) initTaskRoutes(router fiber.Router) {
 }
 
 func (h *Handler) getAllTasks(ctx *fiber.Ctx) error {
-	ctx.Body()
-
+	var filter domain.TaskFilter
 	var tasks []*domain.Task
 
-	tasks, err := h.UserUsecase.ShowAllTasks()
+	err := ctx.BodyParser(&filter)
 	if err != nil {
-		return NewErrorResponse(ctx, fiber.StatusBadRequest, err.Error())
+		return NewErrorResponse(ctx,
+			fiber.StatusBadRequest, err.Error())
 	}
 
-	//return ctx.JSON(fiber.Map{
-	//	"error": false,
-	//	"tasks": []string{"task1, task2"},
-	//})
-	//INSERT INTO task (title, description, category, complexity, points, hint, flag, is_active, is_disabled, author_id) VALUES ('task1', 'This is description', 'penis', 'hard', 50, 'this is hint', 'Allah', true, true, 1);
+	tasks, err = h.UserUsecase.ShowAllTasks(filter)
+	if err != nil {
+		return NewErrorResponse(ctx,
+			fiber.StatusBadRequest, err.Error())
+	}
 
-	//var output []byte
-	//
-	//for t := range tasks {
-	//	output, err = json.Marshal(t)
-	//	if err != nil {
-	//		return NewErrorResponse(ctx, fiber.StatusConflict, err.Error())
-	//	}
-	//}
+	type TaskRespose struct {
+		Response []*domain.Task
+	}
 
-	return ctx.Status(fiber.StatusOK).JSON(tasks)
+	return ctx.Status(fiber.StatusOK).JSON(TaskRespose{
+		Response: tasks,
+	})
 }
 
 func (h *Handler) createNewTask(c *fiber.Ctx) error {

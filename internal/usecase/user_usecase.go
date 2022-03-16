@@ -13,9 +13,8 @@ func NewUserUsecase(tsr repository.TaskRepository) *UserUsecase {
 	return &UserUsecase{taskRepo: tsr}
 }
 
-func (u *UserUsecase) ShowAllTasks() ([]*domain.Task, error) {
+func (u *UserUsecase) ShowAllTasks(filter domain.TaskFilter) ([]*domain.Task, error) {
 	var tasks []*domain.Task
-	var filter domain.TaskFilter
 
 	tasks, err := u.taskRepo.GetTasks(filter)
 	if err != nil {
