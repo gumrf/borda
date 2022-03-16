@@ -43,10 +43,27 @@ func (h *Handler) getAllTasks(ctx *fiber.Ctx) error {
 	})
 }
 
-func (h *Handler) createNewTask(c *fiber.Ctx) error {
-	return c.Status(201).JSON(fiber.Map{
+func (h *Handler) createNewTask(ctx *fiber.Ctx) error {
+	var task domain.Task
+
+	err := ctx.BodyParser(&task)
+	if err != nil {
+		return NewErrorResponse(ctx,
+			fiber.StatusBadRequest, err.Error())
+	}
+
+	var taskId int
+
+	taskId, err = h.AdminUsecase.CreateNewTask(task)
+	if err != nil {
+		return NewErrorResponse(ctx,
+			fiber.StatusBadRequest, err.Error())
+	}
+
+	return ctx.Status(201).JSON(fiber.Map{
 		"error":   false,
 		"message": "Task created",
+		"task_id": taskId,
 	})
 }
 

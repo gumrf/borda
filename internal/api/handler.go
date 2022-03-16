@@ -14,14 +14,17 @@ import (
 )
 
 type Handler struct {
-	AuthService *services.AuthService
-	UserUsecase *usecase.UserUsecase
+	AuthService  *services.AuthService
+	UserUsecase  *usecase.UserUsecase
+	AdminUsecase *usecase.AdminUsecase
 }
 
-func NewHandler(authService *services.AuthService, userUsecase *usecase.UserUsecase) *Handler {
+func NewHandler(authService *services.AuthService,
+	userUsecase *usecase.UserUsecase, adminUsecase *usecase.AdminUsecase) *Handler {
 	return &Handler{
-		AuthService: authService,
-		UserUsecase: userUsecase,
+		AuthService:  authService,
+		UserUsecase:  userUsecase,
+		AdminUsecase: adminUsecase,
 	}
 }
 

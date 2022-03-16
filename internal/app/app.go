@@ -42,10 +42,10 @@ func Run() {
 	)
 
 	userUsecase := usecase.NewUserUsecase(repository.Tasks)
-
+	adminUsecase := usecase.NewAdminUsecase(repository.Tasks)
 	app := fiber.New()
 
-	handlers := api.NewHandler(authService, userUsecase)
+	handlers := api.NewHandler(authService, userUsecase, adminUsecase)
 	handlers.Init(app)
 
 	// Catch OS signals
