@@ -105,4 +105,11 @@ type TaskSubmission struct {
 	Timestemp time.Time `json:"timestemp"`
 }
 
+type SubmitTaskRequest struct {
+	TaskId int    `json:"taskId"`
+	TeamId int    `json:"teamId"`
+	UserId int    `json:"userId"`
+	Flag   string `json:"flag"`
+}
+
 type TaskSubmissions []TaskSubmission

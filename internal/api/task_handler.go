@@ -9,7 +9,7 @@ import (
 func (h *Handler) initTaskRoutes(router fiber.Router) {
 	tasks := router.Group("/tasks", AuthRequired)
 	tasks.Get("", h.getAllTasks)    // ++
-	tasks.Post("", h.createNewTask) //Only admin просто создать новый таск
+	tasks.Post("", h.createNewTask) // ++
 
 	task := router.Group("/tasks/:id")
 	task.Patch("", h.updateTask) //Only admin изменение таска - вариотивная приходит структура см. домен
@@ -52,6 +52,8 @@ func (h *Handler) createNewTask(ctx *fiber.Ctx) error {
 			fiber.StatusBadRequest, err.Error())
 	}
 
+	// VALIDATE task
+
 	var taskId int
 
 	taskId, err = h.AdminUsecase.CreateNewTask(task)
@@ -74,10 +76,30 @@ func (h *Handler) updateTask(c *fiber.Ctx) error {
 	})
 }
 
-func (h *Handler) createNewSubmission(c *fiber.Ctx) error {
-	return c.Status(201).JSON(fiber.Map{
+func (h *Handler) createNewSubmission(ctx *fiber.Ctx) error {
+	/*
+		Приходит флаг, таск, тима, юзер
+	*/
+	var submission domain.SubmitTaskRequest
+	err := ctx.BodyParser(&submission)
+	if err != nil {
+		return NewErrorResponse(ctx,
+			fiber.StatusBadRequest, err.Error())
+	}
+
+	//VALIDATE submission.Flag
+
+	var message string
+	message, err = h.UserUsecase.TryToSolveTask(submission)
+	if err != nil {
+		return NewErrorResponse(ctx,
+			fiber.StatusConflict, err.Error())
+	}
+
+	return ctx.Status(201).JSON(fiber.Map{
 		"error":   false,
-		"message": "Flag submitted",
+		"message": message,
+		"flag":    submission.Flag,
 	})
 }
 
