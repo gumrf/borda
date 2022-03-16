@@ -31,15 +31,15 @@ type Author struct {
 }
 
 type TaskUpdate struct {
-	Title         string `json:"title"`
-	Description   string `json:"description"`
-	Category      string `json:"category"`
-	Complexity    string `json:"complexity"`
-	Points        int    `json:"points"`
-	Hint          string `json:"hint"`
-	Flag          string `json:"flag"`
-	AuthorName    string `json:"-"`
-	AuthorContact string `json:"-"`
+	Title         string `json:"title,omitempty"`
+	Description   string `json:"description,omitempty"`
+	Category      string `json:"category,omitempty"`
+	Complexity    string `json:"complexity,omitempty"`
+	Points        int    `json:"points,omitempty"`
+	Hint          string `json:"hint,omitempty"`
+	Flag          string `json:"flag,omitempty"`
+	AuthorName    string `json:"-,omitempty"`
+	AuthorContact string `json:"-,omitempty"`
 }
 
 func (f *TaskUpdate) ToMap() (map[string]interface{}, error) {

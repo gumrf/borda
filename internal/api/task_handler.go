@@ -2,6 +2,7 @@ package api
 
 import (
 	"borda/internal/domain"
+	"strconv"
 
 	"github.com/gofiber/fiber/v2"
 )
@@ -12,10 +13,10 @@ func (h *Handler) initTaskRoutes(router fiber.Router) {
 	tasks.Post("", h.createNewTask) // ++
 
 	task := router.Group("/tasks/:id")
-	task.Patch("", h.updateTask) //Only admin изменение таска - вариотивная приходит структура см. домен
+	task.Patch("", h.updateTask) //TODO: fix repositort UpdateTask()
 
-	task.Post("/submissions", h.createNewSubmission) // Users Приходит флаг
-	task.Get("/submissions", h.getAllSubmissions)    // Users Вернуть все попытки решения
+	task.Post("/submissions", h.createNewSubmission) //  implement method to fill TaskSubmission table
+	task.Get("/submissions", h.getAllSubmissions)    // 				in repository
 }
 
 func (h *Handler) getAllTasks(ctx *fiber.Ctx) error {
@@ -69,17 +70,38 @@ func (h *Handler) createNewTask(ctx *fiber.Ctx) error {
 	})
 }
 
-func (h *Handler) updateTask(c *fiber.Ctx) error {
-	return c.JSON(fiber.Map{
+func (h *Handler) updateTask(ctx *fiber.Ctx) error {
+
+	taskId, err := strconv.Atoi(ctx.Params("id"))
+	if err != nil {
+		return NewErrorResponse(ctx,
+			fiber.StatusConflict, err.Error())
+	}
+
+	var taskData domain.TaskUpdate
+
+	err = ctx.BodyParser(&taskData)
+	if err != nil {
+		return NewErrorResponse(ctx,
+			fiber.StatusBadRequest, err.Error())
+	}
+
+	//sql: converting argument $2 type:
+	// 		unsupported type []interface {}, a slice of interface
+	//TODO: fix this err in repository UpdateTask()
+	err = h.AdminUsecase.UpdateTask(taskId, taskData)
+	if err != nil {
+		return NewErrorResponse(ctx,
+			fiber.StatusBadRequest, err.Error())
+	}
+
+	return ctx.JSON(fiber.Map{
 		"error":   false,
 		"message": "Successfully update task!",
 	})
 }
 
 func (h *Handler) createNewSubmission(ctx *fiber.Ctx) error {
-	/*
-		Приходит флаг, таск, тима, юзер
-	*/
 	var submission domain.SubmitTaskRequest
 	err := ctx.BodyParser(&submission)
 	if err != nil {
@@ -89,6 +111,7 @@ func (h *Handler) createNewSubmission(ctx *fiber.Ctx) error {
 
 	//VALIDATE submission.Flag
 
+	//TODO: implemet method in repository to fill TaskSubmission table
 	var message string
 	message, err = h.UserUsecase.TryToSolveTask(submission)
 	if err != nil {
@@ -104,6 +127,7 @@ func (h *Handler) createNewSubmission(ctx *fiber.Ctx) error {
 }
 
 func (h *Handler) getAllSubmissions(c *fiber.Ctx) error {
+	//TODO: implemet method in repository to fill TaskSubmission table
 	return c.JSON(fiber.Map{
 		"error":       false,
 		"submissions": []string{"s1", "s2", "s3"},

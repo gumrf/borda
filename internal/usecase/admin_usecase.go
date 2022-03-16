@@ -22,3 +22,7 @@ func (a *AdminUsecase) CreateNewTask(task domain.Task) (int, error) {
 
 	return id, nil
 }
+
+func (a *AdminUsecase) UpdateTask(taskId int, dataForUpdate domain.TaskUpdate) error {
+	return a.taskRepo.UpdateTask(taskId, dataForUpdate)
+}
