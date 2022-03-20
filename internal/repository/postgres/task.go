@@ -7,12 +7,13 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
+	"strconv"
 	"strings"
 
 	"github.com/jmoiron/sqlx"
 )
 
-var ErrNotFound = errors.New("No records found")
+var ErrTaskNotFound = errors.New("task not found")
 
 type TaskRepository struct {
 	db                      *sqlx.DB
@@ -33,7 +34,6 @@ func NewTaskRepository(db *sqlx.DB) *TaskRepository {
 }
 
 func (r TaskRepository) CreateNewTask(task domain.Task) (int, error) {
-
 	tx, err := r.db.Beginx()
 	if err != nil {
 		return -1, fmt.Errorf("TaskRepository.Create: beginx: %w", err)
@@ -113,7 +113,7 @@ func (r TaskRepository) findOrCreateAuthor(tx *sqlx.Tx, author *domain.Author) (
 	return author.Id, nil
 }
 
-// Find returns a list of tasks based on a filter.
+// GetTasks returns a list of tasks based on a filter.
 func (r TaskRepository) GetTasks(filter domain.TaskFilter) ([]*domain.Task, error) {
 	ctx := context.Background()
 
@@ -131,7 +131,7 @@ func (r TaskRepository) GetTasks(filter domain.TaskFilter) ([]*domain.Task, erro
 	return tasks, nil
 }
 
-// FindById searchs for task with specified id
+// GetTaskById search for task with specified id
 func (r TaskRepository) GetTaskById(taskId int) (*domain.Task, error) {
 	ctx := context.Background()
 
@@ -152,7 +152,7 @@ func (r TaskRepository) GetTaskById(taskId int) (*domain.Task, error) {
 	return tasks[0], nil
 }
 
-// findTaks returns a list of matching tasks.
+// findTasks returns a list of matching tasks.
 func (r TaskRepository) findTasks(tx *sqlx.Tx, filter domain.TaskFilter) (_ []*domain.Task, err error) {
 	f, err := filter.ToMap()
 	if err != nil {
@@ -222,40 +222,48 @@ func (r TaskRepository) UpdateTask(taskId int, update domain.TaskUpdate) error {
 	tx, err := r.db.Begin()
 	if err != nil {
 		return err
+
 	}
 	defer tx.Rollback() // nolint
 
-	// init query params & args
-	params, args := []string{"1 = 1"}, make([]interface{}, 0)
-	// index = 1 is reserved for task id.
-	index := 2
+	// init sql query params & args
+	params, args, index := make([]string, 0), make([]interface{}, 0), 1
 
 	for field, value := range updateFields {
-		params = append(params, fmt.Sprintf("t.%s = $%d", field, index))
+		params = append(params, field+" = $"+strconv.Itoa(index))
 		args = append(args, value)
 		index++
 	}
 
-	//TODO: Update Author if author with name and contact doesn't exist.
-
 	query := fmt.Sprintf(`
 		UPDATE public.%s
 		SET %s
-		WHERE id = $1`,
-		r.taskTableName, strings.Join(params, ", "))
+		WHERE id = $%d`,
+		r.taskTableName,
+		strings.Join(params, ", "),
+		index,
+	)
 
-	if _, err := tx.Exec(query, taskId, args); err != nil {
+	args = append(args, taskId)
+
+	fmt.Println(query)
+
+	if _, err := tx.Exec(query, args...); err != nil {
 		return err
 	}
 
 	_, err = tx.Exec(fmt.Sprintf(`
-		UPDATE public.%[1]s
-		SET name = $1, contact = $2
-		WHERE id = (SELECT id
-			FROM public.%[1]s
-			WHERE name = $1 AND contact = $2)`,
+			UPDATE public.%[1]s
+			SET name = $1, contact = $2
+			WHERE id = (
+				SELECT id
+				FROM public.%[1]s
+				WHERE name = $1 AND contact = $2
+			)`,
 		r.authorTableName),
-		update.AuthorName, update.AuthorContact, 100)
+		update.AuthorName,
+		update.AuthorContact)
+
 	if err != nil {
 		return err
 	}
@@ -263,7 +271,7 @@ func (r TaskRepository) UpdateTask(taskId int, update domain.TaskUpdate) error {
 	return tx.Commit()
 }
 
-// Solve creates a record that the team solved the task
+// SolveTask creates a record that the team solved the task
 func (r TaskRepository) SolveTask(taskId, teamId int) error {
 	query := fmt.Sprintf(`
 		INSERT INTO public.%s (
