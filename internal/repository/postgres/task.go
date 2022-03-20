@@ -288,16 +288,34 @@ func (r TaskRepository) SolveTask(taskId, teamId int) error {
 	return nil
 }
 
+func (r TaskRepository) ChekSolvedTask(taskId, teamId int) (bool, error) {
+	query := fmt.Sprintf(`
+		SELECT EXISTS (
+			SELECT 1 FROM public.%s
+			WHERE task_id=$1 AND team_id=$2
+		)`,
+		r.solvedTasksTableName)
+
+	var isTaskSolved bool
+
+	err := r.db.Get(&isTaskSolved, query, taskId, teamId) //Return false if task not solved
+	if err != nil {
+		return isTaskSolved, err
+	}
+
+	return isTaskSolved, nil
+}
+
 func (r TaskRepository) FillTaskSubmission(value domain.SubmitTaskRequest, isCorrect bool) error {
 	query := fmt.Sprintf(`
-	INSERT INTO public.%s (
-		task_id,
-		team_id,
-		user_id,
-		flag,
-		is_correct
+		INSERT INTO public.%s (
+			task_id,
+			team_id,
+			user_id,
+			flag,
+			is_correct
 		)
-	VALUES ($1, $2, $3, $4, $5)`,
+		VALUES ($1, $2, $3, $4, $5)`,
 		r.taskSubmissionTableName)
 
 	if _, err := r.db.Exec(query, value.TaskId, value.TeamId, value.UserId,

@@ -27,6 +27,15 @@ func (u *UserUsecase) ShowAllTasks(filter domain.TaskFilter) ([]*domain.Task, er
 func (a *UserUsecase) TryToSolveTask(submission domain.SubmitTaskRequest) (string, error) {
 	var task *domain.Task
 	var err error
+	var isTaskSolved bool
+
+	isTaskSolved, err = a.taskRepo.ChekSolvedTask(submission.TaskId, submission.TeamId)
+	if err != nil {
+		return "Error on cheking solved task", err
+	}
+	if isTaskSolved {
+		return "Task already solved!", nil
+	}
 
 	task, err = a.taskRepo.GetTaskById(submission.TaskId)
 	if err != nil {

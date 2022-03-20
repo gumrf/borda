@@ -32,6 +32,7 @@ type TaskRepository interface {
 	SolveTask(taskId, teamId int) error
 	FillTaskSubmission(value domain.SubmitTaskRequest, isCorrect bool) error
 	ShowTaskSubmissions(value domain.SubmitTaskRequest) ([]*domain.TaskSubmission, error)
+	ChekSolvedTask(taskId, teamId int) (bool, error)
 }
 
 type SettingsRepository interface {

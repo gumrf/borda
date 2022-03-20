@@ -9,11 +9,11 @@ import (
 
 func (h *Handler) initTaskRoutes(router fiber.Router) {
 	tasks := router.Group("/tasks", AuthRequired)
-	tasks.Get("", h.getAllTasks)    // ++
-	tasks.Post("", h.createNewTask) // ++
+	tasks.Get("", h.getAllTasks)
+	tasks.Post("", h.createNewTask)
 
 	task := router.Group("/tasks/:id")
-	task.Patch("", h.updateTask) //TODO: fix repositort UpdateTask()
+	task.Patch("", h.updateTask)
 
 	task.Post("/submissions", h.createNewSubmission)
 	task.Get("/submissions", h.getAllSubmissions)
@@ -53,7 +53,7 @@ func (h *Handler) createNewTask(ctx *fiber.Ctx) error {
 			fiber.StatusBadRequest, err.Error())
 	}
 
-	// VALIDATE task
+	//TODO: VALIDATE task
 
 	var taskId int
 
@@ -86,9 +86,8 @@ func (h *Handler) updateTask(ctx *fiber.Ctx) error {
 			fiber.StatusBadRequest, err.Error())
 	}
 
-	//sql: converting argument $2 type:
-	// 		unsupported type []interface {}, a slice of interface
-	//TODO: fix this err in repository UpdateTask()
+	//TODO: VALIDATE taskData
+
 	err = h.AdminUsecase.UpdateTask(taskId, taskData)
 	if err != nil {
 		return NewErrorResponse(ctx,
@@ -109,7 +108,7 @@ func (h *Handler) createNewSubmission(ctx *fiber.Ctx) error {
 			fiber.StatusBadRequest, err.Error())
 	}
 
-	//VALIDATE submission.Flag
+	//TODO: VALIDATE submission.Flag
 
 	var message string
 	message, err = h.UserUsecase.TryToSolveTask(submission)
