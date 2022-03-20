@@ -30,6 +30,8 @@ type TaskRepository interface {
 	GetTasks(domain.TaskFilter) ([]*domain.Task, error)
 	UpdateTask(id int, update domain.TaskUpdate) error
 	SolveTask(taskId, teamId int) error
+	FillTaskSubmission(value domain.SubmitTaskRequest, isCorrect bool) error
+	ShowTaskSubmissions(value domain.SubmitTaskRequest) ([]*domain.TaskSubmission, error)
 }
 
 type SettingsRepository interface {

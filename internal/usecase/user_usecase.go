@@ -27,8 +27,6 @@ func (u *UserUsecase) ShowAllTasks(filter domain.TaskFilter) ([]*domain.Task, er
 func (a *UserUsecase) TryToSolveTask(submission domain.SubmitTaskRequest) (string, error) {
 	var task *domain.Task
 	var err error
-	//Надо как-то заполнить таблицу в бд task_submissions
-	// нет нужных методов в репозитории
 
 	task, err = a.taskRepo.GetTaskById(submission.TaskId)
 	if err != nil {
@@ -37,14 +35,32 @@ func (a *UserUsecase) TryToSolveTask(submission domain.SubmitTaskRequest) (strin
 
 	if submission.Flag == task.Flag {
 		err = a.taskRepo.SolveTask(task.Id, submission.TeamId)
-		// relation \"public.solved_task\" does not exist"
-		// Где-то тут надо заполнить task_submissions с помощью domain.TaskSubmission
+
 		if err != nil {
-			return "", err
+			return "Error on SolveTask", err
 		}
+
+		err = a.taskRepo.FillTaskSubmission(submission, true)
+		if err != nil {
+			return "Error on FillTaskSubmission true", err
+		}
+
 		return "Submission is correct", nil
 	} else {
+		err = a.taskRepo.FillTaskSubmission(submission, false)
+		if err != nil {
+			return "Error on FillTaskSubmission false", err
+		}
+
 		return "Submission is incorrect", nil
 	}
 
+}
+
+func (a *UserUsecase) ShowAllSubmisiions(input domain.SubmitTaskRequest) ([]*domain.TaskSubmission, error) {
+	submissions, err := a.taskRepo.ShowTaskSubmissions(input)
+	if err != nil {
+		return nil, err
+	}
+	return submissions, nil
 }

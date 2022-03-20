@@ -97,12 +97,12 @@ type SolvedTask struct {
 type SolvedTasks []SolvedTask
 
 type TaskSubmission struct {
-	TaskId    int       `json:"taskId"`
-	TeamId    int       `json:"teamId"`
-	UserId    int       `json:"userId"`
-	Flag      string    `json:"flag"`
-	IsCorrect bool      `json:"isCorrect"`
-	Timestemp time.Time `json:"timestemp"`
+	TaskId    int       `json:"taskId" db:"task_id"`
+	TeamId    int       `json:"teamId" db:"team_id"`
+	UserId    int       `json:"userId" db:"user_id"`
+	Flag      string    `json:"flag" db:"flag"`
+	IsCorrect bool      `json:"isCorrect" db:"is_correct"`
+	Timestemp time.Time `json:"timestemp" db:"timestamp"`
 }
 
 type SubmitTaskRequest struct {

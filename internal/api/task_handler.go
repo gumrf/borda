@@ -15,8 +15,8 @@ func (h *Handler) initTaskRoutes(router fiber.Router) {
 	task := router.Group("/tasks/:id")
 	task.Patch("", h.updateTask) //TODO: fix repositort UpdateTask()
 
-	task.Post("/submissions", h.createNewSubmission) //  implement method to fill TaskSubmission table
-	task.Get("/submissions", h.getAllSubmissions)    // 				in repository
+	task.Post("/submissions", h.createNewSubmission)
+	task.Get("/submissions", h.getAllSubmissions)
 }
 
 func (h *Handler) getAllTasks(ctx *fiber.Ctx) error {
@@ -111,7 +111,6 @@ func (h *Handler) createNewSubmission(ctx *fiber.Ctx) error {
 
 	//VALIDATE submission.Flag
 
-	//TODO: implemet method in repository to fill TaskSubmission table
 	var message string
 	message, err = h.UserUsecase.TryToSolveTask(submission)
 	if err != nil {
@@ -126,10 +125,24 @@ func (h *Handler) createNewSubmission(ctx *fiber.Ctx) error {
 	})
 }
 
-func (h *Handler) getAllSubmissions(c *fiber.Ctx) error {
-	//TODO: implemet method in repository to fill TaskSubmission table
-	return c.JSON(fiber.Map{
+func (h *Handler) getAllSubmissions(ctx *fiber.Ctx) error {
+
+	var userTask domain.SubmitTaskRequest
+	err := ctx.BodyParser(&userTask)
+	if err != nil {
+		return NewErrorResponse(ctx,
+			fiber.StatusBadRequest, err.Error())
+	}
+
+	var submissions []*domain.TaskSubmission
+	submissions, err = h.UserUsecase.ShowAllSubmisiions(userTask)
+	if err != nil {
+		return NewErrorResponse(ctx,
+			fiber.StatusConflict, err.Error())
+	}
+
+	return ctx.JSON(fiber.Map{
 		"error":       false,
-		"submissions": []string{"s1", "s2", "s3"},
+		"submissions": submissions,
 	})
 }
