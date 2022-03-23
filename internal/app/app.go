@@ -6,6 +6,7 @@ import (
 	"borda/internal/logger"
 	"borda/internal/repository"
 	"borda/internal/services"
+	"borda/internal/usecase"
 	"borda/pkg/hash"
 	"borda/pkg/pg"
 
@@ -40,9 +41,11 @@ func Run() {
 		hash.NewSHA1Hasher(config.PasswordSalt()),
 	)
 
+	userUsecase := usecase.NewUserUsecase(repository.Tasks)
+	adminUsecase := usecase.NewAdminUsecase(repository.Tasks)
 	app := fiber.New()
 
-	handlers := api.NewHandler(authService)
+	handlers := api.NewHandler(authService, userUsecase, adminUsecase)
 	handlers.Init(app)
 
 	// Catch OS signals

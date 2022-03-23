@@ -55,7 +55,7 @@ CREATE TABLE IF NOT EXISTS task (
    author_id   INTEGER REFERENCES author(id)
 );
 
-CREATE TABLE IF NOT EXISTS solved_tasks (
+CREATE TABLE IF NOT EXISTS solved_task (
    task_id integer NOT NULL REFERENCES task(id),
    team_id integer NOT NULL REFERENCES team(id),
    timestamp timestamptz NOT NULL DEFAULT now()
