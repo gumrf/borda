@@ -30,6 +30,41 @@ func NewAuthService(ur repository.UserRepository, tr repository.TeamRepository,
 	}
 }
 
+func (s *AuthService) DataVerification(input domain.UserSignUpInput) error {
+
+	// Проверка на имя пользователя
+	err := s.userRepo.IsUsernameExists(input.Username)
+	if err != nil {
+		return err
+	}
+
+	//Проверка на имя команды или uid
+	switch input.AttachTeamMethod {
+	case "create":
+		err = s.teamRepo.IsTeamNameExists(input.AttachTeamAttribute)
+		if err != nil {
+			return err
+		}
+	case "join":
+		err := s.teamRepo.IsTeamTokenValid(input.AttachTeamAttribute)
+		if err != nil {
+			return err
+		}
+
+		team, err := s.teamRepo.GetTeamByToken(input.AttachTeamAttribute)
+		if err != nil {
+			return err
+		}
+
+		err = s.teamRepo.IsTeamFull(team.Id)
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
 func (s *AuthService) SignUp(input domain.UserSignUpInput) error {
 	passwordHash, err := s.hasher.Hash(input.Password)
 	if err != nil {
