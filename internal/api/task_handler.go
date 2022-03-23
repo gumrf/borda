@@ -108,7 +108,10 @@ func (h *Handler) createNewSubmission(ctx *fiber.Ctx) error {
 			fiber.StatusBadRequest, err.Error())
 	}
 
-	//TODO: VALIDATE submission.Flag
+	if err := submission.Validate(); err != nil {
+		return NewErrorResponse(ctx,
+			fiber.StatusBadRequest, "Input flag is invalid.")
+	}
 
 	var message string
 	message, err = h.UserService.TryToSolveTask(submission)
