@@ -30,7 +30,7 @@ func NewAuthService(ur repository.UserRepository, tr repository.TeamRepository,
 	}
 }
 
-func (s *AuthService) verifiData(input domain.UserSignUpInput) error {
+func (s *AuthService) verifyData(input domain.UserSignUpInput) error {
 
 	// Проверка на имя пользователя
 	err := s.userRepo.IsUsernameExists(input.Username)
@@ -46,10 +46,10 @@ func (s *AuthService) verifiData(input domain.UserSignUpInput) error {
 			return err
 		}
 	case "join":
-		err := s.teamRepo.IsTeamTokenExists(input.AttachTeamAttribute)
-		if err != nil {
-			return err
-		}
+		// err := s.teamRepo.IsTeamTokenExists(input.AttachTeamAttribute)
+		// if err != nil {
+		// 	return err
+		// }
 
 		team, err := s.teamRepo.GetTeamByToken(input.AttachTeamAttribute)
 		if err != nil {
@@ -66,7 +66,7 @@ func (s *AuthService) verifiData(input domain.UserSignUpInput) error {
 }
 
 func (s *AuthService) SignUp(input domain.UserSignUpInput) error {
-	err := s.verifiData(input)
+	err := s.verifyData(input)
 	if err != nil {
 		return err
 	}

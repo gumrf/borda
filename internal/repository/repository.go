@@ -24,7 +24,7 @@ type TeamRepository interface {
 	AddMember(teamId, userId int) error
 	GetMembers(teamId int) ([]domain.User, error)
 	IsTeamNameExists(teamName string) error
-	IsTeamTokenExists(token string) error
+	//IsTeamTokenExists(token string) error May be unnecessary
 	IsTeamFull(teamId int) error
 }
 
