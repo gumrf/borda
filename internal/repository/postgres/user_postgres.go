@@ -68,11 +68,34 @@ func (r UserRepository) CreateNewUser(username, password, contact string) (int, 
 		return -1, err
 	}
 
-	if err := tx.Commit(); err != nil{
+	if err := tx.Commit(); err != nil {
 		return -1, err
 	}
 
 	return userId, nil
+}
+
+func (r UserRepository) IsUsernameExists(username string) error {
+	query := fmt.Sprintf(`
+		SELECT EXISTS (
+			SELECT 1
+			FROM public.%s
+			WHERE name=$1
+			LIMIT 1
+		)`,
+		r.userTableName)
+
+	var isUserExist bool
+	err := r.db.QueryRow(query, username).Scan(&isUserExist)
+	if err != nil {
+		return err
+	}
+
+	if isUserExist {
+		return domain.ErrUserAlreadyExists
+	}
+
+	return nil
 }
 
 func (r UserRepository) FindUserByCredentials(username, password string) (*domain.User, error) {

@@ -13,6 +13,7 @@ type UserRepository interface {
 	UpdatePassword(userId int, newPassword string) error
 	AssignRole(userId, roleId int) error
 	GetRole(userId int) (domain.Role, error)
+	IsUsernameExists(username string) error
 	// SetSession(userId int, session domain.Session) error
 }
 
@@ -22,6 +23,9 @@ type TeamRepository interface {
 	GetTeamByToken(token string) (domain.Team, error)
 	AddMember(teamId, userId int) error
 	GetMembers(teamId int) ([]domain.User, error)
+	IsTeamNameExists(teamName string) error
+	//IsTeamTokenExists(token string) error May be unnecessary
+	IsTeamFull(teamId int) error
 }
 
 type TaskRepository interface {

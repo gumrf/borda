@@ -30,7 +30,7 @@ VALUES
        ('TestTeam3', '3858b180-aa81-11ec-96e5-04d9f50035c4', 3);
 
 -- Create test Settings
-INSERT INTO  public.settings (key, value) VALUES ('team-limit', '4')
+INSERT INTO  public.settings (key, value) VALUES ('team_limit', '4')
 
 
 

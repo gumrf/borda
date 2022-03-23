@@ -9,9 +9,9 @@ import (
 
 func (h *Handler) initAuthRoutes(router fiber.Router) {
 	auth := router.Group("/auth")
-	auth.Post("/signUp", h.handleSignUp)
-	auth.Post("/signIn", h.handleSignIn)
-	auth.Post("/signOut", h.handleSignOut)
+	auth.Post("/sign-up", h.handleSignUp)
+	auth.Post("/sign-in", h.handleSignIn)
+	auth.Post("/sign-out", h.handleSignOut)
 }
 
 // api/v1/auth/signUp?team[create]=teamName
