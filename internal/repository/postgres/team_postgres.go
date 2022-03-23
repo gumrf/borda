@@ -131,7 +131,7 @@ func (r TeamRepository) GetTeamByToken(token string) (domain.Team, error) {
 	return team, nil
 }
 
-func (r TeamRepository) IsTeamTokenValid(token string) error {
+func (r TeamRepository) IsTeamTokenExists(token string) error {
 	query := fmt.Sprintf(`
 		SELECT EXISTS (
 			SELECT 1
