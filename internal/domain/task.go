@@ -2,7 +2,10 @@ package domain
 
 import (
 	"encoding/json"
+	"regexp"
 	"time"
+
+	validation "github.com/go-ozzo/ozzo-validation/v4"
 )
 
 // Task is task
@@ -20,9 +23,16 @@ type Task struct {
 	Author      Author `json:"author" db:"author"`
 }
 
-// func (t *Task) Validate() error {
-
-// }
+func (t Task) Validate() error {
+	err := validation.ValidateStruct(&t,
+		validation.Field(&t.Flag, validation.Required, validation.Match(regexp.MustCompile("^MACTF{[0-9A-Za-z_]+}$"))),
+	)
+	if err != nil{
+		return ErrInvalidInput
+	}
+	
+	return nil
+}
 
 type Author struct {
 	Id      int    `json:"id" db:"id"`
