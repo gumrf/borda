@@ -2,12 +2,12 @@ package domain
 
 import "errors"
 
-var ErrUserAlreadyExists = errors.New("User already exists")
+var ErrUserAlreadyExists = errors.New("user already exists")
 
-var ErrInvalidInput = errors.New("Invalid input")
+var ErrInvalidInput = errors.New("invalid input")
 
-var ErrInvalidTeamInput = errors.New("ErrInvalidTeamInput")
+var ErrInvalidTeamInput = errors.New("errInvalidTeamInput")
 
-var ErrTeamAlreadyExists = errors.New("Team already exists")
+var ErrTeamAlreadyExists = errors.New("team already exists")
 
-var ErrTeamTokenIsInvalid = errors.New("Team token is invalid or doesent exists")
+var ErrTeamTokenIsInvalid = errors.New("team token is invalid or doesent exists")
