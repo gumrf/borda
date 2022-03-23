@@ -1,19 +1,19 @@
-package usecase
+package services
 
 import (
 	"borda/internal/domain"
 	"borda/internal/repository"
 )
 
-type UserUsecase struct {
+type UserService struct {
 	taskRepo repository.TaskRepository
 }
 
-func NewUserUsecase(tsr repository.TaskRepository) *UserUsecase {
-	return &UserUsecase{taskRepo: tsr}
+func NewUserService(tsr repository.TaskRepository) *UserService {
+	return &UserService{taskRepo: tsr}
 }
 
-func (u *UserUsecase) ShowAllTasks(filter domain.TaskFilter) ([]*domain.Task, error) {
+func (u *UserService) ShowAllTasks(filter domain.TaskFilter) ([]*domain.Task, error) {
 	var tasks []*domain.Task
 
 	tasks, err := u.taskRepo.GetTasks(filter)
@@ -24,7 +24,7 @@ func (u *UserUsecase) ShowAllTasks(filter domain.TaskFilter) ([]*domain.Task, er
 	return tasks, nil
 }
 
-func (a *UserUsecase) TryToSolveTask(submission domain.SubmitTaskRequest) (string, error) {
+func (a *UserService) TryToSolveTask(submission domain.SubmitTaskRequest) (string, error) {
 	var task *domain.Task
 	var err error
 	var isTaskSolved bool
@@ -66,7 +66,7 @@ func (a *UserUsecase) TryToSolveTask(submission domain.SubmitTaskRequest) (strin
 
 }
 
-func (a *UserUsecase) ShowAllSubmisiions(input domain.SubmitTaskRequest) ([]*domain.TaskSubmission, error) {
+func (a *UserService) ShowAllSubmisiions(input domain.SubmitTaskRequest) ([]*domain.TaskSubmission, error) {
 	submissions, err := a.taskRepo.ShowTaskSubmissions(input)
 	if err != nil {
 		return nil, err
