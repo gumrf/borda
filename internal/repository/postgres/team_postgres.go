@@ -40,7 +40,7 @@ func (r TeamRepository) CreateNewTeam(teamLeaderId int, teamName string) (int, e
 		r.tableTeamName)
 
 	var isTeamNameExists bool
-	err := r.db.Get(&isTeamNameExists, teamName)
+	err := r.db.Get(&isTeamNameExists, query, teamName)
 	if err != nil {
 		return -1, err
 	}
@@ -70,6 +70,29 @@ func (r TeamRepository) CreateNewTeam(teamLeaderId int, teamName string) (int, e
 	}
 
 	return id, nil
+}
+
+func (r TeamRepository) IsTeamNameExists(teamName string) error {
+	query := fmt.Sprintf(`
+		SELECT EXISTS (
+			SELECT 1
+			FROM public.%s
+			WHERE name=$1
+			LIMIT 1
+		)`,
+		r.tableTeamName)
+
+	var isTeamNameExists bool
+	err := r.db.Get(&isTeamNameExists, query, teamName)
+	if err != nil {
+		return err
+	}
+
+	if isTeamNameExists {
+		return domain.ErrTeamAlreadyExists
+	}
+
+	return nil
 }
 
 func (r TeamRepository) GetTeamById(teamId int) (domain.Team, error) {
@@ -106,6 +129,29 @@ func (r TeamRepository) GetTeamByToken(token string) (domain.Team, error) {
 	}
 
 	return team, nil
+}
+
+func (r TeamRepository) IsTeamTokenValid(token string) error {
+	query := fmt.Sprintf(`
+		SELECT EXISTS (
+			SELECT 1
+			FROM public.%s
+			WHERE token=$1
+			LIMIT 1
+		)`,
+		r.tableTeamName)
+
+	var isTeamTokenValid bool
+	err := r.db.Get(&isTeamTokenValid, query, token)
+	if err != nil {
+		return err
+	}
+
+	if !isTeamTokenValid {
+		return domain.ErrTeamTokenIsInvalid
+	}
+
+	return nil
 }
 
 func (r TeamRepository) AddMember(teamId, userId int) error {
@@ -215,6 +261,42 @@ func (r TeamRepository) AddMember(teamId, userId int) error {
 	if err != nil || id == -1 {
 		return fmt.Errorf("team repository addMember error: %v", err)
 	}
+	return nil
+}
+
+func (r TeamRepository) IsTeamFull(teamId int) error {
+	var valueLimit string
+	query := fmt.Sprintf(`
+		SELECT value 
+		FROM %s
+		WHERE key=$1`,
+		r.tableSettingsName,
+	)
+	err := r.db.QueryRowx(query, "team_limit").Scan(&valueLimit)
+	if err != nil {
+		return fmt.Errorf("team repository addMember error: Not found team_limit in db, %v", err)
+	}
+
+	memberLimit, err := strconv.Atoi(valueLimit)
+	if err != nil {
+		return fmt.Errorf("team repository addMember error: team_limit in db not converted to integer, %v", err)
+	}
+
+	var alreadyExistMembers int
+	query = fmt.Sprintf(`
+		SELECT COUNT(user_id)
+		FROM %s
+		WHERE team_id=$1`,
+		r.tableTeamMembersName,
+	)
+	err = r.db.QueryRow(query, teamId).Scan(&alreadyExistMembers)
+	if err != nil {
+		return fmt.Errorf("team repository addMember error: %v", err)
+	}
+	if alreadyExistMembers+1 > memberLimit {
+		return fmt.Errorf("team repository addMember Limit team error. Already members: %v, limit: %v", alreadyExistMembers, memberLimit)
+	}
+
 	return nil
 }
 
