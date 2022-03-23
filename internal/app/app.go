@@ -5,8 +5,7 @@ import (
 	"borda/internal/config"
 	"borda/internal/logger"
 	"borda/internal/repository"
-	"borda/internal/services"
-	"borda/internal/usecase"
+	"borda/internal/service"
 	"borda/pkg/hash"
 	"borda/pkg/pg"
 
@@ -36,16 +35,21 @@ func Run() {
 		logger.Log.Fatalw("Failed to run migrations: %w", err)
 	}
 
+	// Repository
 	repository := repository.NewRepository(db)
-	authService := services.NewAuthService(repository.Users, repository.Teams,
+	
+	// Services
+	authService := service.NewAuthService(repository.Users, repository.Teams,
 		hash.NewSHA1Hasher(config.PasswordSalt()),
 	)
-
-	userUsecase := usecase.NewUserUsecase(repository.Tasks)
-	adminUsecase := usecase.NewAdminUsecase(repository.Tasks)
+	userService := service.NewUserService(repository.Tasks)
+	adminService := service.NewAdminService(repository.Tasks)
+	
+	
 	app := fiber.New()
 
-	handlers := api.NewHandler(authService, userUsecase, adminUsecase)
+	// Handlers
+	handlers := api.NewHandler(authService, userService, adminService)
 	handlers.Init(app)
 
 	// Catch OS signals

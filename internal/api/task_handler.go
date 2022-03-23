@@ -29,7 +29,7 @@ func (h *Handler) getAllTasks(ctx *fiber.Ctx) error {
 			fiber.StatusBadRequest, err.Error())
 	}
 
-	tasks, err = h.UserUsecase.ShowAllTasks(filter)
+	tasks, err = h.UserService.ShowAllTasks(filter)
 	if err != nil {
 		return NewErrorResponse(ctx,
 			fiber.StatusBadRequest, err.Error())
@@ -57,7 +57,7 @@ func (h *Handler) createNewTask(ctx *fiber.Ctx) error {
 
 	var taskId int
 
-	taskId, err = h.AdminUsecase.CreateNewTask(task)
+	taskId, err = h.AdminService.CreateNewTask(task)
 	if err != nil {
 		return NewErrorResponse(ctx,
 			fiber.StatusBadRequest, err.Error())
@@ -88,7 +88,7 @@ func (h *Handler) updateTask(ctx *fiber.Ctx) error {
 
 	//TODO: VALIDATE taskData
 
-	err = h.AdminUsecase.UpdateTask(taskId, taskData)
+	err = h.AdminService.UpdateTask(taskId, taskData)
 	if err != nil {
 		return NewErrorResponse(ctx,
 			fiber.StatusBadRequest, err.Error())
@@ -111,7 +111,7 @@ func (h *Handler) createNewSubmission(ctx *fiber.Ctx) error {
 	//TODO: VALIDATE submission.Flag
 
 	var message string
-	message, err = h.UserUsecase.TryToSolveTask(submission)
+	message, err = h.UserService.TryToSolveTask(submission)
 	if err != nil {
 		return NewErrorResponse(ctx,
 			fiber.StatusConflict, err.Error())
@@ -134,7 +134,7 @@ func (h *Handler) getAllSubmissions(ctx *fiber.Ctx) error {
 	}
 
 	var submissions []*domain.TaskSubmission
-	submissions, err = h.UserUsecase.ShowAllSubmisiions(userTask)
+	submissions, err = h.UserService.ShowAllSubmisiions(userTask)
 	if err != nil {
 		return NewErrorResponse(ctx,
 			fiber.StatusConflict, err.Error())

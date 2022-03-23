@@ -2,8 +2,7 @@ package api
 
 import (
 	"borda/internal/config"
-	"borda/internal/services"
-	"borda/internal/usecase"
+	"borda/internal/service"
 	"fmt"
 	"time"
 
@@ -14,17 +13,17 @@ import (
 )
 
 type Handler struct {
-	AuthService  *services.AuthService
-	UserUsecase  *usecase.UserUsecase
-	AdminUsecase *usecase.AdminUsecase
+	AuthService  *service.AuthService
+	UserService  *service.UserService
+	AdminService *service.AdminService
 }
 
-func NewHandler(authService *services.AuthService,
-	userUsecase *usecase.UserUsecase, adminUsecase *usecase.AdminUsecase) *Handler {
+func NewHandler(authService *service.AuthService, userService *service.UserService,
+	adminService *service.AdminService) *Handler {
 	return &Handler{
 		AuthService:  authService,
-		UserUsecase:  userUsecase,
-		AdminUsecase: adminUsecase,
+		UserService:  userService,
+		AdminService: adminService,
 	}
 }
 
