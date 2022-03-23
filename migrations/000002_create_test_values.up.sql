@@ -1,9 +1,12 @@
 -- Create test Users
 INSERT INTO public."user" (name, password, contact)
 VALUES
-       ('TestUser1', 'change me', '@TestUser1'),
-       ('TestUser2', 'change me', '@TestUser2'),
-       ('TestUser3', 'change me', '@TestUser3');
+       -- TestUser1Password
+       ('TestUser1', '70617373776f72645f73616c745f783639735df7b147ad23e5ec0eb51eb6ef272e6a10f33d49', '@TestUser1'),
+       -- TestUser2Password
+       ('TestUser2', '70617373776f72645f73616c745f78363973f0e0b8ace07ed0c0c2c111f8a04a7b5bd99062de', '@TestUser2'),
+       -- TestUser3Password
+       ('TestUser3', '70617373776f72645f73616c745f78363973b56b6aa265cd6d4362fe387bc144deaf2991bf07', '@TestUser3');
 
 -- Create test Authors
 INSERT INTO public.author (name, contact)
