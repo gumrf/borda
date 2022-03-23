@@ -28,14 +28,6 @@ func (h *Handler) handleSignUp(ctx *fiber.Ctx) error {
 
 	// TODO: Input validation
 
-	err = h.AuthService.DataVerification(input)
-	if err != nil {
-		// TODO: send specific error depending on error type returned by SignUp
-		return NewErrorResponse(ctx,
-			fiber.StatusInternalServerError, fmt.Sprintf("Error occurred on the server. Error: %s", err.Error()),
-		)
-	}
-
 	err = h.AuthService.SignUp(input)
 	if err != nil {
 		// TODO: send specific error depending on error type returned by SignUp
@@ -65,8 +57,6 @@ func (h *Handler) handleSignIn(ctx *fiber.Ctx) error {
 			fiber.StatusInternalServerError, err.Error(),
 		)
 	}
-
-	//Здесь следует проверка есть ли у чела команда, если да то проходи и на токен если нет то создай команду сучка
 
 	return ctx.Status(fiber.StatusOK).JSON(fiber.Map{"token": token})
 }
