@@ -27,10 +27,10 @@ func (t Task) Validate() error {
 	err := validation.ValidateStruct(&t,
 		validation.Field(&t.Flag, validation.Required, validation.Match(regexp.MustCompile("^MACTF{[0-9A-Za-z_]+}$"))),
 	)
-	if err != nil{
+	if err != nil {
 		return ErrInvalidInput
 	}
-	
+
 	return nil
 }
 
@@ -48,8 +48,8 @@ type TaskUpdate struct {
 	Points        int    `json:"points,omitempty"`
 	Hint          string `json:"hint,omitempty"`
 	Flag          string `json:"flag,omitempty"`
-	AuthorName    string `json:"-,omitempty"`
-	AuthorContact string `json:"-,omitempty"`
+	AuthorName    string `json:"-"`
+	AuthorContact string `json:"-"`
 }
 
 func (f *TaskUpdate) ToMap() (map[string]interface{}, error) {
