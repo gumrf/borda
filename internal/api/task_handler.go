@@ -5,7 +5,7 @@ import (
 )
 
 func (h *Handler) initTaskRoutes(router fiber.Router) {
-	tasks := router.Group("/tasks")
+	tasks := router.Group("/tasks", AuthRequired)
 	tasks.Get("", h.getAllTasks)
 	tasks.Post("", h.createNewTask)
 

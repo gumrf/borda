@@ -1,19 +1,41 @@
 package api
 
+import (
+	"net/http"
+	"strconv"
+
+	"github.com/gofiber/fiber/v2"
+)
+
 type ErrorResponse struct {
-	Errors []*APIError
+	Errors []ErrorObject `json:"errors"`
 }
 
-type APIError struct {
-	Status string
-	Code   string
-	Title  string
-	Detail string
-	Source ErrorSource `json:"omitempty"`
+type ErrorObject struct {
+	Status string `json:"status"`
+	Code   string `json:"code"`
+	Title  string `json:"title,omitempty"`
+	Detail string `json:"detail,omitempty"`
+	// Source *SourceObject `json:"source,omitempty"`
 }
 
-type ErrorSource struct {
-	Parameter Parameter
-}
+// type SourceObject struct {
+// 	Parameter Parameter `json:"parametr"`
+// }
 
-type Parameter string
+// type Parameter string
+
+// TODO: adopt NewErrorResponse to acept custom error compatible with
+// 		 interface. It should replaces title and detail.
+func NewErrorResponse(c *fiber.Ctx, status int, title string) error {
+	return c.Status(status).JSON(
+		ErrorResponse{
+			Errors: []ErrorObject{
+				ErrorObject{
+					Status: strconv.Itoa(status),
+					Code:   http.StatusText(status),
+					Title:  title,
+				},
+			},
+		})
+}

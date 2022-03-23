@@ -24,24 +24,71 @@ func NewUserRepository(db *sqlx.DB) *UserRepository {
 	}
 }
 
-func (r UserRepository) Create(username, password, contact string) (userId int, err error) {
+// TODO: pass user object when create user
+func (r UserRepository) CreateNewUser(username, password, contact string) (int, error) {
+	tx, err := r.db.Beginx()
+	if err != nil {
+		return -1, err
+	}
+
 	query := fmt.Sprintf(`
+		SELECT EXISTS (
+			SELECT 1
+			FROM public.%s
+			WHERE name=$1
+			LIMIT 1
+		)`,
+		r.userTableName)
+
+	var isUserExist bool
+	err = tx.QueryRow(query, username).Scan(&isUserExist)
+	if err != nil {
+		return -1, err
+	}
+
+	if isUserExist {
+		return -1, domain.ErrUserAlreadyExists
+	}
+
+	query = fmt.Sprintf(`
 		INSERT INTO public.%s (
 			name,
 			password,
 			contact
-		) 
+		)
 		VALUES($1, $2, $3)
 		RETURNING id`,
-		r.userTableName)
+		r.userTableName,
+	)
 
-	var id int = -1
-	err = r.db.QueryRowx(query, username, password, contact).Scan(&id)
+	var userId int
+	err = tx.Get(&userId, query, username, password, contact)
+
 	if err != nil {
-		return id, err
+		return -1, err
 	}
 
-	return id, nil
+	if err := tx.Commit(); err != nil{
+		return -1, err
+	}
+
+	return userId, nil
+}
+
+func (r UserRepository) FindUserByCredentials(username, password string) (*domain.User, error) {
+	query := fmt.Sprintf(`
+		SELECT *
+		FROM public.%s
+		WHERE name=$1 AND password=$2`,
+		r.userTableName)
+
+	var user domain.User
+	err := r.db.Get(&user, query, username, password)
+	if err != nil {
+		return nil, err
+	}
+
+	return &user, nil
 }
 
 func (r UserRepository) UpdatePassword(userId int, newPassword string) error {

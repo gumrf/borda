@@ -29,12 +29,30 @@ func NewTeamRepository(db *sqlx.DB) *TeamRepository {
 	}
 }
 
-func (r TeamRepository) Create(teamLeaderId int, teamName string) (team domain.Team, err error) {
+func (r TeamRepository) CreateNewTeam(teamLeaderId int, teamName string) (int, error) {
+	query := fmt.Sprintf(`
+		SELECT EXISTS (
+			SELECT 1
+			FROM public.%s
+			WHERE name=$1
+			LIMIT 1
+		)`,
+		r.tableTeamName)
+
+	var isTeamNameExists bool
+	err := r.db.Get(&isTeamNameExists, teamName)
+	if err != nil {
+		return -1, err
+	}
+
+	if isTeamNameExists {
+		return -1, fmt.Errorf("team name already exists")
+	}
+
 	// Generate uuid
 	uuid := uuid.New().String()
 
-	// Write db
-	query := fmt.Sprintf(`
+	query = fmt.Sprintf(`
 		INSERT INTO public.%s (
 			name,
 			token,
@@ -45,20 +63,49 @@ func (r TeamRepository) Create(teamLeaderId int, teamName string) (team domain.T
 		r.tableTeamName,
 	)
 
-	id := -1
-	err = r.db.QueryRow(query, teamName, uuid, teamLeaderId).Scan(&id)
-	if err != nil || id == -1 {
-		return domain.Team{}, fmt.Errorf("team repository create error: %v", err)
+	var id int
+	row := r.db.QueryRow(query, teamName, uuid, teamLeaderId)
+	if err := row.Scan(&id); err != nil {
+		return -1, fmt.Errorf("TeamRepository.Create: %w", err)
 	}
 
-	// Build obj
-	obj := domain.Team{
-		Id:           id,
-		Name:         teamName,
-		TeamLeaderId: teamLeaderId,
-		Token:        uuid,
+	return id, nil
+}
+
+func (r TeamRepository) GetTeamById(teamId int) (domain.Team, error) {
+	query := fmt.Sprintf(`
+		SELECT * 
+		FROM public.%s 
+		WHERE id=$1
+		LIMIT 1`,
+		r.tableTeamName,
+	)
+
+	var team domain.Team
+	err := r.db.Get(&team, query, teamId)
+	if err != nil {
+		return domain.Team{}, err
 	}
-	return obj, nil
+
+	return team, nil
+}
+
+func (r TeamRepository) GetTeamByToken(token string) (domain.Team, error) {
+	query := fmt.Sprintf(`
+		SELECT * 
+		FROM public.%s 
+		WHERE token=$1
+		LIMIT 1`,
+		r.tableTeamName,
+	)
+
+	var team domain.Team
+	err := r.db.Get(&team, query, token)
+	if err != nil {
+		return domain.Team{}, err
+	}
+
+	return team, nil
 }
 
 func (r TeamRepository) AddMember(teamId, userId int) error {
@@ -171,41 +218,6 @@ func (r TeamRepository) AddMember(teamId, userId int) error {
 	return nil
 }
 
-func (r TeamRepository) Get(teamId int) (team domain.Team, err error) {
-	// Get
-	query := fmt.Sprintf(`
-		SELECT * 
-		FROM public.%s 
-		WHERE id=$1`,
-		r.tableTeamName,
-	)
-
-	// Build empty obj
-	obj := domain.Team{
-		Id:           -1,
-		Name:         "",
-		TeamLeaderId: -1,
-		Token:        "",
-	}
-
-	// Scan to struct, fill obj
-	err = r.db.QueryRowx(query, teamId).StructScan(&obj)
-
-	if err == sql.ErrNoRows {
-		return domain.Team{}, fmt.Errorf("team repository get error: Team not found with id=%v", teamId)
-	}
-	if err != nil {
-		return domain.Team{}, fmt.Errorf("team repository get error: %v", err)
-	}
-
-	// Check
-	if obj.Id == -1 || obj.TeamLeaderId == -1 || obj.Name == "" || obj.Token == "" {
-		return domain.Team{}, fmt.Errorf("team repository get error: Field of struct not filled")
-	}
-
-	return obj, nil
-}
-
 func (r TeamRepository) GetMembers(teamId int) (users []domain.User, err error) {
 	// Check team exist
 	query := fmt.Sprintf(`
@@ -246,7 +258,8 @@ func (r TeamRepository) GetMembers(teamId int) (users []domain.User, err error) 
 		if err != nil {
 			return []domain.User{}, fmt.Errorf("team repository getMembers error: On convert to domain in team with id=%v, %v", teamId, err)
 		}
-		user.TeamId = teamId
+
+		// user.TeamId = teamId
 		_users = append(_users, user)
 	}
 

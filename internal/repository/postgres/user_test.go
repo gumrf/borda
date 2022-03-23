@@ -25,7 +25,7 @@ func makeTestRole(t *testing.T, db *sqlx.DB, roleName string) int {
 	return id
 }
 
-func Test_UserRepository_Create(t *testing.T) {
+func Test_UserRepository_CreateNewUser(t *testing.T) {
 	db := MustOpenDB(t)
 	repo := postgres.NewUserRepository(db)
 
@@ -38,7 +38,7 @@ func Test_UserRepository_Create(t *testing.T) {
 	password := "12345"
 	contact := "@roro"
 
-	userId, err := repo.Create(username, password, contact)
+	userId, err := repo.CreateNewUser(username, password, contact)
 
 	assert := assert.New(t)
 	assert.Equal(nil, err, "err should nil")
@@ -123,4 +123,24 @@ func Test_UserRepository_GetRole(t *testing.T) {
 	assert.Equal(nil, err, "should be nil")
 	assert.Equal(role.Id, roleId, "should be equal")
 	assert.Equal(role.Name, roleName, "should be equal")
+}
+
+func makeTestUser(db *sqlx.DB, username string, password string, contact string) (int, error) {
+	query := `
+	INSERT INTO public."user"
+	(name, password, contact)
+	VALUES($1, $2, $3)
+	RETURNING id`
+
+	id := -1
+	err := db.QueryRow(query, username, password, contact).Scan(&id)
+	if err != nil {
+		return -1, err
+	}
+
+	if id == -1 {
+		return -1, err
+	}
+
+	return int(id), err
 }

@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log"
 	"sync"
+	"time"
 
 	"github.com/spf13/viper"
 )
@@ -30,17 +31,20 @@ func init() {
 func setDefaults() {
 	config.SetDefault("http.host", "localhost")
 	config.SetDefault("http.port", 8080)
+	
 	config.SetDefault("db.postgres.host", "localhost")
 	config.SetDefault("db.postgres.port", 5432)
 	config.SetDefault("db.postgres.user", "postgres")
 	config.SetDefault("db.postgres.password", "postgres")
 	config.SetDefault("db.postgres.name", "postgres")
-	config.SetDefault("db.postgres.migrations_path", "file://../migrations/")
+	config.SetDefault("db.postgres.migrations_path", "file://./migrations")
+
 	config.SetDefault("logger.path", "logs")
 	config.SetDefault("logger.file_name", "app.log")
-	config.SetDefault("auth.jwt.signing_key", "jwt_key_change_me")
-	config.SetDefault("auth.jwt.expire_time", 1800)
-	config.SetDefault("auth.password_salt", "random_string")
+
+	config.SetDefault("jwt.signing_key", "private_key_x69s")
+	config.SetDefault("jwt.key_expire_hours_count", 24)
+	config.SetDefault("password_salt", "password_salt_x69s")
 }
 
 // loadFromEnv reads values from environment variables.
@@ -67,6 +71,24 @@ func Print() string {
 	}
 
 	return "Configuration: " + string(configJSON)
+}
+
+type JWTConfig struct {
+	SigningKey string
+	ExpireTime time.Duration
+}
+
+func JWT() JWTConfig {
+	expireHoursCount := config.GetInt("jwt.key_expire_hours_count")
+
+	return JWTConfig{
+		SigningKey: config.GetString("jwt.signing_key"),
+		ExpireTime: time.Duration(expireHoursCount) * time.Hour,
+	}
+}
+
+func PasswordSalt() string {
+	return config.GetString("auth.password_salt")
 }
 
 // DatabaseUrl returns full Postgres connection url.

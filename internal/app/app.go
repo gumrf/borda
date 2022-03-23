@@ -6,6 +6,7 @@ import (
 	"borda/internal/logger"
 	"borda/internal/repository"
 	"borda/internal/services"
+	"borda/pkg/hash"
 	"borda/pkg/pg"
 
 	"fmt"
@@ -30,11 +31,17 @@ func Run() {
 	}
 	logger.Log.Info("Connected to Postgres: ", config.DatabaseUrl())
 
+	if err := pg.Migrate(db, config.MigrationsPath()); err != nil {
+		logger.Log.Fatalw("Failed to run migrations: %w", err)
+	}
+
 	repository := repository.NewRepository(db)
-	authService := services.NewAuthService(repository)
+	authService := services.NewAuthService(repository.Users, repository.Teams,
+		hash.NewSHA1Hasher(config.PasswordSalt()),
+	)
 
 	app := fiber.New()
-	
+
 	handlers := api.NewHandler(authService)
 	handlers.Init(app)
 

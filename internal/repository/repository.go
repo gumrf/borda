@@ -8,18 +8,20 @@ import (
 )
 
 type UserRepository interface {
-	Create(username, password, contact string) (int, error)
-	// Find(username, password string) (*domain.User, error)
+	CreateNewUser(username, password, contact string) (int, error)
+	FindUserByCredentials(username, password string) (*domain.User, error)
 	UpdatePassword(userId int, newPassword string) error
 	AssignRole(userId, roleId int) error
 	GetRole(userId int) (domain.Role, error)
+	// SetSession(userId int, session domain.Session) error
 }
 
 type TeamRepository interface {
-	Create(teamLeaderId int, teamName string) (domain.Team, error)
-	Get(teamId int) (team domain.Team, err error)
+	CreateNewTeam(teamLeaderId int, teamName string) (int, error)
+	GetTeamById(teamId int) (domain.Team, error)
+	GetTeamByToken(token string) (domain.Team, error)
 	AddMember(teamId, userId int) error
-	GetMembers(teamId int) (users []domain.User, err error)
+	GetMembers(teamId int) ([]domain.User, error)
 }
 
 type TaskRepository interface {
