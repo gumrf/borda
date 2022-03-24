@@ -12,7 +12,7 @@ type UserRepository interface {
 	GetUserByCredentials(username, password string) (*domain.User, error)
 	UpdatePassword(userId int, newPassword string) error
 	AssignRole(userId, roleId int) error
-	GetRole(userId int) (domain.Role, error)
+	GetUserRole(userId int) (*domain.Role, error)
 	// SetSession(userId int, session domain.Session) error
 }
 
