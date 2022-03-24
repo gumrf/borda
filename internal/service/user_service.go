@@ -7,16 +7,31 @@ import (
 
 type UserService struct {
 	taskRepo repository.TaskRepository
+	userRepo repository.UserRepository
 }
 
-func NewUserService(tsr repository.TaskRepository) *UserService {
-	return &UserService{taskRepo: tsr}
+func NewUserService(userRepo repository.UserRepository, taskRepo repository.TaskRepository) *UserService {
+	return &UserService{
+		taskRepo: taskRepo,
+		userRepo: userRepo,
+	}
 }
 
-func (u *UserService) ShowAllTasks(filter domain.TaskFilter) ([]*domain.Task, error) {
-	var tasks []*domain.Task
+func (s *UserService) IsUserInTeam(userId int) bool {
+	user, err := s.userRepo.GetUserById(userId)
+	if err != nil {
+		return false
+	}
 
-	tasks, err := u.taskRepo.GetTasks(filter)
+	if user.Team.Id == 0 {
+		return false
+	}
+
+	return true
+}
+
+func (s *UserService) ShowAllTasks(filter domain.TaskFilter) ([]*domain.Task, error) {
+	tasks, err := s.taskRepo.GetTasks(filter)
 	if err != nil {
 		return nil, err
 	}
@@ -24,13 +39,13 @@ func (u *UserService) ShowAllTasks(filter domain.TaskFilter) ([]*domain.Task, er
 	return tasks, nil
 }
 
-func (a *UserService) TryToSolveTask(submission domain.SubmitTaskRequest) (string, error) {
+func (s *UserService) TryToSolveTask(submission domain.SubmitTaskRequest) (string, error) {
 	var task *domain.Task
 	var err error
 
 	// Перенести проверку в репозиторий
 	//var isTaskSolved bool
-	//isTaskSolved, err = a.taskRepo.CheckSolvedTask(submission.TaskId, submission.TeamId)
+	//isTaskSolved, err = s.taskRepo.CheckSolvedTask(submission.TaskId, submission.TeamId)
 	//if err != nil {
 	//	return "Error on cheking solved task", err
 	//}
@@ -38,26 +53,26 @@ func (a *UserService) TryToSolveTask(submission domain.SubmitTaskRequest) (strin
 	//	return "Task already solved!", nil
 	//}
 
-	task, err = a.taskRepo.GetTaskById(submission.TaskId)
+	task, err = s.taskRepo.GetTaskById(submission.TaskId)
 	if err != nil {
 		return "", err
 	}
 
 	if submission.Flag == task.Flag {
-		err = a.taskRepo.SolveTask(task.Id, submission.TeamId)
+		err = s.taskRepo.SolveTask(task.Id, submission.TeamId)
 
 		if err != nil {
 			return "Error on SolveTask", err
 		}
 
-		err = a.taskRepo.SaveTaskSubmission(submission, true)
+		err = s.taskRepo.SaveTaskSubmission(submission, true)
 		if err != nil {
 			return "Error on FillTaskSubmission true", err
 		}
 
 		return "Submission is correct", nil
 	} else {
-		err = a.taskRepo.SaveTaskSubmission(submission, false)
+		err = s.taskRepo.SaveTaskSubmission(submission, false)
 		if err != nil {
 			return "Error on FillTaskSubmission false", err
 		}
@@ -67,8 +82,8 @@ func (a *UserService) TryToSolveTask(submission domain.SubmitTaskRequest) (strin
 
 }
 
-func (a *UserService) GetTaskSubmissions(input domain.SubmitTaskRequest) ([]*domain.TaskSubmission, error) {
-	submissions, err := a.taskRepo.GetTaskSubmissions(input.TaskId, input.UserId)
+func (s *UserService) GetTaskSubmissions(input domain.SubmitTaskRequest) ([]*domain.TaskSubmission, error) {
+	submissions, err := s.taskRepo.GetTaskSubmissions(input.TaskId, input.UserId)
 	if err != nil {
 		return nil, err
 	}
