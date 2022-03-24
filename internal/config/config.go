@@ -88,7 +88,7 @@ func JWT() JWTConfig {
 }
 
 func PasswordSalt() string {
-	return config.GetString("auth.password_salt")
+	return config.GetString("password_salt")
 }
 
 // DatabaseUrl returns full Postgres connection url.
