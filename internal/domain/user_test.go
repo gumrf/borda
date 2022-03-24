@@ -80,11 +80,9 @@ func TestUserSignUpInputValidate(t *testing.T) {
 	validate(t, &testCase{
 		Name: "TestValidCreate",
 		UserSignUpInput: UserSignUpInput{
-			Username:            "Govnoed3_3",
-			Password:            "AUE322%$#",
-			Contact:             "@drop2_der",
-			AttachTeamMethod:    "create",
-			AttachTeamAttribute: "DT_404",
+			Username: "Govnoed3_3",
+			Password: "AUE322%$#",
+			Contact:  "@drop2_der",
 		},
 		ExpectedError: nil,
 	})
@@ -92,11 +90,9 @@ func TestUserSignUpInputValidate(t *testing.T) {
 	validate(t, &testCase{
 		Name: "TestValidUUID",
 		UserSignUpInput: UserSignUpInput{
-			Username:            "Govnoed3_3",
-			Password:            "AUE322%$#",
-			Contact:             "@drop2_der",
-			AttachTeamMethod:    "join",
-			AttachTeamAttribute: "6e3ab84d-1ca8-4bf5-a803-123c66f965ae",
+			Username: "Govnoed3_3",
+			Password: "AUE322%$#",
+			Contact:  "@drop2_der",
 		},
 		ExpectedError: nil,
 	})
@@ -144,11 +140,9 @@ func TestUserSignUpInputValidate(t *testing.T) {
 	validate(t, &testCase{
 		Name: "TestInvalidUUID",
 		UserSignUpInput: UserSignUpInput{
-			Username:            "Govnoed3_3",
-			Password:            "AUE322%$#",
-			Contact:             "@drop2_der",
-			AttachTeamMethod:    "join",
-			AttachTeamAttribute: "6e3ab84f965ae",
+			Username: "Govnoed3_3",
+			Password: "AUE322%$#",
+			Contact:  "@drop2_der",
 		},
 		ExpectedError: ErrInvalidTeamInput,
 	})
@@ -156,11 +150,9 @@ func TestUserSignUpInputValidate(t *testing.T) {
 	validate(t, &testCase{
 		Name: "TestTooShortTeamName",
 		UserSignUpInput: UserSignUpInput{
-			Username:            "Govnoed3_3",
-			Password:            "AUE322%$#",
-			Contact:             "@drop2_der",
-			AttachTeamMethod:    "create",
-			AttachTeamAttribute: "a",
+			Username: "Govnoed3_3",
+			Password: "AUE322%$#",
+			Contact:  "@drop2_der",
 		},
 		ExpectedError: ErrInvalidTeamInput,
 	})
@@ -168,11 +160,9 @@ func TestUserSignUpInputValidate(t *testing.T) {
 	validate(t, &testCase{
 		Name: "TestInvalidTeamName",
 		UserSignUpInput: UserSignUpInput{
-			Username:            "Govnoed3_3",
-			Password:            "AUE322%$#",
-			Contact:             "@drop2_der",
-			AttachTeamMethod:    "create",
-			AttachTeamAttribute: "!DT_404",
+			Username: "Govnoed3_3",
+			Password: "AUE322%$#",
+			Contact:  "@drop2_der",
 		},
 		ExpectedError: ErrInvalidTeamInput,
 	})
