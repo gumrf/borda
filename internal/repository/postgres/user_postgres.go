@@ -2,6 +2,9 @@ package postgres
 
 import (
 	"borda/internal/domain"
+	"database/sql"
+	"errors"
+	"strings"
 
 	"fmt"
 
@@ -9,48 +12,41 @@ import (
 )
 
 type UserRepository struct {
-	db                 *sqlx.DB
-	userTableName      string
-	roleTableName      string
-	userRolesTableName string
+	db *sqlx.DB
 }
 
 func NewUserRepository(db *sqlx.DB) *UserRepository {
-	return &UserRepository{
-		db:                 db,
-		userTableName:      "\"user\"",
-		roleTableName:      "role",
-		userRolesTableName: "user_role",
-	}
+	return &UserRepository{db: db}
 }
 
 // TODO: pass user object when create user
-func (r UserRepository) CreateNewUser(username, password, contact string) (int, error) {
+func (r UserRepository) SaveUser(username, password, contact string) (int, error) {
 	tx, err := r.db.Beginx()
 	if err != nil {
 		return -1, err
 	}
 
-	query := fmt.Sprintf(`
+	isUserExistQuery := fmt.Sprintf(`
 		SELECT EXISTS (
 			SELECT 1
 			FROM public.%s
 			WHERE name=$1
 			LIMIT 1
 		)`,
-		r.userTableName)
+		userTable,
+	)
 
 	var isUserExist bool
-	err = tx.QueryRow(query, username).Scan(&isUserExist)
-	if err != nil {
+	if err := tx.Get(&isUserExist, isUserExistQuery, username); err != nil {
 		return -1, err
 	}
 
 	if isUserExist {
-		return -1, domain.ErrUserAlreadyExists
+		return -1, NewErrAlreadyExist("user", "username", username)
 	}
 
-	query = fmt.Sprintf(`
+	// Save user to the database
+	createUserQuery := fmt.Sprintf(`
 		INSERT INTO public.%s (
 			name,
 			password,
@@ -58,16 +54,15 @@ func (r UserRepository) CreateNewUser(username, password, contact string) (int, 
 		)
 		VALUES($1, $2, $3)
 		RETURNING id`,
-		r.userTableName,
+		userTable,
 	)
 
 	var userId int
-	err = tx.Get(&userId, query, username, password, contact)
-
-	if err != nil {
+	if err := tx.Get(&userId, createUserQuery, username, password, contact); err != nil {
 		return -1, err
 	}
 
+	// Commit transaction
 	if err := tx.Commit(); err != nil {
 		return -1, err
 	}
@@ -75,39 +70,20 @@ func (r UserRepository) CreateNewUser(username, password, contact string) (int, 
 	return userId, nil
 }
 
-func (r UserRepository) IsUsernameExists(username string) error {
-	query := fmt.Sprintf(`
-		SELECT EXISTS (
-			SELECT 1
-			FROM public.%s
-			WHERE name=$1
-			LIMIT 1
-		)`,
-		r.userTableName)
-
-	var isUserExist bool
-	err := r.db.QueryRow(query, username).Scan(&isUserExist)
-	if err != nil {
-		return err
-	}
-
-	if isUserExist {
-		return domain.ErrUserAlreadyExists
-	}
-
-	return nil
-}
-
-func (r UserRepository) FindUserByCredentials(username, password string) (*domain.User, error) {
+func (r UserRepository) GetUserByCredentials(username, password string) (*domain.User, error) {
 	query := fmt.Sprintf(`
 		SELECT *
 		FROM public.%s
 		WHERE name=$1 AND password=$2`,
-		r.userTableName)
+		userTable,
+	)
 
 	var user domain.User
-	err := r.db.Get(&user, query, username, password)
-	if err != nil {
+	if err := r.db.Get(&user, query, username, password); err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, NewErrNotFound("user", "username, password",
+				strings.Join([]string{username, password}, ", "))
+		}
 		return nil, err
 	}
 
@@ -119,11 +95,11 @@ func (r UserRepository) UpdatePassword(userId int, newPassword string) error {
 		UPDATE public.%s
 		SET password = $1
 		WHERE id = $2`,
-		r.userTableName)
+		userTable,
+	)
 
-	_, err := r.db.Exec(query, newPassword, userId)
-	if err != nil {
-		return fmt.Errorf("Can't update password: %w", err)
+	if _, err := r.db.Exec(query, newPassword, userId); err != nil {
+		return err
 	}
 
 	return nil
@@ -136,29 +112,51 @@ func (r UserRepository) AssignRole(userId, roleId int) error {
 			role_id
 		)
 		VALUES($1, $2)`,
-		r.userRolesTableName)
+		userRolesTable)
 
-	_, err := r.db.Exec(query, userId, roleId)
-	if err != nil {
-		return fmt.Errorf("Can't add role: %w", err)
+	if _, err := r.db.Exec(query, userId, roleId); err != nil {
+		return err
 	}
 
 	return nil
 }
 
-func (r UserRepository) GetRole(userId int) (domain.Role, error) {
+func (r UserRepository) GetUserRole(userId int) (*domain.Role, error) {
 	query := fmt.Sprintf(`
 		SELECT r.id, r.name
 		FROM public.%s AS r
 		INNER JOIN public.%s AS ur ON r.id=ur.role_id
 		WHERE ur.user_id = $1;`,
-		r.roleTableName, r.userRolesTableName)
+		roleTable, userRolesTable)
 
 	var role domain.Role
-	err := r.db.Get(&role, query, userId)
-	if err != nil {
-		return domain.Role{}, err
+	if err := r.db.Get(&role, query, userId); err != nil {
+		return nil, err
 	}
 
-	return role, nil
+	return &role, nil
 }
+
+
+//func (r UserRepository) IsUsernameExists(username string) error {
+//	query := fmt.Sprintf(`
+//		SELECT EXISTS (
+//			SELECT 1
+//			FROM public.%s
+//			WHERE name=$1
+//			LIMIT 1
+//		)`,
+//		r.userTableName)
+//
+//	var isUserExist bool
+//	err := r.db.QueryRow(query, username).Scan(&isUserExist)
+//	if err != nil {
+//		return err
+//	}
+//
+//	if isUserExist {
+//		return domain.ErrUserAlreadyExists
+//	}
+//
+//	return nil
+//}

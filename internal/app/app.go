@@ -37,15 +37,14 @@ func Run() {
 
 	// Repository
 	repository := repository.NewRepository(db)
-	
+
 	// Services
 	authService := service.NewAuthService(repository.Users, repository.Teams,
 		hash.NewSHA1Hasher(config.PasswordSalt()),
 	)
 	userService := service.NewUserService(repository.Tasks)
 	adminService := service.NewAdminService(repository.Tasks)
-	
-	
+
 	app := fiber.New()
 
 	// Handlers

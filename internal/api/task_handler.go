@@ -129,15 +129,15 @@ func (h *Handler) createNewSubmission(ctx *fiber.Ctx) error {
 
 func (h *Handler) getAllSubmissions(ctx *fiber.Ctx) error {
 
-	var userTask domain.SubmitTaskRequest
-	err := ctx.BodyParser(&userTask)
+	var input domain.SubmitTaskRequest
+	err := ctx.BodyParser(&input)
 	if err != nil {
 		return NewErrorResponse(ctx,
 			fiber.StatusBadRequest, err.Error())
 	}
 
 	var submissions []*domain.TaskSubmission
-	submissions, err = h.UserService.ShowAllSubmisiions(userTask)
+	submissions, err = h.UserService.GetTaskSubmissions(input)
 	if err != nil {
 		return NewErrorResponse(ctx,
 			fiber.StatusConflict, err.Error())

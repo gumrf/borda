@@ -1,5 +1,6 @@
 package postgres_test
 
+// TODO: Make new tests
 // import (
 // 	"borda/internal/domain"
 // 	"borda/internal/repository"

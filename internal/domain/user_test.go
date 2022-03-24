@@ -78,7 +78,7 @@ func TestUserSignUpInputValidate(t *testing.T) {
 	}
 
 	validate(t, &testCase{
-		Name:            "TestValidCreate",
+		Name: "TestValidCreate",
 		UserSignUpInput: UserSignUpInput{
 			Username:            "Govnoed3_3",
 			Password:            "AUE322%$#",
@@ -86,11 +86,11 @@ func TestUserSignUpInputValidate(t *testing.T) {
 			AttachTeamMethod:    "create",
 			AttachTeamAttribute: "DT_404",
 		},
-		ExpectedError:   nil,
+		ExpectedError: nil,
 	})
 
 	validate(t, &testCase{
-		Name:            "TestValidUUID",
+		Name: "TestValidUUID",
 		UserSignUpInput: UserSignUpInput{
 			Username:            "Govnoed3_3",
 			Password:            "AUE322%$#",
@@ -98,51 +98,51 @@ func TestUserSignUpInputValidate(t *testing.T) {
 			AttachTeamMethod:    "join",
 			AttachTeamAttribute: "6e3ab84d-1ca8-4bf5-a803-123c66f965ae",
 		},
-		ExpectedError:   nil,
+		ExpectedError: nil,
 	})
 
 	validate(t, &testCase{
-		Name:            "TestInvalidName",
+		Name: "TestInvalidName",
 		UserSignUpInput: UserSignUpInput{
-			Username:            "!qwewq",
-			Password:            "AuE322%$#",
-			Contact:             "@drop2_der",
+			Username: "!qwewq",
+			Password: "AuE322%$#",
+			Contact:  "@drop2_der",
 		},
-		ExpectedError:   ErrInvalidInput,
+		ExpectedError: ErrInvalidInput,
 	})
 
 	validate(t, &testCase{
-		Name:            "TestInvalidPass",
+		Name: "TestInvalidPass",
 		UserSignUpInput: UserSignUpInput{
-			Username:            "Govnoed3_3",
-			Password:            "AUE  322%$#",
-			Contact:             "@drop2_der",
+			Username: "Govnoed3_3",
+			Password: "AUE  322%$#",
+			Contact:  "@drop2_der",
 		},
-		ExpectedError:   ErrInvalidInput,
+		ExpectedError: ErrInvalidInput,
 	})
 
 	validate(t, &testCase{
-		Name:            "TestInvalidContact1",
+		Name: "TestInvalidContact1",
 		UserSignUpInput: UserSignUpInput{
-			Username:            "Govnoed3_3",
-			Password:            "Qwe123",
-			Contact:             "@drop2_der__",
+			Username: "Govnoed3_3",
+			Password: "Qwe123",
+			Contact:  "@drop2_der__",
 		},
-		ExpectedError:   ErrInvalidInput,
+		ExpectedError: ErrInvalidInput,
 	})
 
 	validate(t, &testCase{
-		Name:            "TestInvalidContact2",
+		Name: "TestInvalidContact2",
 		UserSignUpInput: UserSignUpInput{
-			Username:            "Govnoed3_3",
-			Password:            "Qwe123",
-			Contact:             "drop2_der",
+			Username: "Govnoed3_3",
+			Password: "Qwe123",
+			Contact:  "drop2_der",
 		},
-		ExpectedError:   ErrInvalidInput,
+		ExpectedError: ErrInvalidInput,
 	})
 
 	validate(t, &testCase{
-		Name:            "TestInvalidUUID",
+		Name: "TestInvalidUUID",
 		UserSignUpInput: UserSignUpInput{
 			Username:            "Govnoed3_3",
 			Password:            "AUE322%$#",
@@ -150,11 +150,11 @@ func TestUserSignUpInputValidate(t *testing.T) {
 			AttachTeamMethod:    "join",
 			AttachTeamAttribute: "6e3ab84f965ae",
 		},
-		ExpectedError:   ErrInvalidTeamInput,
+		ExpectedError: ErrInvalidTeamInput,
 	})
 
 	validate(t, &testCase{
-		Name:            "TestTooShortTeamName",
+		Name: "TestTooShortTeamName",
 		UserSignUpInput: UserSignUpInput{
 			Username:            "Govnoed3_3",
 			Password:            "AUE322%$#",
@@ -162,11 +162,11 @@ func TestUserSignUpInputValidate(t *testing.T) {
 			AttachTeamMethod:    "create",
 			AttachTeamAttribute: "a",
 		},
-		ExpectedError:   ErrInvalidTeamInput,
+		ExpectedError: ErrInvalidTeamInput,
 	})
 
 	validate(t, &testCase{
-		Name:            "TestInvalidTeamName",
+		Name: "TestInvalidTeamName",
 		UserSignUpInput: UserSignUpInput{
 			Username:            "Govnoed3_3",
 			Password:            "AUE322%$#",
@@ -174,6 +174,6 @@ func TestUserSignUpInputValidate(t *testing.T) {
 			AttachTeamMethod:    "create",
 			AttachTeamAttribute: "!DT_404",
 		},
-		ExpectedError:   ErrInvalidTeamInput,
+		ExpectedError: ErrInvalidTeamInput,
 	})
 }
