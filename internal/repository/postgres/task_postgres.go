@@ -33,7 +33,7 @@ func NewTaskRepository(db *sqlx.DB) *TaskRepository {
 	}
 }
 
-func (r TaskRepository) CreateNewTask(task domain.Task) (int, error) {
+func (r TaskRepository) SaveTask(task domain.Task) (int, error) {
 	tx, err := r.db.Beginx()
 	if err != nil {
 		return -1, fmt.Errorf("TaskRepository.Create: beginx: %w", err)
@@ -288,7 +288,7 @@ func (r TaskRepository) SolveTask(taskId, teamId int) error {
 	return nil
 }
 
-func (r TaskRepository) ChekSolvedTask(taskId, teamId int) (bool, error) {
+func (r TaskRepository) CheckSolvedTask(taskId, teamId int) (bool, error) {
 	query := fmt.Sprintf(`
 		SELECT EXISTS (
 			SELECT 1 FROM public.%s
@@ -306,8 +306,8 @@ func (r TaskRepository) ChekSolvedTask(taskId, teamId int) (bool, error) {
 	return isTaskSolved, nil
 }
 
-func (r TaskRepository) FillTaskSubmission(value domain.SubmitTaskRequest, isCorrect bool) error {
-	query := fmt.Sprintf(`
+func (r TaskRepository) SaveTaskSubmission(taskSubmission domain.SubmitTaskRequest, isCorrect bool) error {
+	saveTaskSubmissionQuery := fmt.Sprintf(`
 		INSERT INTO public.%s (
 			task_id,
 			team_id,
@@ -318,32 +318,34 @@ func (r TaskRepository) FillTaskSubmission(value domain.SubmitTaskRequest, isCor
 		VALUES ($1, $2, $3, $4, $5)`,
 		r.taskSubmissionTableName)
 
-	if _, err := r.db.Exec(query, value.TaskId, value.TeamId, value.UserId,
-		value.Flag, isCorrect); err != nil {
+	if _, err := r.db.Exec(saveTaskSubmissionQuery, taskSubmission.TaskId, taskSubmission.TeamId,
+		taskSubmission.UserId, taskSubmission.Flag, isCorrect); err != nil {
 		return err
 	}
+
 	return nil
 }
 
-func (r TaskRepository) ShowTaskSubmissions(value domain.SubmitTaskRequest) ([]*domain.TaskSubmission, error) {
-	ctx := context.Background()
-
-	tx, err := r.db.BeginTxx(ctx, nil)
+func (r TaskRepository) GetTaskSubmissions(taskId, teamId int) ([]*domain.TaskSubmission, error) {
+	// Create transaction
+	tx, err := r.db.Beginx()
 	if err != nil {
 		return nil, err
 	}
 	defer tx.Rollback()
 
-	query := fmt.Sprintf(`
-	SELECT * FROM public.%s 
-	WHERE task_submission.team_id=$1 AND task_submission.task_id=$2`,
-		r.taskSubmissionTableName)
+	getTaskSubmissionsQuery := fmt.Sprintf(`
+		SELECT * 
+		FROM public.%s 
+		WHERE task_submission.team_id=$1 AND task_submission.task_id=$2`,
+		r.taskSubmissionTableName,
+	)
 
-	result := make([]*domain.TaskSubmission, 0)
-
-	if err := tx.Select(&result, query, value.TeamId, value.TaskId); err != nil {
+	// Get task submissions for team
+	taskSubmissions := make([]*domain.TaskSubmission, 0)
+	if err := tx.Select(&taskSubmissions, getTaskSubmissionsQuery, teamId, taskId); err != nil {
 		return nil, err
 	}
 
-	return result, nil
+	return taskSubmissions, nil
 }
