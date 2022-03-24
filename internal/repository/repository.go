@@ -8,8 +8,8 @@ import (
 )
 
 type UserRepository interface {
-	CreateNewUser(username, password, contact string) (int, error)
-	FindUserByCredentials(username, password string) (*domain.User, error)
+	SaveUser(username, password, contact string) (int, error)
+	GetUserByCredentials(username, password string) (*domain.User, error)
 	UpdatePassword(userId int, newPassword string) error
 	AssignRole(userId, roleId int) error
 	GetRole(userId int) (domain.Role, error)
@@ -17,22 +17,23 @@ type UserRepository interface {
 }
 
 type TeamRepository interface {
-	CreateNewTeam(teamLeaderId int, teamName string) (int, error)
-	GetTeamById(teamId int) (domain.Team, error)
-	GetTeamByToken(token string) (domain.Team, error)
+	SaveTeam(teamLeaderId int, teamName string) (int, error)
+	GetTeamById(teamId int) (*domain.Team, error)
+	GetTeamByToken(token string) (*domain.Team, error)
 	AddMember(teamId, userId int) error
-	GetMembers(teamId int) ([]domain.User, error)
+	// Нужен ли нам этот метод ???
+	//GetMembers(teamId int) ([]domain.User, error)
 }
 
 type TaskRepository interface {
-	CreateNewTask(task domain.Task) (int, error)
+	SaveTask(task domain.Task) (int, error)
 	GetTaskById(id int) (*domain.Task, error)
 	GetTasks(domain.TaskFilter) ([]*domain.Task, error)
 	UpdateTask(id int, update domain.TaskUpdate) error
 	SolveTask(taskId, teamId int) error
-	FillTaskSubmission(value domain.SubmitTaskRequest, isCorrect bool) error
-	ShowTaskSubmissions(value domain.SubmitTaskRequest) ([]*domain.TaskSubmission, error)
-	ChekSolvedTask(taskId, teamId int) (bool, error)
+	SaveTaskSubmission(value domain.SubmitTaskRequest, isCorrect bool) error
+	GetTaskSubmissions(taskId, teamId int) ([]*domain.TaskSubmission, error)
+	//ChekSolvedTask(taskId, teamId int) (bool, error)
 }
 
 type SettingsRepository interface {
