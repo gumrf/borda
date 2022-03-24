@@ -31,7 +31,7 @@ func init() {
 func setDefaults() {
 	config.SetDefault("http.host", "localhost")
 	config.SetDefault("http.port", 8080)
-	
+
 	config.SetDefault("db.postgres.host", "localhost")
 	config.SetDefault("db.postgres.port", 5432)
 	config.SetDefault("db.postgres.user", "postgres")

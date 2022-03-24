@@ -27,10 +27,10 @@ func (t Task) Validate() error {
 	err := validation.ValidateStruct(&t,
 		validation.Field(&t.Flag, validation.Required, validation.Match(regexp.MustCompile("^MACTF{[0-9A-Za-z_]+}$"))),
 	)
-	if err != nil{
+	if err != nil {
 		return ErrInvalidInput
 	}
-	
+
 	return nil
 }
 
