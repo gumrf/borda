@@ -90,6 +90,26 @@ func (r UserRepository) GetUserByCredentials(username, password string) (*domain
 	return &user, nil
 }
 
+func (r UserRepository) GetUserById(id int) (*domain.User, error) {
+	getUserQuery := fmt.Sprintf(`
+		SELECT *
+		FROM public.%s
+		WHERE id=$1
+		LIMIT 1`,
+		userTable,
+	)
+
+	var user domain.User
+	if err := r.db.Get(&user, getUserQuery, id); err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, NewErrNotFound("user", "id", id)
+		}
+		return nil, err
+	}
+
+	return &user, nil
+}
+
 func (r UserRepository) UpdatePassword(userId int, newPassword string) error {
 	query := fmt.Sprintf(`
 		UPDATE public.%s
@@ -136,7 +156,6 @@ func (r UserRepository) GetUserRole(userId int) (*domain.Role, error) {
 
 	return &role, nil
 }
-
 
 //func (r UserRepository) IsUsernameExists(username string) error {
 //	query := fmt.Sprintf(`
