@@ -2,7 +2,6 @@ package postgres
 
 import (
 	"borda/internal/domain"
-	"borda/internal/repository"
 	"database/sql"
 	"errors"
 	"strings"
@@ -43,7 +42,7 @@ func (r UserRepository) SaveUser(username, password, contact string) (int, error
 	}
 
 	if isUserExist {
-		return -1, repository.NewErrAlreadyExist("user", "username", username)
+		return -1, NewErrAlreadyExist("user", "username", username)
 	}
 
 	// Save user to the database
@@ -82,7 +81,7 @@ func (r UserRepository) GetUserByCredentials(username, password string) (*domain
 	var user domain.User
 	if err := r.db.Get(&user, query, username, password); err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
-			return nil, repository.NewErrNotFound("user", "username, password",
+			return nil, NewErrNotFound("user", "username, password",
 				strings.Join([]string{username, password}, ", "))
 		}
 		return nil, err

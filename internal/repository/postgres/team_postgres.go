@@ -2,7 +2,6 @@ package postgres
 
 import (
 	"borda/internal/domain"
-	"borda/internal/repository"
 	"errors"
 
 	"database/sql"
@@ -45,7 +44,7 @@ func (r TeamRepository) SaveTeam(teamLeaderId int, teamName string) (int, error)
 	}
 
 	if isTeamExists {
-		return -1, repository.NewErrNotFound("team", "name", teamName)
+		return -1, NewErrNotFound("team", "name", teamName)
 	}
 
 	// Generate access token for team
@@ -84,7 +83,7 @@ func (r TeamRepository) GetTeamById(teamId int) (*domain.Team, error) {
 	var team domain.Team
 	if err := r.db.Get(&team, getTeamQuery, teamId); err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
-			return nil, repository.NewErrNotFound("team", "id", teamId)
+			return nil, NewErrNotFound("team", "id", teamId)
 		}
 		return nil, err
 	}
@@ -104,7 +103,7 @@ func (r TeamRepository) GetTeamByToken(token string) (*domain.Team, error) {
 	var team domain.Team
 	if err := r.db.Get(&team, getTeamQuery, token); err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
-			return nil, repository.NewErrNotFound("team", "token", token)
+			return nil, NewErrNotFound("team", "token", token)
 		}
 		return nil, err
 	}
@@ -136,7 +135,7 @@ func (r TeamRepository) AddMember(teamId, userId int) error {
 	}
 
 	if !isUserExist {
-		return repository.NewErrNotFound("user", "id", userId)
+		return NewErrNotFound("user", "id", userId)
 	}
 
 	// Check if team id exists in database
@@ -156,7 +155,7 @@ func (r TeamRepository) AddMember(teamId, userId int) error {
 	}
 
 	if !isTeamExist {
-		return repository.NewErrNotFound("team", "id", teamId)
+		return NewErrNotFound("team", "id", teamId)
 	}
 
 	// Get the number of members in the team
@@ -182,7 +181,7 @@ func (r TeamRepository) AddMember(teamId, userId int) error {
 	)
 	if err := tx.Get(&teamMembersLimit, teamMembersLimitQuery, "team_limit"); err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
-			return repository.NewErrNotFound("setting", "value", "team_limit")
+			return NewErrNotFound("setting", "value", "team_limit")
 		}
 		return err
 	}
