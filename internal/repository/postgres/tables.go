@@ -1,7 +1,7 @@
 package postgres
 
 const (
-	userTable           = `\"user\"`
+	userTable           = "\"user\""
 	roleTable           = "role"
 	userRolesTable      = "user_role"
 	taskTable           = "task"
