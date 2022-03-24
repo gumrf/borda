@@ -4,7 +4,7 @@ SET TIMEZONE="Europe/Moscow";
 -- Create users table
 CREATE TABLE IF NOT EXISTS "user" (
    id serial NOT NULL PRIMARY KEY,
-   name varchar(128) NOT NULL,
+   name varchar(128) UNIQUE NOT NULL,
    password varchar(256) NOT NULL,
    contact varchar(256) NULL
 );

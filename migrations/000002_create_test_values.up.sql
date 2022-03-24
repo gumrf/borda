@@ -12,8 +12,8 @@ VALUES
 INSERT INTO public.author (name, contact)
 VALUES
        ('TestAuthor1', '@TestAuthor1_contact'),
-       ('TestAuthor3', '@TestAuthor2_contact'),
-       ('TestAuthor2', '@TestAuthor3_contact');
+       ('TestAuthor2', '@TestAuthor2_contact'),
+       ('TestAuthor3', '@TestAuthor3_contact');
 
 -- Create test Tasks
 INSERT INTO public.task (title, description, category, complexity, points, hint, flag, is_active, is_disabled, author_id)
