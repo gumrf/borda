@@ -23,17 +23,6 @@ type Task struct {
 	Author      Author `json:"author" db:"author"`
 }
 
-func (t Task) Validate() error {
-	err := validation.ValidateStruct(&t,
-		validation.Field(&t.Flag, validation.Required, validation.Match(regexp.MustCompile("^MACTF{[0-9A-Za-z_]+}$"))),
-	)
-	if err != nil{
-		return ErrInvalidInput
-	}
-	
-	return nil
-}
-
 type Author struct {
 	Id      int    `json:"id" db:"id"`
 	Name    string `json:"name" db:"name"`
@@ -48,8 +37,8 @@ type TaskUpdate struct {
 	Points        int    `json:"points,omitempty"`
 	Hint          string `json:"hint,omitempty"`
 	Flag          string `json:"flag,omitempty"`
-	AuthorName    string `json:"-,omitempty"`
-	AuthorContact string `json:"-,omitempty"`
+	AuthorName    string `json:"-"`
+	AuthorContact string `json:"-"`
 }
 
 func (f *TaskUpdate) ToMap() (map[string]interface{}, error) {
@@ -120,6 +109,17 @@ type SubmitTaskRequest struct {
 	TeamId int    `json:"teamId"`
 	UserId int    `json:"userId"`
 	Flag   string `json:"flag"`
+}
+
+func (t SubmitTaskRequest) Validate() error {
+	err := validation.ValidateStruct(&t,
+		validation.Field(&t.Flag, validation.Required, validation.Match(regexp.MustCompile("^MACTF{[0-9A-Za-z_]+}$"))),
+	)
+	if err != nil {
+		return ErrInvalidInput
+	}
+
+	return nil
 }
 
 type TaskSubmissions []TaskSubmission

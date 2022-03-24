@@ -14,9 +14,6 @@ func (h *Handler) initAuthRoutes(router fiber.Router) {
 	auth.Post("/sign-out", h.handleSignOut)
 }
 
-// api/v1/auth/signUp?team[create]=teamName
-// api/v1/auth/signUp?team[join]=token
-
 func (h *Handler) handleSignUp(ctx *fiber.Ctx) error {
 	var input domain.UserSignUpInput
 
@@ -26,7 +23,10 @@ func (h *Handler) handleSignUp(ctx *fiber.Ctx) error {
 			fiber.StatusBadRequest, "Input data is invalid.")
 	}
 
-	// TODO: Input validation
+	if err := input.Validate(); err != nil {
+		return NewErrorResponse(ctx,
+			fiber.StatusBadRequest, "Input data is invalid.")
+	}
 
 	err = h.AuthService.SignUp(input)
 	if err != nil {
@@ -48,7 +48,10 @@ func (h *Handler) handleSignIn(ctx *fiber.Ctx) error {
 			fiber.StatusBadRequest, "Input data is invalid.")
 	}
 
-	// TODO: Input validation
+	if err := input.Validate(); err != nil {
+		return NewErrorResponse(ctx,
+			fiber.StatusBadRequest, "Input data is invalid.")
+	}
 
 	token, err := h.AuthService.SignIn(input)
 	if err != nil {
