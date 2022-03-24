@@ -40,7 +40,7 @@ func (s *AuthService) SignUp(input domain.UserSignUpInput) error {
 	//		Attach user to the team.
 	//		If parsing token or creating new team fails, user should't be created.
 	// 		To achive prosess  should be run in transaction.
-	userId, err := s.userRepo.CreateNewUser(input.Username, passwordHash, input.Contact)
+	userId, err := s.userRepo.SaveUser(input.Username, passwordHash, input.Contact)
 	if err != nil {
 		if errors.Is(err, domain.ErrUserAlreadyExists) {
 			return err
@@ -50,8 +50,7 @@ func (s *AuthService) SignUp(input domain.UserSignUpInput) error {
 
 	switch input.AttachTeamMethod {
 	case "create":
-		_, err = s.teamRepo.CreateNewTeam(userId, input.AttachTeamAttribute)
-		if err != nil {
+		if _, err := s.teamRepo.SaveTeam(userId, input.AttachTeamAttribute); err != nil {
 			return err
 		}
 	case "join":
@@ -60,8 +59,7 @@ func (s *AuthService) SignUp(input domain.UserSignUpInput) error {
 			return err
 		}
 
-		err = s.teamRepo.AddMember(team.Id, userId)
-		if err != nil {
+		if err := s.teamRepo.AddMember(team.Id, userId); err != nil {
 			return err
 		}
 	}
@@ -77,7 +75,7 @@ func (s *AuthService) SignIn(input domain.UserSignInInput) (string, error) {
 
 	fmt.Println(passwordHash)
 
-	user, err := s.userRepo.FindUserByCredentials(input.Username, passwordHash)
+	user, err := s.userRepo.GetUserByCredentials(input.Username, passwordHash)
 	if err != nil {
 		return "", err
 	}
@@ -92,6 +90,5 @@ func (s *AuthService) SignIn(input domain.UserSignInInput) (string, error) {
 		Subject:   strconv.Itoa(user.Id),
 	})
 
-	// TODO: save token somewhere
 	return token.SignedString([]byte(jwtConf.SigningKey))
 }

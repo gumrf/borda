@@ -15,7 +15,7 @@ func NewAdminService(tsr repository.TaskRepository) *AdminService {
 
 func (a *AdminService) CreateNewTask(task domain.Task) (int, error) {
 
-	id, err := a.taskRepo.CreateNewTask(task)
+	id, err := a.taskRepo.SaveTask(task)
 	if err != nil {
 		return -1, err
 	}
@@ -23,6 +23,6 @@ func (a *AdminService) CreateNewTask(task domain.Task) (int, error) {
 	return id, nil
 }
 
-func (a *AdminService) UpdateTask(taskId int, dataForUpdate domain.TaskUpdate) error {
-	return a.taskRepo.UpdateTask(taskId, dataForUpdate)
+func (a *AdminService) UpdateTask(taskId int, taskUpdate domain.TaskUpdate) error {
+	return a.taskRepo.UpdateTask(taskId, taskUpdate)
 }
