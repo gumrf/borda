@@ -111,29 +111,6 @@ func (r TeamRepository) GetTeamByToken(token string) (*domain.Team, error) {
 	return &team, nil
 }
 
-// func (r TeamRepository) IsTeamTokenExists(token string) error {
-// 	query := fmt.Sprintf(`
-// 		SELECT EXISTS (
-// 			SELECT 1
-// 			FROM public.%s
-// 			WHERE token=$1
-// 			LIMIT 1
-// 		)`,
-// 		r.tableTeamName)
-
-// 	var isTeamTokenValid bool
-// 	err := r.db.Get(&isTeamTokenValid, query, token)
-// 	if err != nil {
-// 		return err
-// 	}
-
-// 	if !isTeamTokenValid {
-// 		return domain.ErrTeamTokenIsInvalid
-// 	}
-
-// 	return nil
-// }
-
 func (r TeamRepository) AddMember(teamId, userId int) error {
 	// Begin transaction
 	tx, err := r.db.Beginx()
@@ -249,7 +226,7 @@ func (r TeamRepository) AddMember(teamId, userId int) error {
 //		SELECT value
 //		FROM %s
 //		WHERE key=$1`,
-//		r.tableSettingsName,
+//		settingsTable,
 //	)
 //	err := r.db.QueryRowx(query, "team_limit").Scan(&valueLimit)
 //	if err != nil {
@@ -266,7 +243,7 @@ func (r TeamRepository) AddMember(teamId, userId int) error {
 //		SELECT COUNT(user_id)
 //		FROM %s
 //		WHERE team_id=$1`,
-//		r.tableTeamMembersName,
+//		teamMembersTable,
 //	)
 //	err = r.db.QueryRow(query, teamId).Scan(&alreadyExistMembers)
 //	if err != nil {
@@ -349,3 +326,26 @@ func (r TeamRepository) AddMember(teamId, userId int) error {
 //
 //	return nil
 //}
+
+// func (r TeamRepository) IsTeamTokenExists(token string) error {
+// 	query := fmt.Sprintf(`
+// 		SELECT EXISTS (
+// 			SELECT 1
+// 			FROM public.%s
+// 			WHERE token=$1
+// 			LIMIT 1
+// 		)`,
+// 		r.tableTeamName)
+
+// 	var isTeamTokenValid bool
+// 	err := r.db.Get(&isTeamTokenValid, query, token)
+// 	if err != nil {
+// 		return err
+// 	}
+
+// 	if !isTeamTokenValid {
+// 		return domain.ErrTeamTokenIsInvalid
+// 	}
+
+// 	return nil
+// }
