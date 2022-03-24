@@ -14,21 +14,11 @@ import (
 )
 
 type TeamRepository struct {
-	db               *sqlx.DB
-	teamTable        string
-	userTable        string
-	teamMembersTable string
-	settingsTable    string
+	db *sqlx.DB
 }
 
 func NewTeamRepository(db *sqlx.DB) *TeamRepository {
-	return &TeamRepository{
-		db:               db,
-		teamTable:        "team",
-		userTable:        "\"user\"",
-		teamMembersTable: "team_member",
-		settingsTable:    "settings",
-	}
+	return &TeamRepository{db: db}
 }
 
 func (r TeamRepository) SaveTeam(teamLeaderId int, teamName string) (int, error) {
@@ -45,7 +35,8 @@ func (r TeamRepository) SaveTeam(teamLeaderId int, teamName string) (int, error)
 			WHERE name=$1
 			LIMIT 1
 		)`,
-		r.teamTable)
+		teamTable,
+	)
 
 	// Check if team name already exists in database
 	var isTeamExists bool
@@ -69,7 +60,7 @@ func (r TeamRepository) SaveTeam(teamLeaderId int, teamName string) (int, error)
 		) 
 		VALUES($1, $2, $3)
 		RETURNING id`,
-		r.teamTable,
+		teamTable,
 	)
 
 	var id int
@@ -87,7 +78,7 @@ func (r TeamRepository) GetTeamById(teamId int) (*domain.Team, error) {
 		FROM public.%s 
 		WHERE id=$1
 		LIMIT 1`,
-		r.teamTable,
+		teamTable,
 	)
 
 	var team domain.Team
@@ -107,7 +98,7 @@ func (r TeamRepository) GetTeamByToken(token string) (*domain.Team, error) {
 		FROM public.%s 
 		WHERE token=$1
 		LIMIT 1`,
-		r.teamTable,
+		teamTable,
 	)
 
 	var team domain.Team
@@ -136,7 +127,8 @@ func (r TeamRepository) AddMember(teamId, userId int) error {
 			WHERE id=$1
 			LIMIT 1
 		)`,
-		r.userTable)
+		userTable,
+	)
 
 	var isUserExist bool
 	if err := tx.Get(&isUserExist, isUserExistQuery, userId); err != nil {
@@ -155,7 +147,8 @@ func (r TeamRepository) AddMember(teamId, userId int) error {
 			WHERE id=$1
 			LIMIT 1
 		)`,
-		r.teamTable)
+		teamTable,
+	)
 
 	var isTeamExist bool
 	if err := tx.Get(&isTeamExist, isTeamExistQuery, teamId); err != nil {
@@ -172,7 +165,7 @@ func (r TeamRepository) AddMember(teamId, userId int) error {
 		SELECT COUNT(user_id)
 		FROM %s
 		WHERE team_id=$1`,
-		r.teamMembersTable,
+		teamMembersTable,
 	)
 
 	if err := tx.Get(&teamMembersCount, teamMembersCountQuery, teamId); err != nil {
@@ -185,7 +178,7 @@ func (r TeamRepository) AddMember(teamId, userId int) error {
 		SELECT value 
 		FROM %s
 		WHERE key=$1`,
-		r.settingsTable,
+		settingsTable,
 	)
 	if err := tx.Get(&teamMembersLimit, teamMembersLimitQuery, "team_limit"); err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
@@ -212,7 +205,7 @@ func (r TeamRepository) AddMember(teamId, userId int) error {
 		) 
 		VALUES($1, $2)
 		RETURNING id`,
-		r.teamMembersTable,
+		teamMembersTable,
 	)
 
 	var id int = -1

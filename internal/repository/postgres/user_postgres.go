@@ -13,19 +13,11 @@ import (
 )
 
 type UserRepository struct {
-	db                 *sqlx.DB
-	userTableName      string
-	roleTableName      string
-	userRolesTableName string
+	db *sqlx.DB
 }
 
 func NewUserRepository(db *sqlx.DB) *UserRepository {
-	return &UserRepository{
-		db:                 db,
-		userTableName:      "\"user\"",
-		roleTableName:      "role",
-		userRolesTableName: "user_role",
-	}
+	return &UserRepository{db: db}
 }
 
 // TODO: pass user object when create user
@@ -42,7 +34,8 @@ func (r UserRepository) SaveUser(username, password, contact string) (int, error
 			WHERE name=$1
 			LIMIT 1
 		)`,
-		r.userTableName)
+		userTable,
+	)
 
 	var isUserExist bool
 	if err := tx.Get(&isUserExist, isUserExistQuery, username); err != nil {
@@ -62,7 +55,7 @@ func (r UserRepository) SaveUser(username, password, contact string) (int, error
 		)
 		VALUES($1, $2, $3)
 		RETURNING id`,
-		r.userTableName,
+		userTable,
 	)
 
 	var userId int
@@ -83,7 +76,8 @@ func (r UserRepository) GetUserByCredentials(username, password string) (*domain
 		SELECT *
 		FROM public.%s
 		WHERE name=$1 AND password=$2`,
-		r.userTableName)
+		userTable,
+	)
 
 	var user domain.User
 	if err := r.db.Get(&user, query, username, password); err != nil {
@@ -102,7 +96,8 @@ func (r UserRepository) UpdatePassword(userId int, newPassword string) error {
 		UPDATE public.%s
 		SET password = $1
 		WHERE id = $2`,
-		r.userTableName)
+		userTable,
+	)
 
 	if _, err := r.db.Exec(query, newPassword, userId); err != nil {
 		return err
@@ -118,7 +113,7 @@ func (r UserRepository) AssignRole(userId, roleId int) error {
 			role_id
 		)
 		VALUES($1, $2)`,
-		r.userRolesTableName)
+		userRolesTable)
 
 	if _, err := r.db.Exec(query, userId, roleId); err != nil {
 		return err
@@ -133,7 +128,7 @@ func (r UserRepository) GetUserRole(userId int) (*domain.Role, error) {
 		FROM public.%s AS r
 		INNER JOIN public.%s AS ur ON r.id=ur.role_id
 		WHERE ur.user_id = $1;`,
-		r.roleTableName, r.userRolesTableName)
+		roleTable, userRolesTable)
 
 	var role domain.Role
 	if err := r.db.Get(&role, query, userId); err != nil {
