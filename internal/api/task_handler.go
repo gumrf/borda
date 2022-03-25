@@ -8,11 +8,11 @@ import (
 )
 
 func (h *Handler) initTaskRoutes(router fiber.Router) {
-	tasks := router.Group("/tasks", AuthRequired)
+	tasks := router.Group("/tasks", h.authRequired)
 	tasks.Get("", h.getAllTasks)
-	tasks.Post("", h.createNewTask)
+	tasks.Post("", h.createNewTask, h.adminPermissionRequired)
 
-	task := router.Group("/tasks/:id")
+	task := router.Group("/tasks/:id", h.adminPermissionRequired)
 	task.Patch("", h.updateTask)
 
 	task.Post("/submissions", h.createNewSubmission)

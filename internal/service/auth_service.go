@@ -6,11 +6,10 @@ import (
 	"borda/internal/repository"
 	"borda/pkg/hash"
 	"fmt"
-
-	"errors"
 	"strconv"
 	"time"
 
+	"errors"
 	"github.com/golang-jwt/jwt/v4"
 )
 
@@ -121,11 +120,15 @@ func (s *AuthService) SignIn(input domain.UserSignInInput) (string, error) {
 	fmt.Println(jwtConf)
 
 	// Generate JWT token
-	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.StandardClaims{
-		ExpiresAt: time.Now().Add(jwtConf.ExpireTime).Unix(),
-		IssuedAt:  time.Now().Unix(),
-		Subject:   strconv.Itoa(user.Id),
-	})
+	claims := jwt.MapClaims{
+		"iss":   strconv.Itoa(user.Id),
+		"exp":   jwt.NewNumericDate(time.Now().Add(jwtConf.ExpireTime)),
+		"iat":   jwt.NewNumericDate(time.Now()),
+		"aud":   "borda-v1",
+		"scope": []string{"user"},
+	}
+
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
 
 	return token.SignedString([]byte(jwtConf.SigningKey))
 }

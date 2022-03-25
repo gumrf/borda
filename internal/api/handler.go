@@ -4,11 +4,12 @@ import (
 	"borda/internal/config"
 	"borda/internal/service"
 	"fmt"
+	"strconv"
 	"time"
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/logger"
-	jwtware "github.com/gofiber/jwt/v3"
+	jwtMiddleware "github.com/gofiber/jwt/v3"
 	"github.com/golang-jwt/jwt/v4"
 )
 
@@ -42,18 +43,48 @@ func (h *Handler) Init(app *fiber.App) {
 
 	h.initAuthRoutes(v1)
 
-	v1.Use(jwtware.New(jwtware.Config{
-		SigningKey: []byte(config.JWT().SigningKey),
+	// Everything defined bellow will require authorization
+	v1.Use(jwtMiddleware.New(jwtMiddleware.Config{
+		SigningMethod: jwt.SigningMethodHS256.Name,
+		SigningKey:    []byte(config.JWT().SigningKey),
+		ContextKey:    "token",
 	}))
 
 	h.initUserRoutes(v1)
 	h.initTaskRoutes(v1)
 }
 
-func AuthRequired(c *fiber.Ctx) error {
-	user := c.Locals("user").(*jwt.Token)
-	claims := user.Claims.(jwt.MapClaims)
-	name := claims["sub"].(string)
-	fmt.Println("Welcome " + name)
+func (h *Handler) authRequired(c *fiber.Ctx) error {
+	token := c.Locals("token").(*jwt.Token)
+	claims := token.Claims.(jwt.MapClaims)
+
+	// Get user id, scope from claims
+	id := claims["iss"].(string)
+	scope := claims["scope"].([]interface{})
+
+	// Store user id, scope in context for the following routes
+	c.Locals("userId", id)
+	c.Locals("scope", scope[0])
+
+	fmt.Println("User ID: "+id+", Scope: ", scope[0])
+	return c.Next()
+}
+
+func (h *Handler) CheckUserInTeam(c *fiber.Ctx) error {
+	id, _ := strconv.Atoi(c.Locals("userId").(string))
+
+	if !h.UserService.IsUserInTeam(id) {
+		return NewErrorResponse(c, fiber.StatusForbidden, "Authorization is not completed.") // Add details for err
+	}
+
+	return c.Next()
+}
+
+func (h *Handler) adminPermissionRequired(c *fiber.Ctx) error {
+	scope := c.Locals("scope")
+	if scope != "admin" {
+		return NewErrorResponse(c, fiber.StatusForbidden, "You are not allowed to access resource. Ask for admin permission")
+	}
+
 	return c.Next()
 }

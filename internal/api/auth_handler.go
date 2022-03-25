@@ -20,12 +20,12 @@ func (h *Handler) handleSignUp(ctx *fiber.Ctx) error {
 	err := ctx.BodyParser(&input)
 	if err != nil {
 		return NewErrorResponse(ctx,
-			fiber.StatusBadRequest, "Input data is invalid.")
+			fiber.StatusBadRequest, "Input data is invalid. Can't parse json.")
 	}
 
 	if err := input.Validate(); err != nil {
 		return NewErrorResponse(ctx,
-			fiber.StatusBadRequest, "Input data is invalid.")
+			fiber.StatusBadRequest, "Input data is invalid. Validation is not passed.")
 	}
 
 	err = h.AuthService.SignUp(input)
