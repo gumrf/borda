@@ -10,18 +10,17 @@ import (
 func (h *Handler) initTaskRoutes(router fiber.Router) {
 	tasks := router.Group("/tasks", h.authRequired)
 	tasks.Get("", h.getAllTasks)
-	tasks.Post("", h.createNewTask, h.adminPermissionRequired)
 
-	task := router.Group("/tasks/:id", h.adminPermissionRequired)
-	task.Patch("", h.updateTask)
+	task := router.Group("/tasks/:id")
 
 	task.Post("/submissions", h.createNewSubmission)
 	task.Get("/submissions", h.getAllSubmissions)
 }
 
 func (h *Handler) getAllTasks(ctx *fiber.Ctx) error {
+
 	var filter domain.TaskFilter
-	var tasks []*domain.Task
+	var tasks []domain.TaskUserResponse
 
 	err := ctx.BodyParser(&filter)
 	if err != nil {
@@ -29,74 +28,20 @@ func (h *Handler) getAllTasks(ctx *fiber.Ctx) error {
 			fiber.StatusBadRequest, err.Error())
 	}
 
-	tasks, err = h.UserService.ShowAllTasks(filter)
+	id, _ := strconv.Atoi(ctx.Locals("userId").(string))
+
+	tasks, err = h.UserService.ShowAllTasks(filter, id)
 	if err != nil {
 		return NewErrorResponse(ctx,
 			fiber.StatusBadRequest, err.Error())
 	}
 
 	type TaskRespose struct {
-		Response []*domain.Task
+		Response []domain.TaskUserResponse
 	}
 
 	return ctx.Status(fiber.StatusOK).JSON(TaskRespose{
 		Response: tasks,
-	})
-}
-
-func (h *Handler) createNewTask(ctx *fiber.Ctx) error {
-	var task domain.Task
-
-	err := ctx.BodyParser(&task)
-	if err != nil {
-		return NewErrorResponse(ctx,
-			fiber.StatusBadRequest, err.Error())
-	}
-
-	//TODO: VALIDATE task
-
-	var taskId int
-
-	taskId, err = h.AdminService.CreateNewTask(task)
-	if err != nil {
-		return NewErrorResponse(ctx,
-			fiber.StatusBadRequest, err.Error())
-	}
-
-	return ctx.Status(201).JSON(fiber.Map{
-		"error":   false,
-		"message": "Task created",
-		"task_id": taskId,
-	})
-}
-
-func (h *Handler) updateTask(ctx *fiber.Ctx) error {
-
-	taskId, err := strconv.Atoi(ctx.Params("id"))
-	if err != nil {
-		return NewErrorResponse(ctx,
-			fiber.StatusConflict, err.Error())
-	}
-
-	var taskData domain.TaskUpdate
-
-	err = ctx.BodyParser(&taskData)
-	if err != nil {
-		return NewErrorResponse(ctx,
-			fiber.StatusBadRequest, err.Error())
-	}
-
-	//TODO: VALIDATE taskData
-
-	err = h.AdminService.UpdateTask(taskId, taskData)
-	if err != nil {
-		return NewErrorResponse(ctx,
-			fiber.StatusBadRequest, err.Error())
-	}
-
-	return ctx.JSON(fiber.Map{
-		"error":   false,
-		"message": "Successfully update task!",
 	})
 }
 
