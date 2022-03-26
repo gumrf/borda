@@ -27,7 +27,7 @@ type TeamRepository interface {
 	AddMember(teamId, userId int) error
 	GetTeamByUserId(userId int) (int, error) //Временный метод
 	// Нужен ли нам этоти методы ???
-	//GetMembers(teamId int) ([]domain.User, error)
+	GetMembers(teamId int) ([]domain.User, error) // Этот метод теперь нужен!
 	//IsTeamNameExists(teamName string) error
 	//IsTeamTokenExists(token string) error May be unnecessary
 	//IsTeamFull(teamId int) error
