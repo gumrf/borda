@@ -25,21 +25,22 @@ type Task struct {
 
 // Используется для отправки юзеру таска на запрос GetAllTasks
 type TaskUserResponse struct {
-	Id                  int    `json:"id"`
-	Title               string `json:"title" `
-	Description         string `json:"description" `
-	Category            string `json:"category" `
-	Complexity          string `json:"complexity" `
-	Points              int    `json:"points" `
-	Hint                string `json:"hint"`
-	IsSolved            bool   `json:"is_solved"`
-	UserTaskSubmissions []UserTaskSubmission
-	Author              Author
+	Id          int                      `json:"id"`
+	Title       string                   `json:"title" `
+	Description string                   `json:"description" `
+	Category    string                   `json:"category" `
+	Complexity  string                   `json:"complexity" `
+	Points      int                      `json:"points" `
+	Hint        string                   `json:"hint,omitempty"`
+	IsSolved    bool                     `json:"is_solved"`
+	Submissions []TaskSubmissionResponse `json:"submissions"`
+	Author      Author                   `json:"author"`
 }
 
-type UserTaskSubmission struct {
-	UserId    int       `json:"userId"`
+type TaskSubmissionResponse struct {
+	Username  string    `json:"username"`
 	Flag      string    `json:"flag" `
+	IsCorrect bool      `json:"is_correct"`
 	Timestemp time.Time `json:"timestemp"`
 }
 
