@@ -8,15 +8,26 @@ import (
 )
 
 func (h *Handler) initAdminRoutes(router fiber.Router) {
-	tasks := router.Group("/tasks", h.adminPermissionRequired)
+	admin := router.Group("/admin", h.adminPermissionRequired)
 
-	tasks.Get("", h.getAllTasksAdmin)
-	tasks.Post("", h.createNewTask)
+	admin.Get("/tasks", h.getAllTasksAdmin)
+	admin.Post("/tasks", h.createNewTask)
 
 	task := router.Group("/tasks/:id")
 	task.Patch("", h.updateTask)
 }
 
+// @Summary      Get all tasks
+// @Description  allows the admin to get all tasks.
+// @Tags         Tasks
+// @Accept       json
+// @Produce      json
+// @Param		 ?
+// @Success      200  {object}  TaskResponse
+// @Failure      400  {object}  ErrorResponse
+// @Failure      404  {object}  ErrorResponse
+// @Failure      500  {object}  ErrorResponse
+// @Router       /admin/tasks [get]
 func (h *Handler) getAllTasksAdmin(ctx *fiber.Ctx) error {
 	var filter domain.TaskFilter
 	var tasks []*domain.Task
@@ -27,21 +38,32 @@ func (h *Handler) getAllTasksAdmin(ctx *fiber.Ctx) error {
 			fiber.StatusBadRequest, err.Error())
 	}
 
-	tasks, err = h.AdminService.ShowAllTasks(filter)
+	tasks, err = h.AdminService.GetAllTasks(filter)
 	if err != nil {
 		return NewErrorResponse(ctx,
 			fiber.StatusBadRequest, err.Error())
 	}
 
 	type TaskRespose struct {
-		Response []*domain.Task
+		Tasks []*domain.Task `json:"tasks"`
 	}
 
 	return ctx.Status(fiber.StatusOK).JSON(TaskRespose{
-		Response: tasks,
+		Tasks: tasks,
 	})
 }
 
+// @Summary      Update task
+// @Description  allows the admin to update task.
+// @Tags         UpdateTask
+// @Accept       json
+// @Produce      json
+// @Param		 ?
+// @Success      200  {object}  TaskResponse
+// @Failure      400  {object}  ErrorResponse
+// @Failure      404  {object}  ErrorResponse
+// @Failure      500  {object}  ErrorResponse
+// @Router       /task/:id [patch]
 func (h *Handler) updateTask(ctx *fiber.Ctx) error {
 
 	taskId, err := strconv.Atoi(ctx.Params("id"))
@@ -50,9 +72,9 @@ func (h *Handler) updateTask(ctx *fiber.Ctx) error {
 			fiber.StatusConflict, err.Error())
 	}
 
-	var taskData domain.TaskUpdate
+	var update domain.TaskUpdate
 
-	err = ctx.BodyParser(&taskData)
+	err = ctx.BodyParser(&update)
 	if err != nil {
 		return NewErrorResponse(ctx,
 			fiber.StatusBadRequest, err.Error())
@@ -60,18 +82,28 @@ func (h *Handler) updateTask(ctx *fiber.Ctx) error {
 
 	//TODO: VALIDATE taskData
 
-	err = h.AdminService.UpdateTask(taskId, taskData)
+	err = h.AdminService.UpdateTask(taskId, update)
 	if err != nil {
 		return NewErrorResponse(ctx,
 			fiber.StatusBadRequest, err.Error())
 	}
 
-	return ctx.JSON(fiber.Map{
-		"error":   false,
-		"message": "Successfully update task!",
+	return ctx.Status(fiber.StatusOK).JSON(fiber.Map{
+		"error": false,
 	})
 }
 
+// @Summary      Create new task
+// @Description  allows the admin to create new tasks.
+// @Tags         CreateTask
+// @Accept       json
+// @Produce      json
+// @Param		 ?
+// @Success      201  {object}  TaskResponse
+// @Failure      400  {object}  ErrorResponse
+// @Failure      404  {object}  ErrorResponse
+// @Failure      500  {object}  ErrorResponse
+// @Router       /tasks/ [post]
 func (h *Handler) createNewTask(ctx *fiber.Ctx) error {
 	var task domain.Task
 

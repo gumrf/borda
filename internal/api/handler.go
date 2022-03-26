@@ -40,7 +40,6 @@ func (h *Handler) Init(app *fiber.App) {
 
 	api := app.Group("/api")
 	v1 := api.Group("/v1")
-	admin := v1.Group("/admin")
 
 	h.initAuthRoutes(v1)
 
@@ -53,7 +52,7 @@ func (h *Handler) Init(app *fiber.App) {
 
 	h.initUserRoutes(v1)
 	h.initTaskRoutes(v1)
-	h.initAdminRoutes(admin)
+	h.initAdminRoutes(v1)
 }
 
 func (h *Handler) authRequired(c *fiber.Ctx) error {
