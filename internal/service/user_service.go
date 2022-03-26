@@ -34,10 +34,10 @@ func (s *UserService) IsUserInTeam(userId int) bool {
 }
 
 func (s *UserService) GetAllTasks(userId int) ([]domain.TaskUserResponse, error) {
-	var filter domain.TaskFilter
-	//Важные поля для юзера
-	filter.IsActive = true
-	filter.IsDisabled = false
+	filter := domain.TaskFilter{
+		IsActive:   true,
+		IsDisabled: false,
+	}
 
 	var tasks []*domain.Task
 	// Получили таски по фильтру
@@ -65,18 +65,18 @@ func (s *UserService) GetAllTasks(userId int) ([]domain.TaskUserResponse, error)
 		usernames[user.Id] = user.Username
 	}
 
-	userTasks := make([]domain.TaskUserResponse, 0)
+	userScopedTasks := make([]domain.TaskUserResponse, 0)
 
 	for _, task := range tasks {
 
 		//Получаю все решения этого пользователя
-		allSubmissions, err := s.taskRepo.GetTaskSubmissions(task.Id, userId)
+		allSubmissions, err := s.taskRepo.GetTaskSubmissions(task.Id, teamId)
 		if err != nil {
 			return nil, err
 		}
 
 		//Привожу решения пользователя в вид для этого пользователя
-		userSubmissions := make([]domain.TaskSubmissionResponse, 0)
+		taskSubmissionResponse := make([]domain.TaskSubmissionResponse, 0)
 		for _, sub := range allSubmissions {
 			submissionResponse := domain.TaskSubmissionResponse{
 				Username:  usernames[sub.UserId],
@@ -84,7 +84,7 @@ func (s *UserService) GetAllTasks(userId int) ([]domain.TaskUserResponse, error)
 				IsCorrect: sub.IsCorrect,
 				Timestemp: sub.Timestemp,
 			}
-			userSubmissions = append(userSubmissions, submissionResponse)
+			taskSubmissionResponse = append(taskSubmissionResponse, submissionResponse)
 		}
 
 		//Проверка, решен ли таск
@@ -103,15 +103,15 @@ func (s *UserService) GetAllTasks(userId int) ([]domain.TaskUserResponse, error)
 			Points:      task.Points,
 			Hint:        task.Hint,
 			IsSolved:    IsSolved,
-			Submissions: userSubmissions,
+			Submissions: taskSubmissionResponse,
 			Author:      task.Author,
 		}
 
-		userTasks = append(userTasks, taskResponse)
+		userScopedTasks = append(userScopedTasks, taskResponse)
 
 	}
 
-	return userTasks, nil
+	return userScopedTasks, nil
 }
 
 func (s *UserService) TryToSolveTask(submission domain.SubmitTaskRequest) (string, error) {

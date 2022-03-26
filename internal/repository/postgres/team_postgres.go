@@ -252,7 +252,7 @@ func (r TeamRepository) GetMembers(teamId int) (users []domain.User, err error) 
 	var team_id int
 	err = r.db.QueryRowx(query, teamId).Scan(&team_id)
 	if err != nil {
-		return []domain.User{}, fmt.Errorf("team repository getMembers error: Team not found with id=%v", teamId)
+		return []domain.User{}, NewErrNotFound("team", "id", team_id)
 	}
 
 	// Get
@@ -272,7 +272,7 @@ func (r TeamRepository) GetMembers(teamId int) (users []domain.User, err error) 
 
 	rows, err := r.db.Queryx(query, teamId)
 	if err != nil {
-		return []domain.User{}, fmt.Errorf("team repository getMembers error: Members not found in team with id=%v, %v", teamId, err)
+		return []domain.User{}, NewErrNotFound("member", "id", teamId)
 	}
 
 	for rows.Next() {

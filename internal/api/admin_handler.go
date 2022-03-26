@@ -29,16 +29,9 @@ func (h *Handler) initAdminRoutes(router fiber.Router) {
 // @Failure      500  {object}  ErrorResponse
 // @Router       /admin/tasks [get]
 func (h *Handler) getAllTasksAdmin(ctx *fiber.Ctx) error {
-	var filter domain.TaskFilter
 	var tasks []*domain.Task
 
-	err := ctx.BodyParser(&filter)
-	if err != nil {
-		return NewErrorResponse(ctx,
-			fiber.StatusBadRequest, err.Error())
-	}
-
-	tasks, err = h.AdminService.GetAllTasks(filter)
+	tasks, err := h.AdminService.GetAllTasks()
 	if err != nil {
 		return NewErrorResponse(ctx,
 			fiber.StatusBadRequest, err.Error())
@@ -102,7 +95,7 @@ func (h *Handler) updateTask(ctx *fiber.Ctx) error {
 // @Accept       json
 // @Produce      json
 // @Param		 ?
-// @Success      201  {object}  TaskResponse
+// @Success      20   {object}  TaskResponse
 // @Failure      400  {object}  ErrorResponse
 // @Failure      404  {object}  ErrorResponse
 // @Failure      500  {object}  ErrorResponse
@@ -121,17 +114,17 @@ func (h *Handler) createNewTask(ctx *fiber.Ctx) error {
 			fiber.StatusBadRequest, "Validation is not passed."+err.Error())
 	}
 
-	var taskId int
-
-	taskId, err = h.AdminService.CreateNewTask(task)
+	createdTask, err := h.AdminService.CreateNewTask(task)
 	if err != nil {
 		return NewErrorResponse(ctx,
 			fiber.StatusBadRequest, err.Error())
 	}
 
-	return ctx.Status(201).JSON(fiber.Map{
-		"error":   false,
-		"message": "Task created",
-		"task_id": taskId,
+	type TaskResponse struct {
+		CreatedTask []*domain.Task `json:"task"`
+	}
+
+	return ctx.Status(fiber.StatusOK).JSON(TaskResponse{
+		CreatedTask: createdTask,
 	})
 }
