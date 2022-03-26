@@ -80,7 +80,10 @@ func (h *Handler) updateTask(ctx *fiber.Ctx) error {
 			fiber.StatusBadRequest, err.Error())
 	}
 
-	//TODO: VALIDATE taskData
+	if err := update.Validate(); err != nil {
+		return NewErrorResponse(ctx,
+			fiber.StatusBadRequest, "Validation is not passed. "+err.Error())
+	}
 
 	err = h.AdminService.UpdateTask(taskId, update)
 	if err != nil {
@@ -113,7 +116,10 @@ func (h *Handler) createNewTask(ctx *fiber.Ctx) error {
 			fiber.StatusBadRequest, err.Error())
 	}
 
-	//TODO: VALIDATE task
+	if err := task.Validate(); err != nil {
+		return NewErrorResponse(ctx,
+			fiber.StatusBadRequest, "Validation is not passed."+err.Error())
+	}
 
 	var taskId int
 

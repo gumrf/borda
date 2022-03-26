@@ -2,10 +2,7 @@ package domain
 
 import (
 	"encoding/json"
-	"regexp"
 	"time"
-
-	validation "github.com/go-ozzo/ozzo-validation/v4"
 )
 
 // Task is task
@@ -130,17 +127,6 @@ type SubmitTaskRequest struct {
 	TeamId int    `json:"teamId"`
 	UserId int    `json:"userId"`
 	Flag   string `json:"flag"`
-}
-
-func (t SubmitTaskRequest) Validate() error {
-	err := validation.ValidateStruct(&t,
-		validation.Field(&t.Flag, validation.Required, validation.Match(regexp.MustCompile("^MACTF{[0-9A-Za-z_]+}$"))),
-	)
-	if err != nil {
-		return ErrInvalidInput
-	}
-
-	return nil
 }
 
 type TaskSubmissions []TaskSubmission
