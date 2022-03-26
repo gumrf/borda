@@ -42,7 +42,7 @@ func Run() {
 	authService := service.NewAuthService(repository.Users, repository.Teams,
 		hash.NewSHA1Hasher(config.PasswordSalt()),
 	)
-	userService := service.NewUserService(repository.Users, repository.Tasks)
+	userService := service.NewUserService(repository.Users, repository.Tasks, repository.Teams)
 	adminService := service.NewAdminService(repository.Tasks)
 
 	app := fiber.New()
