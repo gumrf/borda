@@ -111,6 +111,27 @@ func (r TeamRepository) GetTeamByToken(token string) (*domain.Team, error) {
 	return &team, nil
 }
 
+// Временная функция для нахождения команды по юзер айди ДЛЯ ТЕСТА
+func (r TeamRepository) GetTeamByUserId(userId int) (int, error) {
+	getTeamQuery := fmt.Sprintf(`
+		SELECT team_id 
+		FROM public.%s 
+		WHERE user_id=$1
+		LIMIT 1`,
+		teamMembersTable,
+	)
+
+	var teamId int
+	if err := r.db.Get(&teamId, getTeamQuery, userId); err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return -1, NewErrNotFound("team", "user", userId)
+		}
+		return -1, err
+	}
+
+	return teamId, nil
+}
+
 func (r TeamRepository) AddMember(teamId, userId int) error {
 	// Begin transaction
 	tx, err := r.db.Beginx()
