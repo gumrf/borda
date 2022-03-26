@@ -13,7 +13,7 @@ func NewAdminService(tsr repository.TaskRepository) *AdminService {
 	return &AdminService{taskRepo: tsr}
 }
 
-func (s *AdminService) ShowAllTasks(filter domain.TaskFilter) ([]*domain.Task, error) {
+func (s *AdminService) GetAllTasks(filter domain.TaskFilter) ([]*domain.Task, error) {
 	tasks, err := s.taskRepo.GetTasks(filter)
 	if err != nil {
 		return nil, err

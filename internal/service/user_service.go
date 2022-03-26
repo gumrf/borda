@@ -33,51 +33,81 @@ func (s *UserService) IsUserInTeam(userId int) bool {
 	return true
 }
 
-func (s *UserService) ShowAllTasks(filter domain.TaskFilter, userId int) ([]domain.TaskUserResponse, error) {
-
-	// filter.IsActive = true
-	// filter.IsDisabled = false ??????????????????????//
+func (s *UserService) GetAllTasks(userId int) ([]domain.TaskUserResponse, error) {
+	var filter domain.TaskFilter
+	//Важные поля для юзера
+	filter.IsActive = true
+	filter.IsDisabled = false
 
 	var tasks []*domain.Task
-	tasks, err := s.taskRepo.GetTasks(filter) // Получили таски по фильтру
+	// Получили таски по фильтру
+	tasks, err := s.taskRepo.GetTasks(filter)
 	if err != nil {
 		return nil, err
 	}
 
 	var teamId int
-	teamId, err = s.teamRepo.GetTeamByUserId(userId) //Надо откуда-то волшебным образом высрать TeamId
+	//Надо откуда-то волшебным образом высрать TeamId
+	teamId, err = s.teamRepo.GetTeamByUserId(userId)
 	if err != nil {
 		return nil, err
 	}
 
-	userTasks := make([]domain.TaskUserResponse, len(tasks))
+	//Получаю всех участников команды
+	users, err := s.teamRepo.GetMembers(teamId)
+	if err != nil {
+		return nil, err
+	}
 
-	// Ебаный ужас НО ОНО РАБОАЕТ ЭТО ПРОСТО ОХУЕННО
-	for i := range tasks {
-		userTasks[i].Id = tasks[i].Id
-		userTasks[i].Title = tasks[i].Title
-		userTasks[i].Description = tasks[i].Description
-		userTasks[i].Author = tasks[i].Author
-		userTasks[i].Category = tasks[i].Category
-		userTasks[i].Hint = tasks[i].Hint
-		userTasks[i].Complexity = tasks[i].Complexity
-		userTasks[i].Points = tasks[i].Points
-		userTasks[i].IsSolved, err = s.taskRepo.CheckSolvedTask(tasks[i].Id, teamId)
+	//Вношу имена в мапу [user.id]username
+	usernames := make(map[int]string)
+	for _, user := range users {
+		usernames[user.Id] = user.Username
+	}
+
+	userTasks := make([]domain.TaskUserResponse, 0)
+
+	for _, task := range tasks {
+
+		//Получаю все решения этого пользователя
+		allSubmissions, err := s.taskRepo.GetTaskSubmissions(task.Id, userId)
 		if err != nil {
 			return nil, err
 		}
-		submissions, err := s.taskRepo.GetTaskSubmissions(tasks[i].Id, userId)
+
+		//Привожу решения пользователя в вид для этого пользователя
+		userSubmissions := make([]domain.TaskSubmissionResponse, 0)
+		for _, sub := range allSubmissions {
+			submissionResponse := domain.TaskSubmissionResponse{
+				Username:  usernames[sub.UserId],
+				Flag:      sub.Flag,
+				IsCorrect: sub.IsCorrect,
+				Timestemp: sub.Timestemp,
+			}
+			userSubmissions = append(userSubmissions, submissionResponse)
+		}
+
+		//Проверка, решен ли таск
+		IsSolved, err := s.taskRepo.CheckSolvedTask(task.Id, teamId)
 		if err != nil {
 			return nil, err
 		}
 
-		userTasks[i].UserTaskSubmissions = make([]domain.UserTaskSubmission, len(submissions))
-
-		for j := range submissions {
-			userTasks[i].UserTaskSubmissions[j].Flag = submissions[j].Flag
-			userTasks[i].UserTaskSubmissions[j].Timestemp = submissions[j].Timestemp
-			userTasks[i].UserTaskSubmissions[j].UserId = submissions[j].UserId
+		//Заполнение формы таска для юзера
+		taskResponse := domain.TaskUserResponse{
+			Id:          task.Id,
+			Title:       task.Title,
+			Description: task.Description,
+			Category:    task.Description,
+			Complexity:  task.Category,
+			Points:      task.Points,
+			Hint:        task.Hint,
+			IsSolved:    IsSolved,
+			Submissions: userSubmissions,
+			Author:      task.Author,
 		}
+
+		userTasks = append(userTasks, taskResponse)
 
 	}
 
