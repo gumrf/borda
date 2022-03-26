@@ -23,6 +23,26 @@ type Task struct {
 	Author      Author `json:"author" db:"author"`
 }
 
+// Используется для отправки юзеру таска на запрос GetAllTasks
+type TaskUserResponse struct {
+	Id                  int    `json:"id"`
+	Title               string `json:"title" `
+	Description         string `json:"description" `
+	Category            string `json:"category" `
+	Complexity          string `json:"complexity" `
+	Points              int    `json:"points" `
+	Hint                string `json:"hint"`
+	IsSolved            bool   `json:"is_solved"`
+	UserTaskSubmissions []UserTaskSubmission
+	Author              Author
+}
+
+type UserTaskSubmission struct {
+	UserId    int       `json:"userId"`
+	Flag      string    `json:"flag" `
+	Timestemp time.Time `json:"timestemp"`
+}
+
 type Author struct {
 	Id      int    `json:"id" db:"id"`
 	Name    string `json:"name" db:"name"`
