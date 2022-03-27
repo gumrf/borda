@@ -62,7 +62,7 @@ func (r UserRepository) SaveUser(username, password, contact string) (int, error
 	}
 
 	// Hardcode role to 'user'
-	if err := r.AssignRole(userId, 2); err != nil {
+	if err := assignRole(tx, userId, 2); err != nil {
 		return -1, err
 	}
 
@@ -130,6 +130,26 @@ func (r UserRepository) UpdatePassword(userId int, newPassword string) error {
 }
 
 func (r UserRepository) AssignRole(userId, roleId int) error {
+	// Begin transaction
+	tx, err := r.db.Beginx()
+	if err != nil {
+		return err
+	}
+	defer tx.Rollback()
+
+	if err := assignRole(tx, userId, roleId); err != nil {
+		return err
+	}
+
+	// Commit transaction
+	if err := tx.Commit(); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func assignRole(tx *sqlx.Tx, userId, roleId int) error {
 	query := fmt.Sprintf(`
 		INSERT INTO public.%s (
 			user_id,
@@ -138,7 +158,7 @@ func (r UserRepository) AssignRole(userId, roleId int) error {
 		VALUES($1, $2)`,
 		userRolesTable)
 
-	if _, err := r.db.Exec(query, userId, roleId); err != nil {
+	if _, err := tx.Exec(query, userId, roleId); err != nil {
 		return err
 	}
 
