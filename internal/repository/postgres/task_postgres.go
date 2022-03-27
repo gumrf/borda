@@ -298,7 +298,7 @@ func (r TaskRepository) CheckSolvedTask(taskId, teamId int) (bool, error) {
 	return isTaskSolved, nil
 }
 
-func (r TaskRepository) SaveTaskSubmission(taskSubmission domain.SubmitTaskRequest, isCorrect bool) error {
+func (r TaskRepository) SaveTaskSubmission(submission domain.TaskSubmission) error {
 	saveTaskSubmissionQuery := fmt.Sprintf(`
 		INSERT INTO public.%s (
 			task_id,
@@ -310,8 +310,8 @@ func (r TaskRepository) SaveTaskSubmission(taskSubmission domain.SubmitTaskReque
 		VALUES ($1, $2, $3, $4, $5)`,
 		taskSubmissionTable)
 
-	if _, err := r.db.Exec(saveTaskSubmissionQuery, taskSubmission.TaskId, taskSubmission.TeamId,
-		taskSubmission.UserId, taskSubmission.Flag, isCorrect); err != nil {
+	if _, err := r.db.Exec(saveTaskSubmissionQuery, submission.TaskId, submission.TeamId,
+		submission.UserId, submission.Flag, submission.IsCorrect); err != nil {
 		return err
 	}
 

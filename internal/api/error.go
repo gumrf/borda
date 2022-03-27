@@ -7,11 +7,11 @@ import (
 	"github.com/gofiber/fiber/v2"
 )
 
-type ErrorResponse struct {
-	Errors []ErrorObject `json:"errors"`
+type ErrorsResponse struct {
+	Errors []Error `json:"errors"`
 }
 
-type ErrorObject struct {
+type Error struct {
 	Status string `json:"status"`
 	Code   string `json:"code"`
 	Title  string `json:"title,omitempty"`
@@ -26,9 +26,9 @@ type ErrorObject struct {
 // type Parameter string
 
 func NewErrorResponse(c *fiber.Ctx, status int, title string, detail ...string) error {
-	return c.Status(status).JSON(ErrorResponse{
-		Errors: []ErrorObject{
-			ErrorObject{
+	return c.Status(status).JSON(ErrorsResponse{
+		Errors: []Error{
+			Error{
 				Status: strconv.Itoa(status),
 				Code:   http.StatusText(status),
 				Title:  title,
@@ -42,3 +42,5 @@ func NewErrorResponse(c *fiber.Ctx, status int, title string, detail ...string) 
 		},
 	})
 }
+
+type BadRequestResponse ErrorsResponse

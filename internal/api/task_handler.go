@@ -8,13 +8,11 @@ import (
 )
 
 func (h *Handler) initTaskRoutes(router fiber.Router) {
-	tasks := router.Group("/tasks", h.authRequired)
+	tasks := router.Group("/tasks", h.authRequired, h.checkUserInTeam)
 	tasks.Get("", h.getAllTasks)
 
-	task := router.Group("/tasks/:id")
-
-	task.Post("/submissions", h.createNewSubmission)
-	task.Get("/submissions", h.getAllSubmissions)
+	tasks.Post("/:id/submissions", h.submitFlag)
+	tasks.Get("/:id/submissions", h.getAllSubmissions)
 }
 
 // @Summary      Get all tasks
@@ -28,23 +26,15 @@ func (h *Handler) initTaskRoutes(router fiber.Router) {
 // @Failure      500  {object}  ErrorResponse
 // @Router       /tasks/ [get]
 func (h *Handler) getAllTasks(ctx *fiber.Ctx) error {
-	var tasks []domain.TaskUserResponse
-
 	id, _ := strconv.Atoi(ctx.Locals("userId").(string))
 
 	tasks, err := h.UserService.GetAllTasks(id)
 	if err != nil {
 		return NewErrorResponse(ctx,
-			fiber.StatusBadRequest, err.Error())
+			fiber.StatusBadRequest, "Error occurred on the server.", err.Error())
 	}
 
-	type TaskRespose struct {
-		Tasks []domain.TaskUserResponse `json:"tasks"`
-	}
-
-	return ctx.Status(fiber.StatusOK).JSON(TaskRespose{
-		Tasks: tasks,
-	})
+	return ctx.Status(fiber.StatusOK).JSON(fiber.Map{"tasks": tasks})
 }
 
 // @Summary      Create new submission
@@ -58,31 +48,33 @@ func (h *Handler) getAllTasks(ctx *fiber.Ctx) error {
 // @Failure      404  {object}  ErrorResponse
 // @Failure      500  {object}  ErrorResponse
 // @Router       /tasks/:id/submissions [post]
-func (h *Handler) createNewSubmission(ctx *fiber.Ctx) error {
-	var submission domain.SubmitTaskRequest
-	err := ctx.BodyParser(&submission)
-	if err != nil {
-		return NewErrorResponse(ctx,
-			fiber.StatusBadRequest, err.Error())
+func (h *Handler) submitFlag(c *fiber.Ctx) error {
+	var submission domain.SubmitFlagRequest
+	if err := c.BodyParser(&submission); err != nil {
+		return NewErrorResponse(c, fiber.StatusBadRequest, err.Error())
 	}
 
 	if err := submission.Validate(); err != nil {
-		return NewErrorResponse(ctx,
-			fiber.StatusBadRequest, "Input flag is invalid.")
+		return NewErrorResponse(c, fiber.StatusBadRequest, "Input is invalid.", err.Error())
 	}
 
-	var message string
-	message, err = h.UserService.TryToSolveTask(submission)
+	// Get task from request url
+	taskId, err := strconv.Atoi(c.Params("id"))
 	if err != nil {
-		return NewErrorResponse(ctx,
+		return NewErrorResponse(c, fiber.StatusBadRequest, "Input is invalid.", err.Error())
+	}
+
+	if err := h.UserService.SolveTask(domain.TaskSubmission{
+		TaskId: taskId,
+		TeamId: c.Locals("teamId").(int),
+		UserId: c.Locals("userId").(int),
+		Flag:   submission.Flag,
+	}); err != nil {
+		return NewErrorResponse(c,
 			fiber.StatusConflict, err.Error())
 	}
 
-	return ctx.Status(201).JSON(fiber.Map{
-		"error":   false,
-		"message": message,
-		"flag":    submission.Flag,
-	})
+	return c.SendStatus(fiber.StatusOK)
 }
 
 // @Summary      Get all submission
@@ -96,24 +88,20 @@ func (h *Handler) createNewSubmission(ctx *fiber.Ctx) error {
 // @Failure      404  {object}  ErrorResponse
 // @Failure      500  {object}  ErrorResponse
 // @Router       /tasks/:id/submissions [get]
-func (h *Handler) getAllSubmissions(ctx *fiber.Ctx) error {
-
-	var input domain.SubmitTaskRequest
-	err := ctx.BodyParser(&input)
+func (h *Handler) getAllSubmissions(c *fiber.Ctx) error {
+	// Get task from request url
+	taskId, err := strconv.Atoi(c.Params("id"))
 	if err != nil {
-		return NewErrorResponse(ctx,
-			fiber.StatusBadRequest, err.Error())
+		return NewErrorResponse(c, fiber.StatusBadRequest, "Input is invalid.", err.Error())
 	}
 
-	var submissions []*domain.TaskSubmission
-	submissions, err = h.UserService.GetTaskSubmissions(input)
+	// Get user id from context
+	userId := c.Locals("userId").(int)
+
+	submissions, err := h.UserService.GetTaskSubmissions(taskId, userId)
 	if err != nil {
-		return NewErrorResponse(ctx,
-			fiber.StatusConflict, err.Error())
+		return NewErrorResponse(c, fiber.StatusConflict, "", err.Error())
 	}
 
-	return ctx.JSON(fiber.Map{
-		"error":       false,
-		"submissions": submissions,
-	})
+	return c.Status(fiber.StatusOK).JSON(fiber.Map{"submissions": submissions})
 }

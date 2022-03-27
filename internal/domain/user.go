@@ -5,7 +5,7 @@ type User struct {
 	Username string `json:"username" db:"name"`
 	Password string `json:"password" db:"password"`
 	Contact  string `json:"contact" db:"contact"`
-	Team     Team   `json:"teamId" db:"team_id"`
+	TeamId   int    `json:"teamId" db:"team_id"`
 }
 
 type UserSignUpInput struct {
@@ -17,4 +17,11 @@ type UserSignUpInput struct {
 type UserSignInInput struct {
 	Username string `json:"username"`
 	Password string `json:"password"`
+}
+
+type UserResponse struct {
+	Id       int    `json:"id"`
+	Username string `json:"username"`
+	Contact  string `json:"contact"`
+	Team     Team   `json:"team"`
 }

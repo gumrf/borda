@@ -11,6 +11,17 @@ VALUES
 -- Assign roles to users. TestUser1 has admin role, others have user role
 INSERT INTO public.user_role (user_id, role_id) VALUES (1,2), (2,1), (3,1);
 
+-- Create test Teams
+INSERT INTO public.team (name, token, team_leader_id)
+VALUES
+    ('TestTeam1', '2b8dc03a-aa81-11ec-8928-04d9f50035c4', 1),
+    ('TestTeam2', '2cbfd65a-aa81-11ec-b0f6-04d9f50035c4', 2),
+    ('TestTeam3', '3858b180-aa81-11ec-96e5-04d9f50035c4', 3);
+
+-- Add users to team
+
+INSERT INTO public.team_member(team_id, user_id) VALUES (1,1), (2,2), (3,3);
+
 -- Create test Authors
 INSERT INTO public.author (name, contact)
 VALUES
@@ -24,13 +35,6 @@ VALUES
        ('TestTask1', 'TestTask1_description', 'test', 'hard', 1337, 'Test Hint for task 1', 'flag{test_flag_for_task_1}', true, false, 1),
        ('TestTask1', 'TestTask1_description', 'test', 'easy', 1337, 'Test Hint for task 2', 'flag{test_flag_for_task_2}', false, false, 2),
        ('TestTask1', 'TestTask1_description', 'test', 'easy', 1337, 'Test Hint for task 3', 'flag{test_flag_for_task_3}', false, true, 2);
-
--- Create test Teams
-INSERT INTO public.team (name, token, team_leader_id)
-VALUES
-       ('TestTeam1', '2b8dc03a-aa81-11ec-8928-04d9f50035c4', 1),
-       ('TestTeam2', '2cbfd65a-aa81-11ec-b0f6-04d9f50035c4', 2),
-       ('TestTeam3', '3858b180-aa81-11ec-96e5-04d9f50035c4', 3);
 
 -- Create test Settings
 INSERT INTO  public.settings (key, value) VALUES ('team_limit', '4')

@@ -77,17 +77,17 @@ func (t Task) Validate() error {
 	return nil
 }
 
-func (t TaskUpdate) Validate() error {
-	err := validation.ValidateStruct(&t,
-		validation.Field(&t.Title, validation.Match(regexp.MustCompile("^[0-9A-Za-z_?!,.\\s]+$"))),
-		validation.Field(&t.Description),
-		validation.Field(&t.Category, is.LowerCase),
-		validation.Field(&t.Complexity, is.LowerCase),
-		validation.Field(&t.Points, is.Digit),
-		validation.Field(&t.Hint),
-		validation.Field(&t.Flag, validation.Match(regexp.MustCompile("^MACTF{[0-9A-Za-z_]+}$"))),
-		validation.Field(&t.AuthorName, validation.Match(regexp.MustCompile("^[0-9A-Za-z_]+$"))),
-		validation.Field(&t.AuthorContact, validation.Match(regexp.MustCompile("^@[a-z0-9_]+[a-z0-9]$"))),
+func (u TaskUpdate) Validate() error {
+	err := validation.ValidateStruct(&u,
+		validation.Field(&u.Title, validation.Match(regexp.MustCompile("^[0-9A-Za-z_?!,.\\s]+$"))),
+		validation.Field(&u.Description),
+		validation.Field(&u.Category, is.LowerCase),
+		validation.Field(&u.Complexity, is.LowerCase),
+		validation.Field(&u.Points, is.Digit),
+		validation.Field(&u.Hint),
+		validation.Field(&u.Flag, validation.Match(regexp.MustCompile("^MACTF{[0-9A-Za-z_]+}$"))),
+		validation.Field(&u.AuthorName, validation.Match(regexp.MustCompile("^[0-9A-Za-z_]+$"))),
+		validation.Field(&u.AuthorContact, validation.Match(regexp.MustCompile("^@[a-z0-9_]+[a-z0-9]$"))),
 	)
 
 	if err != nil {
@@ -97,7 +97,7 @@ func (t TaskUpdate) Validate() error {
 	return nil
 }
 
-func (t SubmitTaskRequest) Validate() error {
+func (t SubmitFlagRequest) Validate() error {
 	err := validation.ValidateStruct(&t,
 		validation.Field(&t.Flag, validation.Required, validation.Match(regexp.MustCompile("^MACTF{[0-9A-Za-z_]+}$"))),
 	)

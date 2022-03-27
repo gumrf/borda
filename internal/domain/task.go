@@ -20,27 +20,6 @@ type Task struct {
 	Author      Author `json:"author" db:"author"`
 }
 
-// Используется для отправки юзеру таска на запрос GetAllTasks
-type TaskUserResponse struct {
-	Id          int                      `json:"id"`
-	Title       string                   `json:"title" `
-	Description string                   `json:"description" `
-	Category    string                   `json:"category" `
-	Complexity  string                   `json:"complexity" `
-	Points      int                      `json:"points" `
-	Hint        string                   `json:"hint,omitempty"`
-	IsSolved    bool                     `json:"is_solved"`
-	Submissions []TaskSubmissionResponse `json:"submissions"`
-	Author      Author                   `json:"author"`
-}
-
-type TaskSubmissionResponse struct {
-	Username  string    `json:"username"`
-	Flag      string    `json:"flag" `
-	IsCorrect bool      `json:"is_correct"`
-	Timestemp time.Time `json:"timestemp"`
-}
-
 type Author struct {
 	Id      int    `json:"id" db:"id"`
 	Name    string `json:"name" db:"name"`
@@ -59,22 +38,6 @@ type TaskUpdate struct {
 	AuthorContact string `json:"-"`
 }
 
-func (f *TaskUpdate) ToMap() (map[string]interface{}, error) {
-	bytes, err := json.Marshal(f)
-	if err != nil {
-		return nil, err
-	}
-
-	result := make(map[string]interface{})
-
-	err = json.Unmarshal(bytes, &result)
-	if err != nil {
-		return nil, err
-	}
-
-	return result, nil
-}
-
 // TaskFilter represents a filter passed to FindTasks().
 type TaskFilter struct {
 	Id         int    `json:"id,omitempty"`
@@ -87,6 +50,69 @@ type TaskFilter struct {
 
 	Offset int `json:"-"`
 	Limit  int `json:"-"`
+}
+
+//type SolvedTask struct {
+//	TaskId    int       `json:"taskId"`
+//	TeamId    int       `json:"teamId"`
+//	Timestamp time.Time `json:"timestamp"`
+//}
+//
+//type SolvedTasks []SolvedTask
+
+type TaskSubmission struct {
+	TaskId    int       `json:"taskId" db:"task_id"`
+	TeamId    int       `json:"teamId" db:"team_id"`
+	UserId    int       `json:"userId" db:"user_id"`
+	Flag      string    `json:"flag" db:"flag"`
+	IsCorrect bool      `json:"isCorrect" db:"is_correct"`
+	Timestamp time.Time `json:"timestamp" db:"timestamp"`
+}
+
+// UserTaskResponse содержит только то, что должен увидеть пользователь решающий таски
+type UserTaskResponse struct {
+	Id          int                      `json:"id"`
+	Title       string                   `json:"title" `
+	Description string                   `json:"description" `
+	Category    string                   `json:"category" `
+	Complexity  string                   `json:"complexity" `
+	Points      int                      `json:"points" `
+	Hint        string                   `json:"hint,omitempty"`
+	IsSolved    bool                     `json:"isSolved"`
+	Submissions []TaskSubmissionResponse `json:"submissions"`
+	Author      Author                   `json:"author"`
+}
+
+type TaskSubmissionResponse struct {
+	Username  string    `json:"username"`
+	Flag      string    `json:"flag" `
+	IsCorrect bool      `json:"isCorrect"`
+	Timestamp time.Time `json:"timestamp"`
+}
+
+type SubmitFlagRequest struct {
+	//TaskId int `json:"taskId"`
+	//TeamId int    `json:"teamId"`
+	//UserId int    `json:"userId"`
+	Flag string `json:"flag"`
+}
+
+//type TaskSubmissions []TaskSubmission
+
+func (u *TaskUpdate) ToMap() (map[string]interface{}, error) {
+	bytes, err := json.Marshal(u)
+	if err != nil {
+		return nil, err
+	}
+
+	result := make(map[string]interface{})
+
+	err = json.Unmarshal(bytes, &result)
+	if err != nil {
+		return nil, err
+	}
+
+	return result, nil
 }
 
 func (f *TaskFilter) ToMap() (map[string]interface{}, error) {
@@ -104,29 +130,3 @@ func (f *TaskFilter) ToMap() (map[string]interface{}, error) {
 
 	return result, nil
 }
-
-type SolvedTask struct {
-	TaskId    int       `json:"taskId"`
-	TeamId    int       `json:"teamId"`
-	Timestamp time.Time `json:"timestemp"`
-}
-
-type SolvedTasks []SolvedTask
-
-type TaskSubmission struct {
-	TaskId    int       `json:"taskId" db:"task_id"`
-	TeamId    int       `json:"teamId" db:"team_id"`
-	UserId    int       `json:"userId" db:"user_id"`
-	Flag      string    `json:"flag" db:"flag"`
-	IsCorrect bool      `json:"isCorrect" db:"is_correct"`
-	Timestemp time.Time `json:"timestemp" db:"timestamp"`
-}
-
-type SubmitTaskRequest struct {
-	TaskId int    `json:"taskId"`
-	TeamId int    `json:"teamId"`
-	UserId int    `json:"userId"`
-	Flag   string `json:"flag"`
-}
-
-type TaskSubmissions []TaskSubmission

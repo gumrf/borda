@@ -20,35 +20,39 @@ func NewUserService(userRepo repository.UserRepository, taskRepo repository.Task
 	}
 }
 
-func (s *UserService) IsUserInTeam(userId int) bool {
+func (s *UserService) GetUser(id int) (domain.User, error) {
+	if user, err := s.userRepo.GetUserById(id); err != nil {
+		return 
+	}
+}
+func (s *UserService) IsUserInTeam(userId int) (int, bool) {
 	user, err := s.userRepo.GetUserById(userId)
 	if err != nil {
-		return false
+		return 0, false
 	}
 
-	if user.Team.Id == 0 {
-		return false
+	if user.TeamId <= 0 {
+		return 0, false
 	}
 
-	return true
+	return user.TeamId, true
 }
 
-func (s *UserService) GetAllTasks(userId int) ([]domain.TaskUserResponse, error) {
+func (s *UserService) GetAllTasks(userId int) ([]domain.UserTaskResponse, error) {
 	filter := domain.TaskFilter{
 		IsActive:   true,
 		IsDisabled: false,
 	}
 
-	var tasks []*domain.Task
 	// Получили таски по фильтру
 	tasks, err := s.taskRepo.GetTasks(filter)
 	if err != nil {
 		return nil, err
 	}
 
-	var teamId int
+	// TODO: Write teamid  to context when che
 	//Надо откуда-то волшебным образом высрать TeamId
-	teamId, err = s.teamRepo.GetTeamByUserId(userId)
+	teamId, err := s.teamRepo.GetTeamByUserId(userId)
 	if err != nil {
 		return nil, err
 	}
@@ -60,41 +64,43 @@ func (s *UserService) GetAllTasks(userId int) ([]domain.TaskUserResponse, error)
 	}
 
 	//Вношу имена в мапу [user.id]username
-	usernames := make(map[int]string)
+	usernames := make(map[int]string, 4)
 	for _, user := range users {
 		usernames[user.Id] = user.Username
 	}
 
-	userScopedTasks := make([]domain.TaskUserResponse, 0)
+	userTasksResponse := make([]domain.UserTaskResponse, 0)
 
 	for _, task := range tasks {
 
-		//Получаю все решения этого пользователя
-		allSubmissions, err := s.taskRepo.GetTaskSubmissions(task.Id, teamId)
+		// Get team submissions for task
+		submissions, err := s.taskRepo.GetTaskSubmissions(task.Id, teamId)
 		if err != nil {
 			return nil, err
 		}
 
-		//Привожу решения пользователя в вид для этого пользователя
-		taskSubmissionResponse := make([]domain.TaskSubmissionResponse, 0)
-		for _, sub := range allSubmissions {
+		// Build submissions response
+		taskSubmissionsResponse := make([]domain.TaskSubmissionResponse, 0)
+		for _, submission := range submissions {
+			// Allocate sibmission object
 			submissionResponse := domain.TaskSubmissionResponse{
-				Username:  usernames[sub.UserId],
-				Flag:      sub.Flag,
-				IsCorrect: sub.IsCorrect,
-				Timestemp: sub.Timestemp,
+				Username:  usernames[submission.UserId],
+				Flag:      submission.Flag,
+				IsCorrect: submission.IsCorrect,
+				Timestamp: submission.Timestamp,
 			}
-			taskSubmissionResponse = append(taskSubmissionResponse, submissionResponse)
+			// Append allocated submission object to array of submissions
+			taskSubmissionsResponse = append(taskSubmissionsResponse, submissionResponse)
 		}
 
-		//Проверка, решен ли таск
-		IsSolved, err := s.taskRepo.CheckSolvedTask(task.Id, teamId)
+		// Check if task solved
+		isTaskSolved, err := s.taskRepo.CheckSolvedTask(task.Id, teamId)
 		if err != nil {
 			return nil, err
 		}
 
-		//Заполнение формы таска для юзера
-		taskResponse := domain.TaskUserResponse{
+		// Allocate and fill task object
+		taskResponse := domain.UserTaskResponse{
 			Id:          task.Id,
 			Title:       task.Title,
 			Description: task.Description,
@@ -102,63 +108,41 @@ func (s *UserService) GetAllTasks(userId int) ([]domain.TaskUserResponse, error)
 			Complexity:  task.Category,
 			Points:      task.Points,
 			Hint:        task.Hint,
-			IsSolved:    IsSolved,
-			Submissions: taskSubmissionResponse,
+			IsSolved:    isTaskSolved,
+			Submissions: taskSubmissionsResponse,
 			Author:      task.Author,
 		}
 
-		userScopedTasks = append(userScopedTasks, taskResponse)
-
+		// Append task object to UserTasksResponse array
+		userTasksResponse = append(userTasksResponse, taskResponse)
 	}
 
-	return userScopedTasks, nil
+	return userTasksResponse, nil
 }
 
-func (s *UserService) TryToSolveTask(submission domain.SubmitTaskRequest) (string, error) {
-	var task *domain.Task
-	var err error
-
-	// Перенести проверку в репозиторий
-	//var isTaskSolved bool
-	//isTaskSolved, err = s.taskRepo.CheckSolvedTask(submission.TaskId, submission.TeamId)
-	//if err != nil {
-	//	return "Error on cheking solved task", err
-	//}
-	//if isTaskSolved {
-	//	return "Task already solved!", nil
-	//}
-
-	task, err = s.taskRepo.GetTaskById(submission.TaskId)
+func (s *UserService) SolveTask(submission domain.TaskSubmission) error {
+	task, err := s.taskRepo.GetTaskById(submission.TaskId)
 	if err != nil {
-		return "", err
+		return err
 	}
 
 	if submission.Flag == task.Flag {
-		err = s.taskRepo.SolveTask(task.Id, submission.TeamId)
-
-		if err != nil {
-			return "Error on SolveTask", err
-		}
-
-		err = s.taskRepo.SaveTaskSubmission(submission, true)
-		if err != nil {
-			return "Error on FillTaskSubmission true", err
-		}
-
-		return "Submission is correct", nil
-	} else {
-		err = s.taskRepo.SaveTaskSubmission(submission, false)
-		if err != nil {
-			return "Error on FillTaskSubmission false", err
-		}
-
-		return "Submission is incorrect", nil
+		submission.IsCorrect = true
 	}
 
+	if err := s.taskRepo.SolveTask(task.Id, submission.TeamId); err != nil {
+		return err
+	}
+
+	if err := s.taskRepo.SaveTaskSubmission(submission); err != nil {
+		return err
+	}
+
+	return nil
 }
 
-func (s *UserService) GetTaskSubmissions(input domain.SubmitTaskRequest) ([]*domain.TaskSubmission, error) {
-	submissions, err := s.taskRepo.GetTaskSubmissions(input.TaskId, input.UserId)
+func (s *UserService) GetTaskSubmissions(taskId, userId int) ([]*domain.TaskSubmission, error) {
+	submissions, err := s.taskRepo.GetTaskSubmissions(taskId, userId)
 	if err != nil {
 		return nil, err
 	}

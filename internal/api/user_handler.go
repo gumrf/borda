@@ -5,7 +5,7 @@ import (
 )
 
 func (h *Handler) initUserRoutes(router fiber.Router) {
-	users := router.Group("/users", h.authRequired)
+	users := router.Group("/users", h.authRequired, h.checkUserInTeam)
 	users.Get("", h.getAllUsers)
 
 	user := users.Group("/:id")

@@ -10,7 +10,7 @@ func TestTaskValidate(t *testing.T) {
 	type testCase struct {
 		Name string
 
-		Task SubmitTaskRequest
+		Task SubmitFlagRequest
 
 		ExpectedError error
 	}
@@ -25,7 +25,7 @@ func TestTaskValidate(t *testing.T) {
 
 	validate(t, &testCase{
 		Name: "testValid",
-		Task: SubmitTaskRequest{
+		Task: SubmitFlagRequest{
 			Flag: "MACTF{URa_eto_zhe_fLAG213}",
 		},
 		ExpectedError: nil,
@@ -33,7 +33,7 @@ func TestTaskValidate(t *testing.T) {
 
 	validate(t, &testCase{
 		Name: "InvalidName",
-		Task: SubmitTaskRequest{
+		Task: SubmitFlagRequest{
 			Flag: "YACTF{URa_eto_zhe_fLAG213}",
 		},
 		ExpectedError: ErrInvalidInput,
@@ -41,7 +41,7 @@ func TestTaskValidate(t *testing.T) {
 
 	validate(t, &testCase{
 		Name: "Invalidflag",
-		Task: SubmitTaskRequest{
+		Task: SubmitFlagRequest{
 			Flag: "MACTF{URa_e{}o_zhe_fLAG213}",
 		},
 		ExpectedError: ErrInvalidInput,
@@ -49,7 +49,7 @@ func TestTaskValidate(t *testing.T) {
 
 	validate(t, &testCase{
 		Name: "InvalidBrackets1",
-		Task: SubmitTaskRequest{
+		Task: SubmitFlagRequest{
 			Flag: "MACTF{URa_eto_zhe_fLAG213",
 		},
 		ExpectedError: ErrInvalidInput,
@@ -57,7 +57,7 @@ func TestTaskValidate(t *testing.T) {
 
 	validate(t, &testCase{
 		Name: "InvalidBrackets2",
-		Task: SubmitTaskRequest{
+		Task: SubmitFlagRequest{
 			Flag: "MACTFURa_eto_zhe_fLAG213}",
 		},
 		ExpectedError: ErrInvalidInput,
@@ -82,10 +82,9 @@ func TestTaskUpdateValidate(t *testing.T) {
 	}
 
 	validate(t, &testCase{
-		Name:          "",
-		TaskUpdate:    TaskUpdate{
-			Title:         "!",
-			
+		Name: "",
+		TaskUpdate: TaskUpdate{
+			Title: "!",
 		},
 		ExpectedError: nil,
 	})

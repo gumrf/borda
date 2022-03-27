@@ -125,11 +125,10 @@ func (r TeamRepository) GetTeamByToken(token string) (*domain.Team, error) {
 	return &team, nil
 }
 
-// Временная функция для нахождения команды по юзер айди ДЛЯ ТЕСТА
 func (r TeamRepository) GetTeamByUserId(userId int) (int, error) {
 	getTeamQuery := fmt.Sprintf(`
-		SELECT team_id 
-		FROM public.%s 
+		SELECT team_id
+		FROM public.%s
 		WHERE user_id=$1
 		LIMIT 1`,
 		teamMembersTable,

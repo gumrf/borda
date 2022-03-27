@@ -39,7 +39,7 @@ type TaskRepository interface {
 	GetTasks(domain.TaskFilter) ([]*domain.Task, error)
 	UpdateTask(id int, update domain.TaskUpdate) error
 	SolveTask(taskId, teamId int) error
-	SaveTaskSubmission(value domain.SubmitTaskRequest, isCorrect bool) error
+	SaveTaskSubmission(submission domain.TaskSubmission) error
 	GetTaskSubmissions(taskId, teamId int) ([]*domain.TaskSubmission, error)
 	// Для чего этот метод? Для того что бы не бегать каждый раз по скупе таблиц со всеми вариантами решения таска
 	CheckSolvedTask(taskId, teamId int) (bool, error) // конкретно мне понадобился для получения true/false в ShowAllTasks-user

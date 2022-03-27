@@ -14,3 +14,11 @@ type AttachTeamInput struct {
 	// Can be team token or team name.
 	Attribute string `json:"attribute"`
 }
+
+type TeamResponse struct {
+	Id           int      `json:"id" db:"id"`
+	Name         string   `json:"teamName"`
+	TeamLeaderId int      `json:"teamLeaderId"`
+	Token        string   `json:"token"`
+	Members      []string `json:"members"`
+}

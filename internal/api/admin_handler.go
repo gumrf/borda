@@ -10,11 +10,10 @@ import (
 func (h *Handler) initAdminRoutes(router fiber.Router) {
 	admin := router.Group("/admin", h.adminPermissionRequired)
 
-	admin.Get("/tasks", h.getAllTasksAdmin)
-	admin.Post("/tasks", h.createNewTask)
-
-	task := router.Group("/tasks/:id")
-	task.Patch("", h.updateTask)
+	tasks := admin.Group("/tasks")
+	tasks.Get("", h.adminGetAllTasks)
+	tasks.Post("", h.createNewTask)
+	tasks.Patch("/:id", h.updateTask)
 }
 
 // @Summary      Get all tasks
@@ -28,21 +27,14 @@ func (h *Handler) initAdminRoutes(router fiber.Router) {
 // @Failure      404  {object}  ErrorResponse
 // @Failure      500  {object}  ErrorResponse
 // @Router       /admin/tasks [get]
-func (h *Handler) getAllTasksAdmin(ctx *fiber.Ctx) error {
-	var tasks []*domain.Task
-
+func (h *Handler) adminGetAllTasks(c *fiber.Ctx) error {
 	tasks, err := h.AdminService.GetAllTasks()
 	if err != nil {
-		return NewErrorResponse(ctx,
-			fiber.StatusBadRequest, err.Error())
+		return NewErrorResponse(c, fiber.StatusBadRequest, "Internal server error", err.Error())
 	}
 
-	type TaskRespose struct {
-		Tasks []*domain.Task `json:"tasks"`
-	}
-
-	return ctx.Status(fiber.StatusOK).JSON(TaskRespose{
-		Tasks: tasks,
+	return c.Status(fiber.StatusOK).JSON(fiber.Map{
+		"tasks": tasks,
 	})
 }
 
@@ -57,36 +49,35 @@ func (h *Handler) getAllTasksAdmin(ctx *fiber.Ctx) error {
 // @Failure      404  {object}  ErrorResponse
 // @Failure      500  {object}  ErrorResponse
 // @Router       /task/:id [patch]
-func (h *Handler) updateTask(ctx *fiber.Ctx) error {
-
-	taskId, err := strconv.Atoi(ctx.Params("id"))
+func (h *Handler) updateTask(c *fiber.Ctx) error {
+	// Get task id from request url
+	taskId, err := strconv.Atoi(c.Params("id"))
 	if err != nil {
-		return NewErrorResponse(ctx,
-			fiber.StatusConflict, err.Error())
+		return NewErrorResponse(c, fiber.StatusConflict, "Parse url string", err.Error())
 	}
 
+	// Get request payload
 	var update domain.TaskUpdate
-
-	err = ctx.BodyParser(&update)
-	if err != nil {
-		return NewErrorResponse(ctx,
-			fiber.StatusBadRequest, err.Error())
+	if err := c.BodyParser(&update); err != nil {
+		return NewErrorResponse(c, fiber.StatusBadRequest, "Input is invalid.",
+			err.Error())
 	}
 
+	// Validate request payload
 	if err := update.Validate(); err != nil {
-		return NewErrorResponse(ctx,
-			fiber.StatusBadRequest, "Validation is not passed. "+err.Error())
+		return NewErrorResponse(c, fiber.StatusBadRequest,
+			"Validation is not passed.", err.Error())
 	}
 
-	err = h.AdminService.UpdateTask(taskId, update)
-	if err != nil {
-		return NewErrorResponse(ctx,
-			fiber.StatusBadRequest, err.Error())
+	// Update task
+	if err := h.AdminService.UpdateTask(taskId, update); err != nil {
+		return NewErrorResponse(c, fiber.StatusBadRequest,
+			"Internal server error.", err.Error())
 	}
 
-	return ctx.Status(fiber.StatusOK).JSON(fiber.Map{
-		"error": false,
-	})
+	// TODO: fetch and return task after update
+
+	return c.SendStatus(fiber.StatusOK)
 }
 
 // @Summary      Create new task
@@ -103,28 +94,21 @@ func (h *Handler) updateTask(ctx *fiber.Ctx) error {
 func (h *Handler) createNewTask(ctx *fiber.Ctx) error {
 	var task domain.Task
 
-	err := ctx.BodyParser(&task)
-	if err != nil {
-		return NewErrorResponse(ctx,
-			fiber.StatusBadRequest, err.Error())
+	if err := ctx.BodyParser(&task); err != nil {
+		return NewErrorResponse(ctx, fiber.StatusBadRequest,
+			"Input is invalid.", err.Error())
 	}
 
 	if err := task.Validate(); err != nil {
-		return NewErrorResponse(ctx,
-			fiber.StatusBadRequest, "Validation is not passed."+err.Error())
+		return NewErrorResponse(ctx, fiber.StatusBadRequest,
+			"Validation is not passed.", err.Error())
 	}
 
 	createdTask, err := h.AdminService.CreateNewTask(task)
 	if err != nil {
 		return NewErrorResponse(ctx,
-			fiber.StatusBadRequest, err.Error())
+			fiber.StatusBadRequest, "Internal server error.", err.Error())
 	}
 
-	type TaskResponse struct {
-		CreatedTask []*domain.Task `json:"task"`
-	}
-
-	return ctx.Status(fiber.StatusOK).JSON(TaskResponse{
-		CreatedTask: createdTask,
-	})
+	return ctx.Status(fiber.StatusOK).JSON(fiber.Map{"task": createdTask})
 }

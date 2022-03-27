@@ -45,6 +45,7 @@ func (h *Handler) Init(app *fiber.App) {
 
 	// Everything defined bellow will require authorization
 	v1.Use(jwtMiddleware.New(jwtMiddleware.Config{
+		// TODO: DefineErrorHandler function
 		SigningMethod: jwt.SigningMethodHS256.Name,
 		SigningKey:    []byte(config.JWT().SigningKey),
 		ContextKey:    "token",
@@ -71,12 +72,16 @@ func (h *Handler) authRequired(c *fiber.Ctx) error {
 	return c.Next()
 }
 
-func (h *Handler) CheckUserInTeam(c *fiber.Ctx) error {
+func (h *Handler) checkUserInTeam(c *fiber.Ctx) error {
 	id, _ := strconv.Atoi(c.Locals("userId").(string))
 
-	if !h.UserService.IsUserInTeam(id) {
-		return NewErrorResponse(c, fiber.StatusForbidden, "Authorization is not completed.") // Add details for err
+	teamId, ok := h.UserService.IsUserInTeam(id)
+	if !ok {
+		return NewErrorResponse(c, fiber.StatusForbidden, "User is not a member of any team.")
 	}
+
+	// Save team id to context
+	c.Locals("teamId", teamId)
 
 	return c.Next()
 }
@@ -84,7 +89,8 @@ func (h *Handler) CheckUserInTeam(c *fiber.Ctx) error {
 func (h *Handler) adminPermissionRequired(c *fiber.Ctx) error {
 	scope := c.Locals("scope")
 	if scope != "admin" {
-		return NewErrorResponse(c, fiber.StatusForbidden, "You are not allowed to access resource. Ask for admin permission")
+		return NewErrorResponse(c, fiber.StatusForbidden, "Invalid permission.",
+			"You are not allowed to access resource. Ask for admin permission.")
 	}
 
 	return c.Next()
