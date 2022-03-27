@@ -15,6 +15,9 @@ CREATE TABLE IF NOT EXISTS role (
    name varchar(256)
 );
 
+-- Insert default values
+INSERT INTO role (name) VALUES ('admin'), ('user');
+
 -- Create books table
 CREATE TABLE IF NOT EXISTS user_role (
    user_id integer NOT NULL PRIMARY KEY REFERENCES "user"(id),

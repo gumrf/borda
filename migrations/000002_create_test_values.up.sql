@@ -31,11 +31,3 @@ VALUES
 
 -- Create test Settings
 INSERT INTO  public.settings (key, value) VALUES ('team_limit', '4')
-
-
-
-
-
-
-
-
