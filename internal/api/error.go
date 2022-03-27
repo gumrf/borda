@@ -25,17 +25,20 @@ type ErrorObject struct {
 
 // type Parameter string
 
-// TODO: adopt NewErrorResponse to acept custom error compatible with
-// 		 interface. It should replaces title and detail.
-func NewErrorResponse(c *fiber.Ctx, status int, title string) error {
-	return c.Status(status).JSON(
-		ErrorResponse{
-			Errors: []ErrorObject{
-				ErrorObject{
-					Status: strconv.Itoa(status),
-					Code:   http.StatusText(status),
-					Title:  title,
-				},
+func NewErrorResponse(c *fiber.Ctx, status int, title string, detail ...string) error {
+	return c.Status(status).JSON(ErrorResponse{
+		Errors: []ErrorObject{
+			ErrorObject{
+				Status: strconv.Itoa(status),
+				Code:   http.StatusText(status),
+				Title:  title,
+				Detail: func(detail []string) string {
+					if len(detail) > 0 {
+						return detail[0]
+					}
+					return ""
+				}(detail),
 			},
-		})
+		},
+	})
 }
