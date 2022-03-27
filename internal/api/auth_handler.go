@@ -2,8 +2,6 @@ package api
 
 import (
 	"borda/internal/domain"
-	"fmt"
-
 	"github.com/gofiber/fiber/v2"
 )
 
@@ -17,22 +15,19 @@ func (h *Handler) initAuthRoutes(router fiber.Router) {
 func (h *Handler) handleSignUp(ctx *fiber.Ctx) error {
 	var input domain.UserSignUpInput
 
-	err := ctx.BodyParser(&input)
-	if err != nil {
+	if err := ctx.BodyParser(&input); err != nil {
 		return NewErrorResponse(ctx,
-			fiber.StatusBadRequest, "Input data is invalid. Can't parse json.")
+			fiber.StatusBadRequest, "Input data is invalid.", err.Error())
 	}
 
 	if err := input.Validate(); err != nil {
 		return NewErrorResponse(ctx,
-			fiber.StatusBadRequest, "Input data is invalid. Validation is not passed.")
+			fiber.StatusBadRequest, "Input data is invalid.", " Validation is not passed: "+err.Error())
 	}
 
-	err = h.AuthService.SignUp(input)
-	if err != nil {
-		// TODO: send specific error depending on error type returned by SignUp
+	if err := h.AuthService.SignUp(input); err != nil {
 		return NewErrorResponse(ctx,
-			fiber.StatusInternalServerError, fmt.Sprintf("Error occurred on the server. Error: %s", err.Error()),
+			fiber.StatusInternalServerError, "Error occurred on the server.", err.Error(),
 		)
 	}
 
@@ -42,23 +37,20 @@ func (h *Handler) handleSignUp(ctx *fiber.Ctx) error {
 func (h *Handler) handleSignIn(ctx *fiber.Ctx) error {
 	var input domain.UserSignInInput
 
-	err := ctx.BodyParser(&input)
-	if err != nil {
+	if err := ctx.BodyParser(&input); err != nil {
 		return NewErrorResponse(ctx,
-			fiber.StatusBadRequest, "Input data is invalid.")
+			fiber.StatusBadRequest, "Input data is invalid.", err.Error())
 	}
 
 	if err := input.Validate(); err != nil {
 		return NewErrorResponse(ctx,
-			fiber.StatusBadRequest, "Input data is invalid.")
+			fiber.StatusBadRequest, "Input data is invalid.", err.Error())
 	}
 
 	token, err := h.AuthService.SignIn(input)
 	if err != nil {
-		// TODO: send specific error depending on error type returned by SignIn
 		return NewErrorResponse(ctx,
-			fiber.StatusInternalServerError, err.Error(),
-		)
+			fiber.StatusInternalServerError, "Error occurred on the server.", err.Error())
 	}
 
 	return ctx.Status(fiber.StatusOK).JSON(fiber.Map{"token": token})
