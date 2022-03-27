@@ -115,6 +115,12 @@ func (s *AuthService) SignIn(input domain.UserSignInInput) (string, error) {
 		return "", err
 	}
 
+	// Get user role
+	role, err := s.userRepo.GetUserRole(user.Id)
+	if err != nil{
+		return "", err
+	}
+
 	jwtConf := config.JWT()
 
 	fmt.Println(jwtConf)
@@ -125,7 +131,7 @@ func (s *AuthService) SignIn(input domain.UserSignInInput) (string, error) {
 		"exp":   jwt.NewNumericDate(time.Now().Add(jwtConf.ExpireTime)),
 		"iat":   jwt.NewNumericDate(time.Now()),
 		"aud":   "borda-v1",
-		"scope": []string{"user"},
+		"scope": []string{role.Name},
 	}
 
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)

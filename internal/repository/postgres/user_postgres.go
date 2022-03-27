@@ -19,7 +19,6 @@ func NewUserRepository(db *sqlx.DB) *UserRepository {
 	return &UserRepository{db: db}
 }
 
-// TODO: pass user object when create user
 func (r UserRepository) SaveUser(username, password, contact string) (int, error) {
 	tx, err := r.db.Beginx()
 	if err != nil {
@@ -59,6 +58,11 @@ func (r UserRepository) SaveUser(username, password, contact string) (int, error
 
 	var userId int
 	if err := tx.Get(&userId, createUserQuery, username, password, contact); err != nil {
+		return -1, err
+	}
+
+	// Hardcode role to 'user'
+	if err := r.AssignRole(userId, 2); err != nil {
 		return -1, err
 	}
 
