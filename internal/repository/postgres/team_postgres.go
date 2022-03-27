@@ -26,6 +26,7 @@ func (r TeamRepository) SaveTeam(teamLeaderId int, teamName string) (int, error)
 	if err != nil {
 		return -1, err
 	}
+	defer tx.Rollback()
 
 	isTeamExistQuery := fmt.Sprintf(`
 		SELECT EXISTS (
@@ -62,13 +63,26 @@ func (r TeamRepository) SaveTeam(teamLeaderId int, teamName string) (int, error)
 		teamTable,
 	)
 
-	var id int
-	row := tx.QueryRow(saveTeamQuery, teamName, uuid, teamLeaderId)
-	if err := row.Scan(&id); err != nil {
+	var teamId int
+	if err := tx.Get(&teamId, saveTeamQuery, teamName, uuid, teamLeaderId); err != nil {
 		return -1, err
 	}
 
-	return id, nil
+	// Attach user to the team
+	addLeaderToTeamQuery := fmt.Sprintf(`
+		INSERT INTO public.%s (
+			team_id, 
+			user_id
+		) 
+		VALUES($1, $2)`,
+		teamMembersTable,
+	)
+
+	if _, err := tx.Exec(addLeaderToTeamQuery, teamId, teamLeaderId); err != nil {
+		return -1, err
+	}
+
+	return teamId, nil
 }
 
 func (r TeamRepository) GetTeamById(teamId int) (*domain.Team, error) {
