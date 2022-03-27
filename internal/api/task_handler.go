@@ -10,96 +10,54 @@ import (
 func (h *Handler) initTaskRoutes(router fiber.Router) {
 	tasks := router.Group("/tasks", h.authRequired)
 	tasks.Get("", h.getAllTasks)
-	tasks.Post("", h.createNewTask, h.adminPermissionRequired)
 
-	task := router.Group("/tasks/:id", h.adminPermissionRequired)
-	task.Patch("", h.updateTask)
+	task := router.Group("/tasks/:id")
 
 	task.Post("/submissions", h.createNewSubmission)
 	task.Get("/submissions", h.getAllSubmissions)
 }
 
+// @Summary      Get all tasks
+// @Description  allows the user to get tasks by filter.
+// @Tags         Tasks
+// @Accept       json
+// @Produce      json
+// @Success      200  {object}  TaskResponse
+// @Failure      400  {object}  ErrorResponse
+// @Failure      404  {object}  ErrorResponse
+// @Failure      500  {object}  ErrorResponse
+// @Router       /tasks/ [get]
 func (h *Handler) getAllTasks(ctx *fiber.Ctx) error {
-	var filter domain.TaskFilter
-	var tasks []*domain.Task
+	var tasks []domain.TaskUserResponse
 
-	err := ctx.BodyParser(&filter)
-	if err != nil {
-		return NewErrorResponse(ctx,
-			fiber.StatusBadRequest, err.Error())
-	}
+	id, _ := strconv.Atoi(ctx.Locals("userId").(string))
 
-	tasks, err = h.UserService.ShowAllTasks(filter)
+	tasks, err := h.UserService.GetAllTasks(id)
 	if err != nil {
 		return NewErrorResponse(ctx,
 			fiber.StatusBadRequest, err.Error())
 	}
 
 	type TaskRespose struct {
-		Response []*domain.Task
+		Tasks []domain.TaskUserResponse `json:"tasks"`
 	}
 
 	return ctx.Status(fiber.StatusOK).JSON(TaskRespose{
-		Response: tasks,
+		Tasks: tasks,
 	})
 }
 
-func (h *Handler) createNewTask(ctx *fiber.Ctx) error {
-	var task domain.Task
-
-	err := ctx.BodyParser(&task)
-	if err != nil {
-		return NewErrorResponse(ctx,
-			fiber.StatusBadRequest, err.Error())
-	}
-
-	//TODO: VALIDATE task
-
-	var taskId int
-
-	taskId, err = h.AdminService.CreateNewTask(task)
-	if err != nil {
-		return NewErrorResponse(ctx,
-			fiber.StatusBadRequest, err.Error())
-	}
-
-	return ctx.Status(201).JSON(fiber.Map{
-		"error":   false,
-		"message": "Task created",
-		"task_id": taskId,
-	})
-}
-
-func (h *Handler) updateTask(ctx *fiber.Ctx) error {
-
-	taskId, err := strconv.Atoi(ctx.Params("id"))
-	if err != nil {
-		return NewErrorResponse(ctx,
-			fiber.StatusConflict, err.Error())
-	}
-
-	var taskData domain.TaskUpdate
-
-	err = ctx.BodyParser(&taskData)
-	if err != nil {
-		return NewErrorResponse(ctx,
-			fiber.StatusBadRequest, err.Error())
-	}
-
-	//TODO: VALIDATE taskData
-
-	err = h.AdminService.UpdateTask(taskId, taskData)
-	if err != nil {
-		return NewErrorResponse(ctx,
-			fiber.StatusBadRequest, err.Error())
-	}
-
-	return ctx.JSON(fiber.Map{
-		"error":   false,
-		"message": "Successfully update task!",
-	})
-}
-
+// @Summary      Create new submission
+// @Description  allows the user to create submission.
+// @Tags         Submissions
+// @Accept       json
+// @Produce      json
+// @Param		 id   path      int  true  "Task ID"
+// @Success      201  {object}  TaskResponse
+// @Failure      400  {object}  ErrorResponse
+// @Failure      404  {object}  ErrorResponse
+// @Failure      500  {object}  ErrorResponse
+// @Router       /tasks/:id/submissions [post]
 func (h *Handler) createNewSubmission(ctx *fiber.Ctx) error {
 	var submission domain.SubmitTaskRequest
 	err := ctx.BodyParser(&submission)
@@ -127,6 +85,17 @@ func (h *Handler) createNewSubmission(ctx *fiber.Ctx) error {
 	})
 }
 
+// @Summary      Get all submission
+// @Description  allows the user to get all submissions for task.
+// @Tags         Submissions
+// @Accept       json
+// @Produce      json
+// @Param		 id   path      int  true  "Task ID"
+// @Success      201  {object}  TaskResponse
+// @Failure      400  {object}  ErrorResponse
+// @Failure      404  {object}  ErrorResponse
+// @Failure      500  {object}  ErrorResponse
+// @Router       /tasks/:id/submissions [get]
 func (h *Handler) getAllSubmissions(ctx *fiber.Ctx) error {
 
 	var input domain.SubmitTaskRequest

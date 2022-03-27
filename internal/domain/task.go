@@ -2,10 +2,7 @@ package domain
 
 import (
 	"encoding/json"
-	"regexp"
 	"time"
-
-	validation "github.com/go-ozzo/ozzo-validation/v4"
 )
 
 // Task is task
@@ -21,6 +18,27 @@ type Task struct {
 	IsActive    bool   `json:"isActive" db:"is_active"`
 	IsDisabled  bool   `json:"isDisabled" db:"is_disabled"`
 	Author      Author `json:"author" db:"author"`
+}
+
+// Используется для отправки юзеру таска на запрос GetAllTasks
+type TaskUserResponse struct {
+	Id          int                      `json:"id"`
+	Title       string                   `json:"title" `
+	Description string                   `json:"description" `
+	Category    string                   `json:"category" `
+	Complexity  string                   `json:"complexity" `
+	Points      int                      `json:"points" `
+	Hint        string                   `json:"hint,omitempty"`
+	IsSolved    bool                     `json:"is_solved"`
+	Submissions []TaskSubmissionResponse `json:"submissions"`
+	Author      Author                   `json:"author"`
+}
+
+type TaskSubmissionResponse struct {
+	Username  string    `json:"username"`
+	Flag      string    `json:"flag" `
+	IsCorrect bool      `json:"is_correct"`
+	Timestemp time.Time `json:"timestemp"`
 }
 
 type Author struct {
@@ -109,17 +127,6 @@ type SubmitTaskRequest struct {
 	TeamId int    `json:"teamId"`
 	UserId int    `json:"userId"`
 	Flag   string `json:"flag"`
-}
-
-func (t SubmitTaskRequest) Validate() error {
-	err := validation.ValidateStruct(&t,
-		validation.Field(&t.Flag, validation.Required, validation.Match(regexp.MustCompile("^MACTF{[0-9A-Za-z_]+}$"))),
-	)
-	if err != nil {
-		return ErrInvalidInput
-	}
-
-	return nil
 }
 
 type TaskSubmissions []TaskSubmission

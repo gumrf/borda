@@ -111,6 +111,27 @@ func (r TeamRepository) GetTeamByToken(token string) (*domain.Team, error) {
 	return &team, nil
 }
 
+// Временная функция для нахождения команды по юзер айди ДЛЯ ТЕСТА
+func (r TeamRepository) GetTeamByUserId(userId int) (int, error) {
+	getTeamQuery := fmt.Sprintf(`
+		SELECT team_id 
+		FROM public.%s 
+		WHERE user_id=$1
+		LIMIT 1`,
+		teamMembersTable,
+	)
+
+	var teamId int
+	if err := r.db.Get(&teamId, getTeamQuery, userId); err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return -1, NewErrNotFound("team", "user", userId)
+		}
+		return -1, err
+	}
+
+	return teamId, nil
+}
+
 func (r TeamRepository) AddMember(teamId, userId int) error {
 	// Begin transaction
 	tx, err := r.db.Beginx()
@@ -220,6 +241,54 @@ func (r TeamRepository) AddMember(teamId, userId int) error {
 	return nil
 }
 
+func (r TeamRepository) GetMembers(teamId int) (users []domain.User, err error) {
+	// Check team exist
+	query := fmt.Sprintf(`
+		SELECT id
+		FROM %s
+		WHERE id=$1`,
+		teamMembersTable,
+	)
+	var team_id int
+	err = r.db.QueryRowx(query, teamId).Scan(&team_id)
+	if err != nil {
+		return []domain.User{}, NewErrNotFound("team", "id", team_id)
+	}
+
+	// Get
+	query = fmt.Sprintf(`
+		SELECT *
+		FROM %s
+		WHERE ID IN (
+			SELECT user_id
+			FROM %s
+			WHERE team_id=$1
+		)`,
+		userTable,
+		teamMembersTable,
+	)
+
+	var _users = make([]domain.User, 0)
+
+	rows, err := r.db.Queryx(query, teamId)
+	if err != nil {
+		return []domain.User{}, NewErrNotFound("member", "id", teamId)
+	}
+
+	for rows.Next() {
+		var user domain.User
+		err := rows.Scan(&user.Id, &user.Username, &user.Password, &user.Contact)
+		if err != nil {
+			return []domain.User{}, fmt.Errorf("team repository getMembers error: On convert to domain in team with id=%v, %v", teamId, err)
+		}
+
+		// user.TeamId = teamId
+		_users = append(_users, user)
+	}
+
+	return _users, nil
+}
+
 //func (r TeamRepository) IsTeamFull(teamId int) error {
 //	var valueLimit string
 //	query := fmt.Sprintf(`
@@ -254,54 +323,6 @@ func (r TeamRepository) AddMember(teamId, userId int) error {
 //	}
 //
 //	return nil
-//}
-
-//func (r TeamRepository) GetMembers(teamId int) (users []domain.User, err error) {
-//	// Check team exist
-//	query := fmt.Sprintf(`
-//		SELECT id
-//		FROM %s
-//		WHERE id=$1`,
-//		r.teamMembersTable,
-//	)
-//	var team_id int
-//	err = r.db.QueryRowx(query, teamId).Scan(&team_id)
-//	if err != nil {
-//		return []domain.User{}, fmt.Errorf("team repository getMembers error: Team not found with id=%v", teamId)
-//	}
-//
-//	// Get
-//	query = fmt.Sprintf(`
-//		SELECT *
-//		FROM %s
-//		WHERE ID IN (
-//			SELECT user_id
-//			FROM %s
-//			WHERE team_id=$1
-//		)`,
-//		r.userTable,
-//		r.teamMembersTable,
-//	)
-//
-//	var _users = make([]domain.User, 0)
-//
-//	rows, err := r.db.Queryx(query, teamId)
-//	if err != nil {
-//		return []domain.User{}, fmt.Errorf("team repository getMembers error: Members not found in team with id=%v, %v", teamId, err)
-//	}
-//
-//	for rows.Next() {
-//		var user domain.User
-//		err := rows.Scan(&user.Id, &user.Username, &user.Password, &user.Contact)
-//		if err != nil {
-//			return []domain.User{}, fmt.Errorf("team repository getMembers error: On convert to domain in team with id=%v, %v", teamId, err)
-//		}
-//
-//		// user.TeamId = teamId
-//		_users = append(_users, user)
-//	}
-//
-//	return _users, nil
 //}
 
 //func (r TeamRepository) IsTeamNameExists(teamName string) error {

@@ -25,8 +25,9 @@ type TeamRepository interface {
 	GetTeamById(teamId int) (*domain.Team, error)
 	GetTeamByToken(token string) (*domain.Team, error)
 	AddMember(teamId, userId int) error
+	GetTeamByUserId(userId int) (int, error) //Временный метод
 	// Нужен ли нам этоти методы ???
-	//GetMembers(teamId int) ([]domain.User, error)
+	GetMembers(teamId int) ([]domain.User, error) // Этот метод теперь нужен!
 	//IsTeamNameExists(teamName string) error
 	//IsTeamTokenExists(token string) error May be unnecessary
 	//IsTeamFull(teamId int) error
@@ -40,8 +41,8 @@ type TaskRepository interface {
 	SolveTask(taskId, teamId int) error
 	SaveTaskSubmission(value domain.SubmitTaskRequest, isCorrect bool) error
 	GetTaskSubmissions(taskId, teamId int) ([]*domain.TaskSubmission, error)
-	// Для чего этот метод?
-	//ChekSolvedTask(taskId, teamId int) (bool, error)
+	// Для чего этот метод? Для того что бы не бегать каждый раз по скупе таблиц со всеми вариантами решения таска
+	CheckSolvedTask(taskId, teamId int) (bool, error) // конкретно мне понадобился для получения true/false в ShowAllTasks-user
 }
 
 type SettingsRepository interface {
