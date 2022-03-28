@@ -96,11 +96,13 @@ func (r UserRepository) GetUserByCredentials(username, password string) (*domain
 
 func (r UserRepository) GetUserById(id int) (*domain.User, error) {
 	getUserQuery := fmt.Sprintf(`
-		SELECT *
-		FROM public.%s
-		WHERE id=$1
+		SELECT u.id, u.name, u.password, u.contact, m.team_id
+		FROM public.%s AS u
+		INNER JOIN public.%s AS m ON u.id = m.user_id
+		WHERE u.id=$1
 		LIMIT 1`,
 		userTable,
+		teamMembersTable,
 	)
 
 	var user domain.User
