@@ -26,7 +26,7 @@ func (h *Handler) initTaskRoutes(router fiber.Router) {
 // @Failure      500  {object}  ErrorResponse
 // @Router       /tasks/ [get]
 func (h *Handler) getAllTasks(ctx *fiber.Ctx) error {
-	id, _ := strconv.Atoi(ctx.Locals("userId").(string))
+	id := ctx.Locals("userId").(int)
 
 	tasks, err := h.UserService.GetAllTasks(id)
 	if err != nil {

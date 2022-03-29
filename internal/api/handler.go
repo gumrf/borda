@@ -64,8 +64,11 @@ func (h *Handler) authRequired(c *fiber.Ctx) error {
 	id := claims["iss"].(string)
 	scope := claims["scope"].([]interface{})
 
+	// Convert user id from string to int
+	intId, _ := strconv.Atoi(id)
+
 	// Store user id, scope in context for the following routes
-	c.Locals("userId", id)
+	c.Locals("userId", intId)
 	c.Locals("scope", scope[0])
 
 	fmt.Println("User ID: "+id+", Scope: ", scope[0])
@@ -73,7 +76,7 @@ func (h *Handler) authRequired(c *fiber.Ctx) error {
 }
 
 func (h *Handler) checkUserInTeam(c *fiber.Ctx) error {
-	id, _ := strconv.Atoi(c.Locals("userId").(string))
+	id := c.Locals("userId").(int)
 
 	teamId, ok := h.UserService.IsUserInTeam(id)
 	if !ok {
