@@ -21,5 +21,5 @@ type UserSignInInput struct {
 
 type UserResponse struct {
 	Username string `json:"username"`
-	TeamName string `json:"team_name"`
+	TeamName string `json:"team_name,omitempty"`
 }

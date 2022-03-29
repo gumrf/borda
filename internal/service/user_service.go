@@ -154,7 +154,7 @@ func (s *UserService) GetTaskSubmissions(taskId, userId int) ([]*domain.TaskSubm
 
 func (s *UserService) GetAllUsers() ([]domain.UserResponse, error) {
 	//Получил всех пользовотелей, которые в командах
-	users, err := s.userRepo.GetAllUsersInTeams()
+	users, err := s.userRepo.GetAllUsersWithTeams()
 	if err != nil {
 		return nil, err
 	}
@@ -173,6 +173,21 @@ func (s *UserService) GetAllUsers() ([]domain.UserResponse, error) {
 		userResponse := domain.UserResponse{
 			Username: user.Username,
 			TeamName: team.Name,
+		}
+
+		usersResponse = append(usersResponse, userResponse)
+	}
+
+	users, err = s.userRepo.GetAllUsersWithoutTeams()
+	if err != nil {
+		return nil, err
+	}
+
+	for _, user := range users {
+
+		userResponse := domain.UserResponse{
+			Username: user.Username,
+			TeamName: "user not in team",
 		}
 
 		usersResponse = append(usersResponse, userResponse)
