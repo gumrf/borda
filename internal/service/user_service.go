@@ -165,8 +165,12 @@ func (s *UserService) GetAllUsers() ([]domain.UserResponse, error) {
 	for _, user := range users {
 		var userResponse domain.UserResponse
 
-		if user.TeamId != 0 {
+		if user.TeamId == 0 {
+			userResponse = domain.UserResponse{
+				Username: user.Username,
+			}
 
+		} else {
 			team, err := s.teamRepo.GetTeamById(user.TeamId)
 			if err != nil {
 				return nil, err
@@ -176,13 +180,7 @@ func (s *UserService) GetAllUsers() ([]domain.UserResponse, error) {
 				Username: user.Username,
 				TeamName: team.Name,
 			}
-		} else {
-
-			userResponse = domain.UserResponse{
-				Username: user.Username,
-			}
 		}
-
 		usersResponse = append(usersResponse, userResponse)
 	}
 

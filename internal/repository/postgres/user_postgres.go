@@ -118,7 +118,12 @@ func (r UserRepository) GetUserById(id int) (*domain.User, error) {
 
 func (r UserRepository) GetAllUsers() ([]domain.User, error) {
 	getUsersQuery := fmt.Sprintf(`
-	SELECT u.id, u.name, u.password, u.contact, COALESCE (m.team_id, 0) AS team_id
+	SELECT  
+			u.id, 
+			u.name, 
+			u.password, 
+			u.contact, 
+			COALESCE (m.team_id, 0) AS team_id
 		FROM public.%s AS u
 		FULL JOIN public.%s AS m ON u.id = m.user_id;`,
 		userTable,
@@ -126,8 +131,7 @@ func (r UserRepository) GetAllUsers() ([]domain.User, error) {
 
 	var users []domain.User
 
-	err := r.db.Select(&users, getUsersQuery)
-	if err != nil {
+	if err := r.db.Select(&users, getUsersQuery); err != nil {
 		return nil, err
 	}
 
