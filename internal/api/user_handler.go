@@ -22,7 +22,7 @@ func (h *Handler) getUserById(c *fiber.Ctx) error {
 func (h *Handler) getAllUsers(c *fiber.Ctx) error {
 	users, err := h.UserService.GetAllUsers()
 	if err != nil {
-		return NewErrorResponse(c, fiber.StatusBadRequest, "something has gone wrong", err.Error())
+		return NewErrorResponse(c, fiber.StatusBadRequest, "Error occurred on the server.", err.Error())
 	}
 
 	return c.Status(fiber.StatusOK).JSON(fiber.Map{"users": users})
