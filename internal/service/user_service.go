@@ -20,10 +20,13 @@ func NewUserService(userRepo repository.UserRepository, taskRepo repository.Task
 	}
 }
 
-func (s *UserService) GetUser(id int) (domain.User, error) {
-	if user, err := s.userRepo.GetUserById(id); err != nil {
-		return 
+func (s *UserService) GetUser(id int) (*domain.User, error) {
+	user, err := s.userRepo.GetUserById(id)
+	if err != nil {
+		return nil, err
 	}
+
+	return user, nil
 }
 func (s *UserService) IsUserInTeam(userId int) (int, bool) {
 	user, err := s.userRepo.GetUserById(userId)
