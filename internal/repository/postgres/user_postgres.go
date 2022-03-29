@@ -116,7 +116,7 @@ func (r UserRepository) GetUserById(id int) (*domain.User, error) {
 	return &user, nil
 }
 
-func (r UserRepository) GetAllUsersInTeams() ([]domain.User, error) {
+func (r UserRepository) GetAllUsersWithTeams() ([]domain.User, error) {
 	getUsersQuery := fmt.Sprintf(`
 	SELECT u.id, u.name, u.password, u.contact, m.team_id
 		FROM public.%s AS u
@@ -134,6 +134,38 @@ func (r UserRepository) GetAllUsersInTeams() ([]domain.User, error) {
 	for rows.Next() {
 		var user domain.User
 		err := rows.Scan(&user.Id, &user.Username, &user.Password, &user.Contact, &user.TeamId)
+		if err != nil {
+			return nil, err
+		}
+
+		users = append(users, user)
+	}
+
+	return users, nil
+}
+
+//SELECT * FROM "user" AS u WHERE u.id NOT IN (SELECT user_id FROM team_member) Этот запрос для пользователя без команды
+func (r UserRepository) GetAllUsersWithoutTeams() ([]domain.User, error) {
+	getUsersQuery := fmt.Sprintf(`
+	SELECT * 
+		FROM public.%s AS u
+		WHERE u.id 
+		NOT IN (
+			SELECT user_id 
+			FROM public.%s)`,
+		userTable,
+		teamMembersTable)
+
+	rows, err := r.db.Queryx(getUsersQuery)
+	if err != nil {
+		return nil, err
+	}
+
+	var users []domain.User
+
+	for rows.Next() {
+		var user domain.User
+		err := rows.Scan(&user.Id, &user.Username, &user.Password, &user.Contact)
 		if err != nil {
 			return nil, err
 		}
