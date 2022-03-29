@@ -154,7 +154,7 @@ func (s *UserService) GetTaskSubmissions(taskId, userId int) ([]*domain.TaskSubm
 
 func (s *UserService) GetAllUsers() ([]domain.UserResponse, error) {
 	//Получил всех пользовотелей, которые в командах
-	users, err := s.userRepo.GetAllUsersWithTeams()
+	users, err := s.userRepo.GetAllUsers()
 	if err != nil {
 		return nil, err
 	}
@@ -163,31 +163,24 @@ func (s *UserService) GetAllUsers() ([]domain.UserResponse, error) {
 
 	//Прохожусь по всем юзерам отдельно
 	for _, user := range users {
+		var userResponse domain.UserResponse
 
-		//Получаю команду, в которой пользователь
-		team, err := s.teamRepo.GetTeamById(user.TeamId)
-		if err != nil {
-			return nil, err
-		}
+		if user.TeamId != 0 {
 
-		userResponse := domain.UserResponse{
-			Username: user.Username,
-			TeamName: team.Name,
-		}
+			team, err := s.teamRepo.GetTeamById(user.TeamId)
+			if err != nil {
+				return nil, err
+			}
 
-		usersResponse = append(usersResponse, userResponse)
-	}
+			userResponse = domain.UserResponse{
+				Username: user.Username,
+				TeamName: team.Name,
+			}
+		} else {
 
-	users, err = s.userRepo.GetAllUsersWithoutTeams()
-	if err != nil {
-		return nil, err
-	}
-
-	for _, user := range users {
-
-		userResponse := domain.UserResponse{
-			Username: user.Username,
-			TeamName: "user not in team",
+			userResponse = domain.UserResponse{
+				Username: user.Username,
+			}
 		}
 
 		usersResponse = append(usersResponse, userResponse)

@@ -14,8 +14,7 @@ type UserRepository interface {
 	UpdatePassword(userId int, newPassword string) error
 	AssignRole(userId, roleId int) error
 	GetUserRole(userId int) (*domain.Role, error)
-	GetAllUsersWithTeams() ([]domain.User, error)    // Метод получиения всех юзеров с командами
-	GetAllUsersWithoutTeams() ([]domain.User, error) // Получить юзеров без команд
+	GetAllUsers() ([]domain.User, error)
 	// Зачем этот метод?
 	//IsUsernameExists(username string) error
 	// SetSession(userId int, session domain.Session) error
