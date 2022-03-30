@@ -20,6 +20,7 @@ func (h *Handler) getUserById(c *fiber.Ctx) error {
 // @Summary      Get all users
 // @Description  Show all registered users.
 // @Tags         Users
+// @Security     ApiKeyAuth
 // @Produce      json
 // @Success      201  {array}   domain.UserResponse
 // @Failure      400  {object}  ErrorsResponse

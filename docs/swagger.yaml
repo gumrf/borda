@@ -178,6 +178,8 @@ paths:
           description: Internal Server Error
           schema:
             $ref: '#/definitions/api.ErrorsResponse'
+      security:
+      - ApiKeyAuth: []
       summary: Update task
       tags:
       - Admin
@@ -205,6 +207,8 @@ paths:
           description: Internal Server Error
           schema:
             $ref: '#/definitions/api.ErrorsResponse'
+      security:
+      - ApiKeyAuth: []
       summary: Get all tasks
       tags:
       - Admin
@@ -238,6 +242,8 @@ paths:
           description: Internal Server Error
           schema:
             $ref: '#/definitions/api.ErrorsResponse'
+      security:
+      - ApiKeyAuth: []
       summary: Create new task
       tags:
       - Admin
@@ -331,6 +337,8 @@ paths:
           description: Internal Server Error
           schema:
             $ref: '#/definitions/api.ErrorsResponse'
+      security:
+      - ApiKeyAuth: []
       summary: Get all tasks
       tags:
       - Tasks
@@ -362,6 +370,8 @@ paths:
           description: Internal Server Error
           schema:
             $ref: '#/definitions/api.ErrorsResponse'
+      security:
+      - ApiKeyAuth: []
       summary: Get all submission
       tags:
       - Tasks
@@ -400,6 +410,8 @@ paths:
           description: Internal Server Error
           schema:
             $ref: '#/definitions/api.ErrorsResponse'
+      security:
+      - ApiKeyAuth: []
       summary: Submit flag
       tags:
       - Tasks
@@ -427,6 +439,8 @@ paths:
           description: Internal Server Error
           schema:
             $ref: '#/definitions/api.ErrorsResponse'
+      security:
+      - ApiKeyAuth: []
       summary: Get all users
       tags:
       - Users

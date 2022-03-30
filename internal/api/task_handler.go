@@ -18,6 +18,7 @@ func (h *Handler) initTaskRoutes(router fiber.Router) {
 // @Summary      Get all tasks
 // @Description  Get tasks.
 // @Tags         Tasks
+// @Security     ApiKeyAuth
 // @Produce      json
 // @Success      200  {object}  domain.UserTaskResponse
 // @Failure      400      {object}  ErrorsResponse
@@ -39,6 +40,7 @@ func (h *Handler) getAllTasks(ctx *fiber.Ctx) error {
 // @Summary      Submit flag
 // @Description  Create new flag submission.
 // @Tags         Tasks
+// @Security     ApiKeyAuth
 // @Accept       json
 // @Produce      json
 // @Param        flag     body      domain.SubmitFlagRequest  true  "Flag"
@@ -80,6 +82,7 @@ func (h *Handler) submitFlag(c *fiber.Ctx) error {
 // @Summary      Get all submission
 // @Description  Get all submissions for task.
 // @Tags         Tasks
+// @Security     ApiKeyAuth
 // @Produce      json
 // @Param        task_id  path      int  true  "Task ID"
 // @Success      201      {object}  domain.TaskSubmission

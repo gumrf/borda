@@ -19,6 +19,7 @@ func (h *Handler) initAdminRoutes(router fiber.Router) {
 // @Summary      Get all tasks
 // @Description  Get all tasks with admin access.
 // @Tags         Admin
+// @Security     ApiKeyAuth
 // @Produce      json
 // @Success      200  {array}   domain.Task
 // @Failure      400   {object}  ErrorsResponse
@@ -40,6 +41,7 @@ func (h *Handler) adminGetAllTasks(c *fiber.Ctx) error {
 // @Description  Update task.
 // @Tags         Admin
 // @Accept       json
+// @Security     ApiKeyAuth
 // @Produce      json
 // @Param        task_id  path      int          true  "Task ID"
 // @Param        task     body      domain.Task  true  "Task"
@@ -47,7 +49,7 @@ func (h *Handler) adminGetAllTasks(c *fiber.Ctx) error {
 // @Failure      400      {object}  ErrorsResponse
 // @Failure      404      {object}  ErrorsResponse
 // @Failure      500      {object}  ErrorsResponse
-// @Router       /admin/task/{task_id} [patch]
+// @Router       /admin/tasks/{task_id} [patch]
 func (h *Handler) updateTask(c *fiber.Ctx) error {
 	// Get task id from request url
 	taskId, err := strconv.Atoi(c.Params("id"))
@@ -82,6 +84,7 @@ func (h *Handler) updateTask(c *fiber.Ctx) error {
 // @Summary      Create new task
 // @Description  Create new task.
 // @Tags         Admin
+// @Security     ApiKeyAuth
 // @Accept       json
 // @Produce      json
 // @Param        task  body      domain.Task  true  "Task"

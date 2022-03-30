@@ -18,6 +18,11 @@ const docTemplate = `{
     "paths": {
         "/admin/task/{task_id}": {
             "patch": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
                 "description": "Update task.",
                 "consumes": [
                     "application/json"
@@ -77,6 +82,11 @@ const docTemplate = `{
         },
         "/admin/tasks": {
             "get": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
                 "description": "Get all tasks with admin access.",
                 "produces": [
                     "application/json"
@@ -116,6 +126,11 @@ const docTemplate = `{
                 }
             },
             "post": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
                 "description": "Create new task.",
                 "consumes": [
                     "application/json"
@@ -272,6 +287,11 @@ const docTemplate = `{
         },
         "/tasks": {
             "get": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
                 "description": "Get tasks.",
                 "produces": [
                     "application/json"
@@ -310,6 +330,11 @@ const docTemplate = `{
         },
         "/tasks/{task_id}/submissions": {
             "get": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
                 "description": "Get all submissions for task.",
                 "produces": [
                     "application/json"
@@ -355,6 +380,11 @@ const docTemplate = `{
                 }
             },
             "post": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
                 "description": "Create new flag submission.",
                 "consumes": [
                     "application/json"
@@ -414,6 +444,11 @@ const docTemplate = `{
         },
         "/users": {
             "get": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
                 "description": "Show all registered users.",
                 "produces": [
                     "application/json"

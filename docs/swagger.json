@@ -11,6 +11,11 @@
     "paths": {
         "/admin/task/{task_id}": {
             "patch": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
                 "description": "Update task.",
                 "consumes": [
                     "application/json"
@@ -70,6 +75,11 @@
         },
         "/admin/tasks": {
             "get": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
                 "description": "Get all tasks with admin access.",
                 "produces": [
                     "application/json"
@@ -109,6 +119,11 @@
                 }
             },
             "post": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
                 "description": "Create new task.",
                 "consumes": [
                     "application/json"
@@ -265,6 +280,11 @@
         },
         "/tasks": {
             "get": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
                 "description": "Get tasks.",
                 "produces": [
                     "application/json"
@@ -303,6 +323,11 @@
         },
         "/tasks/{task_id}/submissions": {
             "get": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
                 "description": "Get all submissions for task.",
                 "produces": [
                     "application/json"
@@ -348,6 +373,11 @@
                 }
             },
             "post": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
                 "description": "Create new flag submission.",
                 "consumes": [
                     "application/json"
@@ -407,6 +437,11 @@
         },
         "/users": {
             "get": {
+                "security": [
+                    {
+                        "ApiKeyAuth": []
+                    }
+                ],
                 "description": "Show all registered users.",
                 "produces": [
                     "application/json"
