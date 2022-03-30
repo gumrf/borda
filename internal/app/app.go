@@ -16,12 +16,21 @@ import (
 	"github.com/gofiber/fiber/v2"
 )
 
+// @title                       CTF Borda API
+// @version                     0.1
+// @description                 REST API for CTF Borda.
+// @host                        localhost:8080
+// @BasePath                    /api/v1
+// @securityDefinitions.apikey  ApiKeyAuth
+// @in                          header
+// @name                        Authorization
+
 // Run initializes whole application
 func Run() {
 	conf := config.Config()
 
 	if err := logger.InitLogger(conf.GetString("logger.path"), conf.GetString("logger.file_name")); err != nil {
-		fmt.Println("init logger:", err)
+		fmt.Println("Failed to initialize logger:", err)
 		os.Exit(1)
 	}
 

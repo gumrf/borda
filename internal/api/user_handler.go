@@ -7,9 +7,7 @@ import (
 func (h *Handler) initUserRoutes(router fiber.Router) {
 	users := router.Group("/users", h.authRequired, h.checkUserInTeam)
 	users.Get("", h.getAllUsers)
-
-	user := users.Group("/:id")
-	user.Get("", h.getUserById)
+	users.Get("/:id", h.getUserById)
 }
 
 func (h *Handler) getUserById(c *fiber.Ctx) error {
@@ -19,6 +17,15 @@ func (h *Handler) getUserById(c *fiber.Ctx) error {
 	})
 }
 
+// @Summary      Get all users
+// @Description  Show all registered users.
+// @Tags         Users
+// @Produce      json
+// @Success      201  {array}   domain.UserResponse
+// @Failure      400  {object}  ErrorsResponse
+// @Failure      404  {object}  ErrorsResponse
+// @Failure      500  {object}  ErrorsResponse
+// @Router       /users [get]
 func (h *Handler) getAllUsers(c *fiber.Ctx) error {
 	users, err := h.UserService.GetAllUsers()
 	if err != nil {

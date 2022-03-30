@@ -8,7 +8,7 @@ import (
 	"github.com/go-ozzo/ozzo-validation/v4/is"
 )
 
-func (t UserSignInInput) Validate() error {
+func (t SignInInput) Validate() error {
 	err := validation.ValidateStruct(&t,
 		// Username cannot be empty, and the length must between 2 and 20, may contains letters, numbers and '_'
 		validation.Field(&t.Username, validation.Required, validation.Length(2, 50), validation.Match(regexp.MustCompile("^[0-9A-Za-z_]+$"))),
@@ -23,7 +23,7 @@ func (t UserSignInInput) Validate() error {
 	return nil
 }
 
-func (t UserSignUpInput) Validate() error {
+func (t SignUpInput) Validate() error {
 	err := validation.ValidateStruct(&t,
 		// Username cannot be empty, and the length must between 2 and 20, may contains letters, numbers and '_'
 		validation.Field(&t.Username, validation.Required, validation.Length(2, 50), validation.Match(regexp.MustCompile("^[0-9A-Za-z_]+$"))),

@@ -16,15 +16,14 @@ func (h *Handler) initTaskRoutes(router fiber.Router) {
 }
 
 // @Summary      Get all tasks
-// @Description  allows the user to get tasks by filter.
+// @Description  Get tasks.
 // @Tags         Tasks
-// @Accept       json
 // @Produce      json
-// @Success      200  {object}  TaskResponse
-// @Failure      400  {object}  ErrorResponse
-// @Failure      404  {object}  ErrorResponse
-// @Failure      500  {object}  ErrorResponse
-// @Router       /tasks/ [get]
+// @Success      200  {object}  domain.UserTaskResponse
+// @Failure      400      {object}  ErrorsResponse
+// @Failure      404      {object}  ErrorsResponse
+// @Failure      500      {object}  ErrorsResponse
+// @Router       /tasks [get]
 func (h *Handler) getAllTasks(ctx *fiber.Ctx) error {
 	id := ctx.Locals("userId").(int)
 
@@ -37,17 +36,18 @@ func (h *Handler) getAllTasks(ctx *fiber.Ctx) error {
 	return ctx.Status(fiber.StatusOK).JSON(fiber.Map{"tasks": tasks})
 }
 
-// @Summary      Create new submission
-// @Description  allows the user to create submission.
-// @Tags         Submissions
+// @Summary      Submit flag
+// @Description  Create new flag submission.
+// @Tags         Tasks
 // @Accept       json
 // @Produce      json
-// @Param		 id   path      int  true  "Task ID"
-// @Success      201  {object}  TaskResponse
-// @Failure      400  {object}  ErrorResponse
-// @Failure      404  {object}  ErrorResponse
-// @Failure      500  {object}  ErrorResponse
-// @Router       /tasks/:id/submissions [post]
+// @Param        flag     body      domain.SubmitFlagRequest  true  "Flag"
+// @Param        task_id  path      int                       true  "Task ID"
+// @Success      201      string    OK
+// @Failure      400      {object}  ErrorsResponse
+// @Failure      404      {object}  ErrorsResponse
+// @Failure      500      {object}  ErrorsResponse
+// @Router       /tasks/{task_id}/submissions [post]
 func (h *Handler) submitFlag(c *fiber.Ctx) error {
 	var submission domain.SubmitFlagRequest
 	if err := c.BodyParser(&submission); err != nil {
@@ -78,16 +78,15 @@ func (h *Handler) submitFlag(c *fiber.Ctx) error {
 }
 
 // @Summary      Get all submission
-// @Description  allows the user to get all submissions for task.
-// @Tags         Submissions
-// @Accept       json
+// @Description  Get all submissions for task.
+// @Tags         Tasks
 // @Produce      json
-// @Param		 id   path      int  true  "Task ID"
-// @Success      201  {object}  TaskResponse
-// @Failure      400  {object}  ErrorResponse
-// @Failure      404  {object}  ErrorResponse
-// @Failure      500  {object}  ErrorResponse
-// @Router       /tasks/:id/submissions [get]
+// @Param        task_id  path      int  true  "Task ID"
+// @Success      201      {object}  domain.TaskSubmission
+// @Failure      400  {object}  ErrorsResponse
+// @Failure      404  {object}  ErrorsResponse
+// @Failure      500  {object}  ErrorsResponse
+// @Router       /tasks/{task_id}/submissions [get]
 func (h *Handler) getAllSubmissions(c *fiber.Ctx) error {
 	// Get task from request url
 	taskId, err := strconv.Atoi(c.Params("id"))

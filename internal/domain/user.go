@@ -8,13 +8,13 @@ type User struct {
 	TeamId   int    `json:"teamId" db:"team_id"`
 }
 
-type UserSignUpInput struct {
+type SignUpInput struct {
 	Username string `json:"username"`
 	Password string `json:"password"`
 	Contact  string `json:"contact"`
 }
 
-type UserSignInInput struct {
+type SignInInput struct {
 	Username string `json:"username"`
 	Password string `json:"password"`
 }

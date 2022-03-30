@@ -94,7 +94,7 @@ func TestUserSignInInputValidate(t *testing.T) {
 	type testCase struct {
 		Name string
 
-		UserSignInInput UserSignInInput
+		UserSignInInput SignInInput
 
 		ExpectedError error
 	}
@@ -109,7 +109,7 @@ func TestUserSignInInputValidate(t *testing.T) {
 
 	validate(t, &testCase{
 		Name: "TestValid",
-		UserSignInInput: UserSignInInput{
+		UserSignInInput: SignInInput{
 			Username: "Jopa322",
 			Password: "QAZwsx12",
 		},
@@ -118,7 +118,7 @@ func TestUserSignInInputValidate(t *testing.T) {
 
 	validate(t, &testCase{
 		Name: "TooShortUsername",
-		UserSignInInput: UserSignInInput{
+		UserSignInInput: SignInInput{
 			Username: "J",
 			Password: "QAZwsx12",
 		},
@@ -127,7 +127,7 @@ func TestUserSignInInputValidate(t *testing.T) {
 
 	validate(t, &testCase{
 		Name: "ExtraSpace",
-		UserSignInInput: UserSignInInput{
+		UserSignInInput: SignInInput{
 			Username: "Jopa322",
 			Password: "Q fsfd",
 		},
@@ -136,7 +136,7 @@ func TestUserSignInInputValidate(t *testing.T) {
 
 	validate(t, &testCase{
 		Name: "TooShortPass",
-		UserSignInInput: UserSignInInput{
+		UserSignInInput: SignInInput{
 			Username: "Jopa322",
 			Password: "Q",
 		},
@@ -148,7 +148,7 @@ func TestUserSignUpInputValidate(t *testing.T) {
 	type testCase struct {
 		Name string
 
-		UserSignUpInput UserSignUpInput
+		UserSignUpInput SignUpInput
 
 		ExpectedError error
 	}
@@ -163,7 +163,7 @@ func TestUserSignUpInputValidate(t *testing.T) {
 
 	validate(t, &testCase{
 		Name: "TestValidCreate",
-		UserSignUpInput: UserSignUpInput{
+		UserSignUpInput: SignUpInput{
 			Username: "Govnoed3_3",
 			Password: "AUE322%$#",
 			Contact:  "@drop2_der",
@@ -173,7 +173,7 @@ func TestUserSignUpInputValidate(t *testing.T) {
 
 	validate(t, &testCase{
 		Name: "TestValidUUID",
-		UserSignUpInput: UserSignUpInput{
+		UserSignUpInput: SignUpInput{
 			Username: "Govnoed3_3",
 			Password: "AUE322%$#",
 			Contact:  "@drop2_der",
@@ -183,7 +183,7 @@ func TestUserSignUpInputValidate(t *testing.T) {
 
 	validate(t, &testCase{
 		Name: "TestInvalidName",
-		UserSignUpInput: UserSignUpInput{
+		UserSignUpInput: SignUpInput{
 			Username: "!qwewq",
 			Password: "AuE322%$#",
 			Contact:  "@drop2_der",
@@ -193,7 +193,7 @@ func TestUserSignUpInputValidate(t *testing.T) {
 
 	validate(t, &testCase{
 		Name: "TestInvalidPass",
-		UserSignUpInput: UserSignUpInput{
+		UserSignUpInput: SignUpInput{
 			Username: "Govnoed3_3",
 			Password: "AUE  322%$#",
 			Contact:  "@drop2_der",
@@ -203,7 +203,7 @@ func TestUserSignUpInputValidate(t *testing.T) {
 
 	validate(t, &testCase{
 		Name: "TestInvalidContact1",
-		UserSignUpInput: UserSignUpInput{
+		UserSignUpInput: SignUpInput{
 			Username: "Govnoed3_3",
 			Password: "Qwe123",
 			Contact:  "@drop2_der__",
@@ -213,7 +213,7 @@ func TestUserSignUpInputValidate(t *testing.T) {
 
 	validate(t, &testCase{
 		Name: "TestInvalidContact2",
-		UserSignUpInput: UserSignUpInput{
+		UserSignUpInput: SignUpInput{
 			Username: "Govnoed3_3",
 			Password: "Qwe123",
 			Contact:  "drop2_der",
@@ -223,7 +223,7 @@ func TestUserSignUpInputValidate(t *testing.T) {
 
 	validate(t, &testCase{
 		Name: "TestInvalidUUID",
-		UserSignUpInput: UserSignUpInput{
+		UserSignUpInput: SignUpInput{
 			Username: "Govnoed3_3",
 			Password: "AUE322%$#",
 			Contact:  "@drop2_der",
@@ -233,7 +233,7 @@ func TestUserSignUpInputValidate(t *testing.T) {
 
 	validate(t, &testCase{
 		Name: "TestTooShortTeamName",
-		UserSignUpInput: UserSignUpInput{
+		UserSignUpInput: SignUpInput{
 			Username: "Govnoed3_3",
 			Password: "AUE322%$#",
 			Contact:  "@drop2_der",
@@ -243,7 +243,7 @@ func TestUserSignUpInputValidate(t *testing.T) {
 
 	validate(t, &testCase{
 		Name: "TestInvalidTeamName",
-		UserSignUpInput: UserSignUpInput{
+		UserSignUpInput: SignUpInput{
 			Username: "Govnoed3_3",
 			Password: "AUE322%$#",
 			Contact:  "@drop2_der",

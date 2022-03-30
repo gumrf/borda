@@ -1,12 +1,14 @@
 package api
 
 import (
+	_ "borda/docs"
 	"borda/internal/config"
 	"borda/internal/service"
 	"fmt"
 	"strconv"
 	"time"
 
+	swagger "github.com/arsmn/fiber-swagger/v2"
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/logger"
 	jwtMiddleware "github.com/gofiber/jwt/v3"
@@ -37,6 +39,8 @@ func (h *Handler) Init(app *fiber.App) {
 			"time":   time.Now().Format(time.UnixDate),
 		})
 	})
+
+	app.Get("/swagger/*", swagger.HandlerDefault)
 
 	api := app.Group("/api")
 	v1 := api.Group("/v1")

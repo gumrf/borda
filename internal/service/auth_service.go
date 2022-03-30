@@ -29,7 +29,7 @@ func NewAuthService(ur repository.UserRepository, tr repository.TeamRepository,
 	}
 }
 
-//func (s *AuthService) verifyData(input domain.UserSignUpInput) error {
+//func (s *AuthService) verifyData(input domain.SignUpInput) error {
 //
 //	// Реализована внутри функции SaveUser
 //	// Проверка на имя пользователя
@@ -65,7 +65,7 @@ func NewAuthService(ur repository.UserRepository, tr repository.TeamRepository,
 //	return nil
 //}
 
-func (s *AuthService) SignUp(input domain.UserSignUpInput) error {
+func (s *AuthService) SignUp(input domain.SignUpInput) error {
 	//err := s.verifyData(input)
 	//if err != nil {
 	//	return err
@@ -102,7 +102,7 @@ func (s *AuthService) SignUp(input domain.UserSignUpInput) error {
 	return nil
 }
 
-func (s *AuthService) SignIn(input domain.UserSignInInput) (string, error) {
+func (s *AuthService) SignIn(input domain.SignInInput) (string, error) {
 	// Hash password
 	hashedPassword, err := s.hasher.Hash(input.Password)
 	if err != nil {
@@ -117,7 +117,7 @@ func (s *AuthService) SignIn(input domain.UserSignInInput) (string, error) {
 
 	// Get user role
 	role, err := s.userRepo.GetUserRole(user.Id)
-	if err != nil{
+	if err != nil {
 		return "", err
 	}
 

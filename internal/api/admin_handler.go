@@ -8,7 +8,7 @@ import (
 )
 
 func (h *Handler) initAdminRoutes(router fiber.Router) {
-	admin := router.Group("/admin", h.adminPermissionRequired)
+	admin := router.Group("/admin", h.authRequired, h.adminPermissionRequired)
 
 	tasks := admin.Group("/tasks")
 	tasks.Get("", h.adminGetAllTasks)
@@ -17,15 +17,13 @@ func (h *Handler) initAdminRoutes(router fiber.Router) {
 }
 
 // @Summary      Get all tasks
-// @Description  allows the admin to get all tasks.
-// @Tags         Tasks
-// @Accept       json
+// @Description  Get all tasks with admin access.
+// @Tags         Admin
 // @Produce      json
-// @Param		 ?
-// @Success      200  {object}  TaskResponse
-// @Failure      400  {object}  ErrorResponse
-// @Failure      404  {object}  ErrorResponse
-// @Failure      500  {object}  ErrorResponse
+// @Success      200  {array}   domain.Task
+// @Failure      400   {object}  ErrorsResponse
+// @Failure      404   {object}  ErrorsResponse
+// @Failure      500   {object}  ErrorsResponse
 // @Router       /admin/tasks [get]
 func (h *Handler) adminGetAllTasks(c *fiber.Ctx) error {
 	tasks, err := h.AdminService.GetAllTasks()
@@ -39,16 +37,17 @@ func (h *Handler) adminGetAllTasks(c *fiber.Ctx) error {
 }
 
 // @Summary      Update task
-// @Description  allows the admin to update task.
-// @Tags         UpdateTask
+// @Description  Update task.
+// @Tags         Admin
 // @Accept       json
 // @Produce      json
-// @Param		 ?
-// @Success      200  {object}  TaskResponse
-// @Failure      400  {object}  ErrorResponse
-// @Failure      404  {object}  ErrorResponse
-// @Failure      500  {object}  ErrorResponse
-// @Router       /task/:id [patch]
+// @Param        task_id  path      int          true  "Task ID"
+// @Param        task     body      domain.Task  true  "Task"
+// @Success      200      string    OK
+// @Failure      400      {object}  ErrorsResponse
+// @Failure      404      {object}  ErrorsResponse
+// @Failure      500      {object}  ErrorsResponse
+// @Router       /admin/task/{task_id} [patch]
 func (h *Handler) updateTask(c *fiber.Ctx) error {
 	// Get task id from request url
 	taskId, err := strconv.Atoi(c.Params("id"))
@@ -81,16 +80,16 @@ func (h *Handler) updateTask(c *fiber.Ctx) error {
 }
 
 // @Summary      Create new task
-// @Description  allows the admin to create new tasks.
-// @Tags         CreateTask
+// @Description  Create new task.
+// @Tags         Admin
 // @Accept       json
 // @Produce      json
-// @Param		 ?
-// @Success      20   {object}  TaskResponse
-// @Failure      400  {object}  ErrorResponse
-// @Failure      404  {object}  ErrorResponse
-// @Failure      500  {object}  ErrorResponse
-// @Router       /tasks/ [post]
+// @Param        task  body      domain.Task  true  "Task"
+// @Success      200   {object}  domain.Task
+// @Failure      400  {object}  ErrorsResponse
+// @Failure      404  {object}  ErrorsResponse
+// @Failure      500  {object}  ErrorsResponse
+// @Router       /admin/tasks [post]
 func (h *Handler) createNewTask(ctx *fiber.Ctx) error {
 	var task domain.Task
 
