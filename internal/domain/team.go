@@ -22,3 +22,7 @@ type TeamResponse struct {
 	Token        string   `json:"token"`
 	Members      []string `json:"members"`
 }
+
+type TeamMembersResponse struct {
+	Username string `json:"username,omitempty"`
+}

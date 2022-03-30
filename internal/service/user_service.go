@@ -204,26 +204,25 @@ func (s *UserService) GetUserById(userId int) (*domain.UserProfileResponse, erro
 		return nil, err
 	}
 
-	var teamLeader string
-	teamMembersResponse := make([]domain.UserTeamMembers, 0)
+	isTeamLeader := false
+	teamMembersResponse := make([]domain.TeamMembersResponse, 0)
 	for _, member := range teamMembers {
-		var teamMemberResponse domain.UserTeamMembers
+		var teamMemberResponse domain.TeamMembersResponse
 		if member.Id == team.TeamLeaderId {
-			teamLeader = member.Username
-		} else {
-			teamMemberResponse = domain.UserTeamMembers{
-				Username: member.Username,
-			}
+			isTeamLeader = true
+		}
+		teamMemberResponse = domain.TeamMembersResponse{
+			Username: member.Username,
 		}
 		teamMembersResponse = append(teamMembersResponse, teamMemberResponse)
 	}
 
 	userProfile := domain.UserProfileResponse{
-		Username:    user.Username,
-		Contact:     user.Contact,
-		TeamName:    team.Name,
-		TeamLeader:  teamLeader,
-		TeamMembers: teamMembersResponse,
+		Username:     user.Username,
+		Contact:      user.Contact,
+		TeamName:     team.Name,
+		IsTeamLeader: isTeamLeader,
+		TeamMembers:  teamMembersResponse,
 	}
 
 	return &userProfile, nil

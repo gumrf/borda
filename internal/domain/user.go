@@ -21,18 +21,14 @@ type UserSignInInput struct {
 
 type UserResponse struct {
 	Username string `json:"username"`
-	TeamName string `json:"team_name,omitempty"`
+	TeamName string `json:"teamName,omitempty"`
 }
 
 // Переименовать во что-то нормальное, жду предложения номальных названий этих двух структур :)
 type UserProfileResponse struct {
-	Username    string            `json:"username"`
-	Contact     string            `json:"contact"`
-	TeamName    string            `json:"teamName"`
-	TeamLeader  string            `json:"teamLeaderName"`
-	TeamMembers []UserTeamMembers `json:"teamMembers,omitempty"`
-}
-
-type UserTeamMembers struct {
-	Username string `json:"username,omitempty"`
+	Username     string                `json:"username"`
+	Contact      string                `json:"contact"`
+	TeamName     string                `json:"teamName"`
+	IsTeamLeader bool                  `json:"teamLeaderName"`
+	TeamMembers  []TeamMembersResponse `json:"teamMembers,omitempty"`
 }
