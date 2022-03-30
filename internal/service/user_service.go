@@ -151,3 +151,38 @@ func (s *UserService) GetTaskSubmissions(taskId, userId int) ([]*domain.TaskSubm
 	}
 	return submissions, nil
 }
+
+func (s *UserService) GetAllUsers() ([]domain.UserResponse, error) {
+	//Получил всех пользовотелей, которые в командах
+	users, err := s.userRepo.GetAllUsers()
+	if err != nil {
+		return nil, err
+	}
+
+	usersResponse := make([]domain.UserResponse, 0)
+
+	//Прохожусь по всем юзерам отдельно
+	for _, user := range users {
+		var userResponse domain.UserResponse
+
+		if user.TeamId == 0 {
+			userResponse = domain.UserResponse{
+				Username: user.Username,
+			}
+
+		} else {
+			team, err := s.teamRepo.GetTeamById(user.TeamId)
+			if err != nil {
+				return nil, err
+			}
+
+			userResponse = domain.UserResponse{
+				Username: user.Username,
+				TeamName: team.Name,
+			}
+		}
+		usersResponse = append(usersResponse, userResponse)
+	}
+
+	return usersResponse, nil
+}

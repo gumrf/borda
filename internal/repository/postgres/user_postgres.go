@@ -116,6 +116,28 @@ func (r UserRepository) GetUserById(id int) (*domain.User, error) {
 	return &user, nil
 }
 
+func (r UserRepository) GetAllUsers() ([]domain.User, error) {
+	getUsersQuery := fmt.Sprintf(`
+	SELECT  
+			u.id, 
+			u.name, 
+			u.password, 
+			u.contact, 
+			COALESCE (m.team_id, 0) AS team_id
+		FROM public.%s AS u
+		FULL JOIN public.%s AS m ON u.id = m.user_id;`,
+		userTable,
+		teamMembersTable)
+
+	var users []domain.User
+
+	if err := r.db.Select(&users, getUsersQuery); err != nil {
+		return nil, err
+	}
+
+	return users, nil
+}
+
 func (r UserRepository) UpdatePassword(userId int, newPassword string) error {
 	query := fmt.Sprintf(`
 		UPDATE public.%s

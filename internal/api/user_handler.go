@@ -20,8 +20,10 @@ func (h *Handler) getUserById(c *fiber.Ctx) error {
 }
 
 func (h *Handler) getAllUsers(c *fiber.Ctx) error {
-	return c.JSON(fiber.Map{
-		"error": false,
-		"users": []string{"user1, user2"},
-	})
+	users, err := h.UserService.GetAllUsers()
+	if err != nil {
+		return NewErrorResponse(c, fiber.StatusBadRequest, "Error occurred on the server.", err.Error())
+	}
+
+	return c.Status(fiber.StatusOK).JSON(fiber.Map{"users": users})
 }

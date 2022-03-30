@@ -20,8 +20,6 @@ type UserSignInInput struct {
 }
 
 type UserResponse struct {
-	Id       int    `json:"id"`
 	Username string `json:"username"`
-	Contact  string `json:"contact"`
-	Team     Team   `json:"team"`
+	TeamName string `json:"team_name,omitempty"`
 }
