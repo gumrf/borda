@@ -14,6 +14,15 @@ func (h *Handler) initUserRoutes(router fiber.Router) {
 	user.Get("", h.getUserById)
 }
 
+// @Summary      Get user by id
+// @Description  Show user by his id.
+// @Tags         User
+// @Produce      json
+// @Success      200  {array}   domain.UserResponse
+// @Failure      400  {object}  ErrorsResponse
+// @Failure      404  {object}  ErrorsResponse
+// @Failure      500  {object}  ErrorsResponse
+// @Router       /users/:id [get]
 func (h *Handler) getUserById(c *fiber.Ctx) error {
 
 	userId, err := strconv.Atoi(c.Params("id"))
