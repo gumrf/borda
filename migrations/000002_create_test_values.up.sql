@@ -9,7 +9,7 @@ VALUES
        ('TestUser3', '70617373776f72645f73616c745f78363973b56b6aa265cd6d4362fe387bc144deaf2991bf07', '@TestUser3');
 
 -- Assign roles to users. TestUser1 has admin role, others have user role
-INSERT INTO public.user_role (user_id, role_id) VALUES (1,2), (2,1), (3,1);
+INSERT INTO public.user_role (user_id, role_id) VALUES (1,1), (2,2), (3,2);
 
 -- Create test Teams
 INSERT INTO public.team (name, token, team_leader_id)
