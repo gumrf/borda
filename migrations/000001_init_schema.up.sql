@@ -4,9 +4,9 @@ SET TIMEZONE="Europe/Moscow";
 -- Create users table
 CREATE TABLE IF NOT EXISTS "user" (
    id serial NOT NULL PRIMARY KEY,
-   name varchar(128) NOT NULL,
+   name varchar(128) UNIQUE NOT NULL,
    password varchar(256) NOT NULL,
-   contact varchar(256) UNIQUE NULL
+   contact varchar(256) NULL
 );
 
 -- Create roles table
@@ -14,6 +14,9 @@ CREATE TABLE IF NOT EXISTS role (
    id serial NOT NULL PRIMARY KEY,
    name varchar(256)
 );
+
+-- Insert default values
+INSERT INTO role (name) VALUES ('admin'), ('user');
 
 -- Create books table
 CREATE TABLE IF NOT EXISTS user_role (
@@ -55,7 +58,7 @@ CREATE TABLE IF NOT EXISTS task (
    author_id   INTEGER REFERENCES author(id)
 );
 
-CREATE TABLE IF NOT EXISTS solved_tasks (
+CREATE TABLE IF NOT EXISTS solved_task (
    task_id integer NOT NULL REFERENCES task(id),
    team_id integer NOT NULL REFERENCES team(id),
    timestamp timestamptz NOT NULL DEFAULT now()

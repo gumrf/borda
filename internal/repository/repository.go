@@ -8,26 +8,41 @@ import (
 )
 
 type UserRepository interface {
-	Create(username, password, contact string) (int, error)
-	// Find(username, password string) (*domain.User, error)
+	SaveUser(username, password, contact string) (int, error)
+	GetUserByCredentials(username, password string) (*domain.User, error)
+	GetUserById(id int) (*domain.User, error)
 	UpdatePassword(userId int, newPassword string) error
 	AssignRole(userId, roleId int) error
-	GetRole(userId int) (domain.Role, error)
+	GetUserRole(userId int) (*domain.Role, error)
+	GetAllUsers() ([]domain.User, error)
+	// Зачем этот метод?
+	//IsUsernameExists(username string) error
+	// SetSession(userId int, session domain.Session) error
 }
 
 type TeamRepository interface {
-	Create(teamLeaderId int, teamName string) (domain.Team, error)
-	Get(teamId int) (team domain.Team, err error)
+	SaveTeam(teamLeaderId int, teamName string) (int, error)
+	GetTeamById(teamId int) (*domain.Team, error)
+	GetTeamByToken(token string) (*domain.Team, error)
 	AddMember(teamId, userId int) error
-	GetMembers(teamId int) (users []domain.User, err error)
+	GetTeamByUserId(userId int) (int, error) //Временный метод
+	// Нужен ли нам этоти методы ???
+	GetMembers(teamId int) ([]domain.User, error) // Этот метод теперь нужен!
+	//IsTeamNameExists(teamName string) error
+	//IsTeamTokenExists(token string) error May be unnecessary
+	//IsTeamFull(teamId int) error
 }
 
 type TaskRepository interface {
-	CreateNewTask(task domain.Task) (int, error)
+	SaveTask(task domain.Task) (int, error)
 	GetTaskById(id int) (*domain.Task, error)
 	GetTasks(domain.TaskFilter) ([]*domain.Task, error)
 	UpdateTask(id int, update domain.TaskUpdate) error
 	SolveTask(taskId, teamId int) error
+	SaveTaskSubmission(submission domain.TaskSubmission) error
+	GetTaskSubmissions(taskId, teamId int) ([]*domain.TaskSubmission, error)
+	// Для чего этот метод? Для того что бы не бегать каждый раз по скупе таблиц со всеми вариантами решения таска
+	CheckSolvedTask(taskId, teamId int) (bool, error) // конкретно мне понадобился для получения true/false в ShowAllTasks-user
 }
 
 type SettingsRepository interface {

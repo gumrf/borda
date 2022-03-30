@@ -34,7 +34,7 @@ func Open(dsn string) (*sqlx.DB, error) {
 				continue
 			}
 
-			return nil, errors.New("Connecting to Postgres failed after maximum attempts")
+			return nil, errors.New("connecting to Postgres failed after maximum attempts")
 
 		}
 		break
@@ -47,16 +47,16 @@ func Open(dsn string) (*sqlx.DB, error) {
 func Migrate(db *sqlx.DB, migrationsPath string) error {
 	driver, err := postgres.WithInstance(db.DB, &postgres.Config{})
 	if err != nil {
-		return fmt.Errorf("Failed to connect db driver instance: %w", err)
+		return fmt.Errorf("connect db driver instance: %w", err)
 	}
 
 	m, err := migrate.NewWithDatabaseInstance(migrationsPath, "postgres", driver)
 	if err != nil {
-		return fmt.Errorf("Failed to initialize migrations: %w", err)
+		return fmt.Errorf("initialize migrations: %w", err)
 	}
 
 	if err := m.Up(); err != nil && err != migrate.ErrNoChange {
-		return fmt.Errorf("Failed to apply migrations: %w", err)
+		return fmt.Errorf("apply migrations: %w", err)
 	}
 
 	return nil
@@ -64,7 +64,7 @@ func Migrate(db *sqlx.DB, migrationsPath string) error {
 
 func Close(db *sqlx.DB) error {
 	if err := db.Close(); err != nil {
-		return fmt.Errorf("Failed to close connection to Postgres: %w", err)
+		return fmt.Errorf("close connection to Postgres: %w", err)
 	}
 
 	return nil

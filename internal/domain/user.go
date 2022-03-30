@@ -7,3 +7,19 @@ type User struct {
 	Contact  string `json:"contact" db:"contact"`
 	TeamId   int    `json:"teamId" db:"team_id"`
 }
+
+type SignUpInput struct {
+	Username string `json:"username"`
+	Password string `json:"password"`
+	Contact  string `json:"contact"`
+}
+
+type SignInInput struct {
+	Username string `json:"username"`
+	Password string `json:"password"`
+}
+
+type UserResponse struct {
+	Username string `json:"username"`
+	TeamName string `json:"team_name,omitempty"`
+}

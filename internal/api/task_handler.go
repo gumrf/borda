@@ -1,53 +1,106 @@
 package api
 
 import (
+	"borda/internal/domain"
+	"strconv"
+
 	"github.com/gofiber/fiber/v2"
 )
 
 func (h *Handler) initTaskRoutes(router fiber.Router) {
-	tasks := router.Group("/tasks")
+	tasks := router.Group("/tasks", h.authRequired, h.checkUserInTeam)
 	tasks.Get("", h.getAllTasks)
-	tasks.Post("", h.createNewTask)
 
-	task := router.Group("/tasks/:id")
-	task.Patch("", h.updateTask)
-
-	task.Post("/submissions", h.createNewSubmission)
-	task.Get("/submissions", h.getAllSubmissions)
+	tasks.Post("/:id/submissions", h.submitFlag)
+	tasks.Get("/:id/submissions", h.getAllSubmissions)
 }
 
-func (h *Handler) getAllTasks(c *fiber.Ctx) error {
-	c.Body()
-	return c.JSON(fiber.Map{
-		"error": false,
-		"tasks": []string{"task1, task2"},
-	})
+// @Summary      Get all tasks
+// @Description  Get tasks.
+// @Tags         Tasks
+// @Produce      json
+// @Success      200  {object}  domain.UserTaskResponse
+// @Failure      400      {object}  ErrorsResponse
+// @Failure      404      {object}  ErrorsResponse
+// @Failure      500      {object}  ErrorsResponse
+// @Router       /tasks [get]
+func (h *Handler) getAllTasks(ctx *fiber.Ctx) error {
+	id := ctx.Locals("userId").(int)
+
+	tasks, err := h.UserService.GetAllTasks(id)
+	if err != nil {
+		return NewErrorResponse(ctx,
+			fiber.StatusBadRequest, "Error occurred on the server.", err.Error())
+	}
+
+	return ctx.Status(fiber.StatusOK).JSON(fiber.Map{"tasks": tasks})
 }
 
-func (h *Handler) createNewTask(c *fiber.Ctx) error {
-	return c.Status(201).JSON(fiber.Map{
-		"error":   false,
-		"message": "Task created",
-	})
+// @Summary      Submit flag
+// @Description  Create new flag submission.
+// @Tags         Tasks
+// @Accept       json
+// @Produce      json
+// @Param        flag     body      domain.SubmitFlagRequest  true  "Flag"
+// @Param        task_id  path      int                       true  "Task ID"
+// @Success      201      string    OK
+// @Failure      400      {object}  ErrorsResponse
+// @Failure      404      {object}  ErrorsResponse
+// @Failure      500      {object}  ErrorsResponse
+// @Router       /tasks/{task_id}/submissions [post]
+func (h *Handler) submitFlag(c *fiber.Ctx) error {
+	var submission domain.SubmitFlagRequest
+	if err := c.BodyParser(&submission); err != nil {
+		return NewErrorResponse(c, fiber.StatusBadRequest, err.Error())
+	}
+
+	if err := submission.Validate(); err != nil {
+		return NewErrorResponse(c, fiber.StatusBadRequest, "Input is invalid.", err.Error())
+	}
+
+	// Get task from request url
+	taskId, err := strconv.Atoi(c.Params("id"))
+	if err != nil {
+		return NewErrorResponse(c, fiber.StatusBadRequest, "Input is invalid.", err.Error())
+	}
+
+	if err := h.UserService.SolveTask(domain.TaskSubmission{
+		TaskId: taskId,
+		TeamId: c.Locals("teamId").(int),
+		UserId: c.Locals("userId").(int),
+		Flag:   submission.Flag,
+	}); err != nil {
+		return NewErrorResponse(c,
+			fiber.StatusConflict, err.Error())
+	}
+
+	return c.SendStatus(fiber.StatusOK)
 }
 
-func (h *Handler) updateTask(c *fiber.Ctx) error {
-	return c.JSON(fiber.Map{
-		"error":   false,
-		"message": "Successfully update task!",
-	})
-}
-
-func (h *Handler) createNewSubmission(c *fiber.Ctx) error {
-	return c.Status(201).JSON(fiber.Map{
-		"error":   false,
-		"message": "Flag submitted",
-	})
-}
-
+// @Summary      Get all submission
+// @Description  Get all submissions for task.
+// @Tags         Tasks
+// @Produce      json
+// @Param        task_id  path      int  true  "Task ID"
+// @Success      201      {object}  domain.TaskSubmission
+// @Failure      400  {object}  ErrorsResponse
+// @Failure      404  {object}  ErrorsResponse
+// @Failure      500  {object}  ErrorsResponse
+// @Router       /tasks/{task_id}/submissions [get]
 func (h *Handler) getAllSubmissions(c *fiber.Ctx) error {
-	return c.JSON(fiber.Map{
-		"error":       false,
-		"submissions": []string{"s1", "s2", "s3"},
-	})
+	// Get task from request url
+	taskId, err := strconv.Atoi(c.Params("id"))
+	if err != nil {
+		return NewErrorResponse(c, fiber.StatusBadRequest, "Input is invalid.", err.Error())
+	}
+
+	// Get user id from context
+	userId := c.Locals("userId").(int)
+
+	submissions, err := h.UserService.GetTaskSubmissions(taskId, userId)
+	if err != nil {
+		return NewErrorResponse(c, fiber.StatusConflict, "", err.Error())
+	}
+
+	return c.Status(fiber.StatusOK).JSON(fiber.Map{"submissions": submissions})
 }

@@ -1,5 +1,8 @@
-# Postgres
-.pgdata
+# Postgres mount volume
+.postgres
+
+logs/
+build/
 
 # IDEs files
 .idea
@@ -17,7 +20,6 @@
 
 # Output of the go coverage tool, specifically when used with LiteIDE
 *.out
-logs/
 
 # Dependency directories (remove the comment below to include it)
 # vendor/

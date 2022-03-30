@@ -16,7 +16,7 @@ const (
 
 func MustOpenDB(t *testing.T) *sqlx.DB {
 	t.Helper()
-	
+
 	db, err := pg.Open(dsn)
 	if err != nil {
 		t.Fatal(err)

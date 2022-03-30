@@ -8,15 +8,11 @@ import (
 )
 
 type SettingsRepository struct {
-	db                *sqlx.DB
-	tableSettingsName string
+	db *sqlx.DB
 }
 
 func NewSettingsRepository(db *sqlx.DB) *SettingsRepository {
-	return &SettingsRepository{
-		db:                db,
-		tableSettingsName: "settings",
-	}
+	return &SettingsRepository{db: db}
 }
 
 func (r SettingsRepository) Get(key string) (value string, err error) {
@@ -24,7 +20,7 @@ func (r SettingsRepository) Get(key string) (value string, err error) {
 		SELECT *
 		FROM public.%s
 		WHERE key=$1
-		LIMIT 1`, r.tableSettingsName)
+		LIMIT 1`, settingsTable)
 
 	err = r.db.QueryRowx(query, key).Scan(&value)
 
@@ -50,7 +46,7 @@ func (r SettingsRepository) Set(key string, value string) (settingId int, err er
 		ON CONFLICT (key) DO UPDATE
 		SET key = excluded.key, value = excluded.value
 		RETURNING id`,
-		r.tableSettingsName)
+		settingsTable)
 	id := -1
 	err = r.db.QueryRowx(query, value, key).Scan(&id)
 

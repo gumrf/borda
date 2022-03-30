@@ -37,7 +37,7 @@ func Test_TaskRepository_CreateNewTask(t *testing.T) {
 
 			taskRepository := postgres.NewTaskRepository(db)
 
-			actualInt, actualError := taskRepository.CreateNewTask(tc.Task)
+			actualInt, actualError := taskRepository.SaveTask(tc.Task)
 
 			require.Equal(t, tc.ExpectedInt, actualInt)
 			require.Equal(t, tc.ExpectedError, actualError)
@@ -236,7 +236,7 @@ func Test_TaskRepository_GetTaskById(t *testing.T) {
 func MustCreateTask(t *testing.T, db *sqlx.DB, task *domain.Task) *domain.Task {
 	t.Helper()
 
-	id, err := postgres.NewTaskRepository(db).CreateNewTask(*task)
+	id, err := postgres.NewTaskRepository(db).SaveTask(*task)
 	if err != nil {
 		t.Fatal(err)
 	}

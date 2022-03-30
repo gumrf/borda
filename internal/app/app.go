@@ -5,7 +5,8 @@ import (
 	"borda/internal/config"
 	"borda/internal/logger"
 	"borda/internal/repository"
-	"borda/internal/services"
+	"borda/internal/service"
+	"borda/pkg/hash"
 	"borda/pkg/pg"
 
 	"fmt"
@@ -15,27 +16,48 @@ import (
 	"github.com/gofiber/fiber/v2"
 )
 
+// @title                       CTF Borda API
+// @version                     0.1
+// @description                 REST API for CTF Borda.
+// @host                        localhost:8080
+// @BasePath                    /api/v1
+// @securityDefinitions.apikey  ApiKeyAuth
+// @in                          header
+// @name                        Authorization
+
 // Run initializes whole application
 func Run() {
 	conf := config.Config()
 
 	if err := logger.InitLogger(conf.GetString("logger.path"), conf.GetString("logger.file_name")); err != nil {
-		fmt.Println("init logger:", err)
+		fmt.Println("Failed to initialize logger:", err)
 		os.Exit(1)
 	}
 
-	db, err := pg.Open(config.DatabaseUrl())
+	db, err := pg.Open(config.DatabaseURL())
 	if err != nil {
 		logger.Log.Fatalw("Failed to connect to Postgres:", err)
 	}
-	logger.Log.Info("Connected to Postgres: ", config.DatabaseUrl())
+	logger.Log.Info("Connected to Postgres: ", config.DatabaseURL())
 
+	if err := pg.Migrate(db, config.MigrationsPath()); err != nil {
+		logger.Log.Fatalf("Failed to run migrations: %v", err)
+	}
+
+	// Repository
 	repository := repository.NewRepository(db)
-	authService := services.NewAuthService(repository)
+
+	// Services
+	authService := service.NewAuthService(repository.Users, repository.Teams,
+		hash.NewSHA1Hasher(config.PasswordSalt()),
+	)
+	userService := service.NewUserService(repository.Users, repository.Tasks, repository.Teams)
+	adminService := service.NewAdminService(repository.Tasks)
 
 	app := fiber.New()
-	
-	handlers := api.NewHandler(authService)
+
+	// Handlers
+	handlers := api.NewHandler(authService, userService, adminService)
 	handlers.Init(app)
 
 	// Catch OS signals

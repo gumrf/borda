@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log"
 	"sync"
+	"time"
 
 	"github.com/spf13/viper"
 )
@@ -13,7 +14,6 @@ import (
 // TODO: Make config safe for concurrent operations.
 
 var (
-	// config is config
 	config viper.Viper
 	once   sync.Once
 )
@@ -26,21 +26,23 @@ func init() {
 	})
 }
 
-// setDefaults sets default values :)
 func setDefaults() {
-	config.SetDefault("http.host", "localhost")
-	config.SetDefault("http.port", 8080)
+	config.SetDefault("server.addr", "localhost:8080")
+
 	config.SetDefault("db.postgres.host", "localhost")
 	config.SetDefault("db.postgres.port", 5432)
 	config.SetDefault("db.postgres.user", "postgres")
 	config.SetDefault("db.postgres.password", "postgres")
 	config.SetDefault("db.postgres.name", "postgres")
-	config.SetDefault("db.postgres.migrations_path", "file://../migrations/")
+
+	config.SetDefault("migrations_path", "file://./migrations")
+
 	config.SetDefault("logger.path", "logs")
 	config.SetDefault("logger.file_name", "app.log")
-	config.SetDefault("auth.jwt.signing_key", "jwt_key_change_me")
-	config.SetDefault("auth.jwt.expire_time", 1800)
-	config.SetDefault("auth.password_salt", "random_string")
+
+	config.SetDefault("jwt.signing_key", "private_key_x69s")
+	config.SetDefault("jwt.key_expire_hours_count", 24)
+	config.SetDefault("password_salt", "password_salt_x69s")
 }
 
 // loadFromEnv reads values from environment variables.
@@ -48,12 +50,16 @@ func setDefaults() {
 func loadFromEnv() {
 	config.AllowEmptyEnv(false)
 	config.BindEnv("APP_ENV")
+	config.BindEnv("server.addr", "SERVER_ADDR")
+
 	config.BindEnv("db.postgres.host", "POSTGRES_HOST")
 	config.BindEnv("db.postgres.port", "POSTGRES_PORT")
 	config.BindEnv("db.postgres.user", "POSTGRES_USER")
 	config.BindEnv("db.postgres.password", "POSTGRES_PASSWORD")
 	config.BindEnv("db.postgres.name", "POSTGRES_DB")
-	config.BindEnv("db.postgres.migrations_path", "POSTGRES_MIGRATION_PATH")
+	//config.BindEnv("db.url", "DATABASE_URL")
+
+	config.BindEnv("migrations_path", "MIGRATIONS_PATH")
 }
 
 func Config() *viper.Viper {
@@ -69,8 +75,25 @@ func Print() string {
 	return "Configuration: " + string(configJSON)
 }
 
-// DatabaseUrl returns full Postgres connection url.
-func DatabaseUrl() string {
+type JWTConfig struct {
+	SigningKey string
+	ExpireTime time.Duration
+}
+
+func JWT() JWTConfig {
+	expireHoursCount := config.GetInt("jwt.key_expire_hours_count")
+
+	return JWTConfig{
+		SigningKey: config.GetString("jwt.signing_key"),
+		ExpireTime: time.Duration(expireHoursCount) * time.Hour,
+	}
+}
+
+func PasswordSalt() string {
+	return config.GetString("password_salt")
+}
+
+func DatabaseURL() string {
 	return fmt.Sprintf("postgres://%s:%s@%s:%d/%s?sslmode=disable",
 		config.GetString("db.postgres.user"),
 		config.GetString("db.postgres.password"),
@@ -81,7 +104,7 @@ func DatabaseUrl() string {
 
 // MigrationsPath return path to migrations location
 func MigrationsPath() string {
-	return config.GetString("db.postgres.migrations_path")
+	return config.GetString("migrations_path")
 }
 
 // LoggerPath return path to migrations location
@@ -92,7 +115,8 @@ func LoggerPath() string {
 }
 
 func ServerAddr() string {
-	return fmt.Sprintf("%s:%s",
-		config.GetString("http.host"),
-		config.GetString("http.port"))
+	return config.GetString("server.addr")
+	//return fmt.Sprintf("%s:%s",
+	//	config.GetString("http.host"),
+	//	config.GetString("http.port"))
 }
