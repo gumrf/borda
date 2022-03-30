@@ -1,6 +1,8 @@
 package api
 
 import (
+	"strconv"
+
 	"github.com/gofiber/fiber/v2"
 )
 
@@ -13,10 +15,18 @@ func (h *Handler) initUserRoutes(router fiber.Router) {
 }
 
 func (h *Handler) getUserById(c *fiber.Ctx) error {
-	return c.JSON(fiber.Map{
-		"error":  false,
-		"userId": c.Params("id"),
-	})
+
+	userId, err := strconv.Atoi(c.Params("id"))
+	if err != nil {
+		return NewErrorResponse(c, fiber.StatusBadRequest, "Input is invalid ", err.Error())
+	}
+
+	user, err := h.UserService.GetUserById(userId)
+	if err != nil {
+		return NewErrorResponse(c, fiber.StatusBadRequest, "Error occurred on the server. ", err.Error())
+	}
+
+	return c.Status(fiber.StatusOK).JSON(fiber.Map{"user_profile": user})
 }
 
 func (h *Handler) getAllUsers(c *fiber.Ctx) error {
