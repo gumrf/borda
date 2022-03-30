@@ -186,3 +186,45 @@ func (s *UserService) GetAllUsers() ([]domain.UserResponse, error) {
 
 	return usersResponse, nil
 }
+
+//Вернуть имя, контакт, и команду в которой он остоит, обозначить капитана
+func (s *UserService) GetUserById(userId int) (*domain.UserProfileResponse, error) {
+	user, err := s.userRepo.GetUserById(userId)
+	if err != nil {
+		return nil, err
+	}
+
+	team, err := s.teamRepo.GetTeamById(user.TeamId)
+	if err != nil {
+		return nil, err
+	}
+
+	teamMembers, err := s.teamRepo.GetMembers(user.TeamId)
+	if err != nil {
+		return nil, err
+	}
+
+	var teamLeader string
+	teamMembersResponse := make([]domain.UserTeamMembers, 0)
+	for _, member := range teamMembers {
+		var teamMemberResponse domain.UserTeamMembers
+		if member.Id == team.TeamLeaderId {
+			teamLeader = member.Username
+		} else {
+			teamMemberResponse = domain.UserTeamMembers{
+				Username: member.Username,
+			}
+		}
+		teamMembersResponse = append(teamMembersResponse, teamMemberResponse)
+	}
+
+	userProfile := domain.UserProfileResponse{
+		Username:    user.Username,
+		Contact:     user.Contact,
+		TeamName:    team.Name,
+		TeamLeader:  teamLeader,
+		TeamMembers: teamMembersResponse,
+	}
+
+	return &userProfile, nil
+}
