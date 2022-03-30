@@ -1,27 +1,50 @@
+# Learn more: https://docs.docker.com/compose/reference/
+#
+# Build images:   docker-compose build
+# Start app:      docker-compose up borda
+# Start database: docker-compose up db
+# Stop all:       docker-compose down (add -v to wipe db)
+#
 version: "3.9"
 services:
+  borda:
+    image: borda-backend
+    container_name: borda-backend
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "8080:8080"
+    env_file:
+      - .env
+    depends_on:
+      - db
 
-  postgres:
+  db:
     container_name: postgres
-    # restart: always
     image: postgres:latest
     volumes:
-      - ./.pgdata:/var/lib/postgresql/data:z
+      # Permission denied when creating db
+      # https://stackoverflow.com/questions/24288616/permission-denied-on-accessing-host-directory-in-docker
+      - ./.postgres/data:/var/lib/postgresql/data
     ports:
       - "5432:5432"
-    env_file: 
-      - local.env
+    env_file:
+      - .env
 
   pgweb:
     container_name: pgweb
-    # restart: always
     image: sosedoff/pgweb
-    ports: 
-      - "8081:8081" 
-    links: 
-      - postgres:postgres
+    restart: on-failure
+    ports:
+      - "8081:8081"
     environment:
-      - DATABASE_URL=postgres://postgres:postgres@postgres:5432/postgres?sslmode=disable
-      # - DATABASE_URL=postgres://<useer>:<password>@<host>:<port>/<dbname>?<param1=value1&...>
+      DATABASE_URL: "${DATABASE_URL}"
     depends_on:
-      - postgres
+      - db
+
+#networks:
+#  backend:
+#
+#volumes:
+#  db-data:

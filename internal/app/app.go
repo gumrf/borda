@@ -25,14 +25,14 @@ func Run() {
 		os.Exit(1)
 	}
 
-	db, err := pg.Open(config.DatabaseUrl())
+	db, err := pg.Open(config.DatabaseURL())
 	if err != nil {
 		logger.Log.Fatalw("Failed to connect to Postgres:", err)
 	}
-	logger.Log.Info("Connected to Postgres: ", config.DatabaseUrl())
+	logger.Log.Info("Connected to Postgres: ", config.DatabaseURL())
 
 	if err := pg.Migrate(db, config.MigrationsPath()); err != nil {
-		logger.Log.Fatalw("Failed to run migrations: %w", err)
+		logger.Log.Fatalf("Failed to run migrations: %v", err)
 	}
 
 	// Repository

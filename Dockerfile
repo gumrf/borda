@@ -2,19 +2,23 @@ FROM golang:1.17-alpine as Builder
 
 RUN  apk add --update make
 
-ADD . /borda-backend/
-WORKDIR /borda-backend
+COPY . /borda/
+WORKDIR /borda
 
 RUN go mod download
-RUN CGO_ENABLED=0 go build -o ./build/borda-backend
 
-# 
+ENV CGO_ENABLED=0 GOOS=linux GOARCH=amd64
+RUN go build -o ./build/borda-backend ./cmd/main.go
+
 FROM alpine:latest
 
 RUN apk add --no-cache ca-certificates
 
-COPY --from=Builder /borda-backend/build/* /opt/Borda/
+WORKDIR /borda
 
-EXPOSE 6969
+COPY --from=Builder /borda/build/* /borda/
+COPY ./migrations/* /borda/migrations/
 
-ENTRYPOINT ["/opt/Borda/borda-backend"]
+EXPOSE 8080
+
+ENTRYPOINT ["./borda-backend"]
