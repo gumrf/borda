@@ -1,20 +1,47 @@
 package api
 
 import (
+	"strconv"
+
 	"github.com/gofiber/fiber/v2"
 )
 
 func (h *Handler) initUserRoutes(router fiber.Router) {
 	users := router.Group("/users", h.authRequired, h.checkUserInTeam)
-	users.Get("", h.getAllUsers)
-	users.Get("/:id", h.getUserById)
+	users.Get("/", h.getAllUsers)
+	users.Get("/me", h.getMyProfile)
+	users.Get("/:id", h.getUserProfile)
 }
 
-func (h *Handler) getUserById(c *fiber.Ctx) error {
-	return c.JSON(fiber.Map{
-		"error":  false,
-		"userId": c.Params("id"),
+func (h *Handler) getMyProfile(c *fiber.Ctx) error {
+	id := c.Locals("userId").(int)
+
+	user, err := h.UserService.GetUserMe(id)
+	if err != nil {
+		return err
+	}
+
+	return c.Status(fiber.StatusOK).JSON(fiber.Map{
+		"error":   false,
+		"profile": user,
 	})
+}
+
+func (h *Handler) getUserProfile(c *fiber.Ctx) error {
+	userId, err := strconv.Atoi(c.Params("id"))
+	if err != nil {
+		return err
+	}
+
+	user, err := h.UserService.GetUser(userId)
+	if err != nil {
+		return err
+	}
+
+	return c.Status(fiber.StatusOK).JSON(fiber.Map{
+		"profile": user,
+	})
+
 }
 
 // @Summary      Get all users
