@@ -18,11 +18,10 @@ func (h *Handler) getMyProfile(c *fiber.Ctx) error {
 
 	user, err := h.UserService.GetUserMe(id)
 	if err != nil {
-		return err
+		return NewErrorResponse(c, fiber.StatusBadRequest, "Error occurred on the server", err.Error())
 	}
 
 	return c.Status(fiber.StatusOK).JSON(fiber.Map{
-		"error":   false,
 		"profile": user,
 	})
 }
@@ -30,12 +29,12 @@ func (h *Handler) getMyProfile(c *fiber.Ctx) error {
 func (h *Handler) getUserProfile(c *fiber.Ctx) error {
 	userId, err := strconv.Atoi(c.Params("id"))
 	if err != nil {
-		return err
+		return NewErrorResponse(c, fiber.StatusBadRequest, "Error occurred on the server", err.Error())
 	}
 
 	user, err := h.UserService.GetUser(userId)
 	if err != nil {
-		return err
+		return NewErrorResponse(c, fiber.StatusBadRequest, "Error occurred on the server", err.Error())
 	}
 
 	return c.Status(fiber.StatusOK).JSON(fiber.Map{
