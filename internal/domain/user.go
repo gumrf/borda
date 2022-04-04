@@ -21,5 +21,12 @@ type SignInInput struct {
 
 type UserResponse struct {
 	Username string `json:"username"`
-	TeamName string `json:"team_name,omitempty"`
+	TeamName string `json:"teamName,omitempty"`
+}
+
+type UserProfileResponse struct {
+	Username    string           `json:"username"`
+	Contact     string           `json:"contact,omitempty"`
+	TeamName    string           `json:"teamName"`
+	TeamMembers []MemberResponse `json:"teamMembers"`
 }

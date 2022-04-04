@@ -22,3 +22,8 @@ type TeamResponse struct {
 	Token        string   `json:"token"`
 	Members      []string `json:"members"`
 }
+
+type MemberResponse struct {
+	Username  string `json:"username"`
+	IsCaptain bool   `json:"isCaptain,omitempty"`
+}
