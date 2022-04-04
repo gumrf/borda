@@ -20,14 +20,6 @@ func NewUserService(userRepo repository.UserRepository, taskRepo repository.Task
 	}
 }
 
-func (s *UserService) GetUser(id int) (*domain.User, error) {
-	user, err := s.userRepo.GetUserById(id)
-	if err != nil {
-		return nil, err
-	}
-
-	return user, nil
-}
 func (s *UserService) IsUserInTeam(userId int) (int, bool) {
 	user, err := s.userRepo.GetUserById(userId)
 	if err != nil {
@@ -185,4 +177,82 @@ func (s *UserService) GetAllUsers() ([]domain.UserResponse, error) {
 	}
 
 	return usersResponse, nil
+}
+
+func (s *UserService) GetUserMe(userId int) (domain.UserProfileResponse, error) {
+	user, err := s.userRepo.GetUserById(userId)
+	if err != nil {
+		return domain.UserProfileResponse{}, err
+	}
+
+	team, err := s.teamRepo.GetTeamById(user.TeamId)
+	if err != nil {
+		return domain.UserProfileResponse{}, err
+	}
+
+	teamMembers, err := s.teamRepo.GetMembers(user.TeamId)
+	if err != nil {
+		return domain.UserProfileResponse{}, err
+	}
+
+	membersResponse := make([]domain.MemberResponse, 0)
+
+	for _, teamMember := range teamMembers {
+		isCaptain := false
+		if teamMember.Id == team.TeamLeaderId {
+			isCaptain = true
+		}
+
+		memberResponse := domain.MemberResponse{
+			Username:  teamMember.Username,
+			IsCaptain: isCaptain,
+		}
+
+		membersResponse = append(membersResponse, memberResponse)
+	}
+
+	userProfileResponse := domain.UserProfileResponse{
+		Username:    user.Username,
+		Contact:     user.Contact,
+		TeamName:    team.Name,
+		TeamMembers: membersResponse,
+	}
+
+	return userProfileResponse, nil
+}
+
+func (s *UserService) GetUser(userId int) (domain.UserProfileResponse, error) {
+	user, err := s.userRepo.GetUserById(userId)
+	if err != nil {
+		return domain.UserProfileResponse{}, err
+	}
+
+	team, err := s.teamRepo.GetTeamById(user.TeamId)
+	if err != nil {
+		return domain.UserProfileResponse{}, err
+	}
+
+	teamMembers, err := s.teamRepo.GetMembers(user.TeamId)
+	if err != nil {
+		return domain.UserProfileResponse{}, err
+	}
+
+	membersResponse := make([]domain.MemberResponse, 0)
+
+	for _, teamMember := range teamMembers {
+
+		memberResponse := domain.MemberResponse{
+			Username: teamMember.Username,
+		}
+
+		membersResponse = append(membersResponse, memberResponse)
+	}
+
+	userProfileResponse := domain.UserProfileResponse{
+		Username:    user.Username,
+		TeamName:    team.Name,
+		TeamMembers: membersResponse,
+	}
+
+	return userProfileResponse, nil
 }
