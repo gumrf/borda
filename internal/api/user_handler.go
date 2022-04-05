@@ -1,6 +1,8 @@
 package api
 
 import (
+	"borda/internal/repository"
+	"borda/internal/usecase"
 	"strconv"
 
 	"github.com/gofiber/fiber/v2"
@@ -9,36 +11,65 @@ import (
 func (h *Handler) initUserRoutes(router fiber.Router) {
 	users := router.Group("/users", h.authRequired, h.checkUserInTeam)
 	users.Get("/", h.getAllUsers)
-	users.Get("/me", h.getMyProfile)
-	users.Get("/:id", h.getUserProfile)
+	users.Get("/me", h.getCurentLogetInUser)
+	users.Get("/:id", h.getUser)
 }
 
-func (h *Handler) getMyProfile(c *fiber.Ctx) error {
+// @Summary      Get curent loget in user
+// @Description  Show page of curent loget in user.
+// @Tags         User
+// @Security     ApiKeyAuth
+// @Produce      json
+// @Success      201  {array}   domain.UserProfileResponse
+// @Failure      400  {object}  ErrorsResponse
+// @Failure      404  {object}  ErrorsResponse
+// @Failure      500  {object}  ErrorsResponse
+// @Router       /users/me [get]
+func (h *Handler) getCurentLogetInUser(c *fiber.Ctx) error {
 	id := c.Locals("userId").(int)
+	var UserRepo repository.UserRepository
+	var TeamRepo repository.TeamRepository
 
-	user, err := h.UserService.GetUserMe(id)
+	uc := usecase.NewUsecaseGetUser(UserRepo, TeamRepo)
+	result, err := uc.Execute(id, true)
 	if err != nil {
 		return NewErrorResponse(c, fiber.StatusBadRequest, "Error occurred on the server", err.Error())
 	}
 
 	return c.Status(fiber.StatusOK).JSON(fiber.Map{
-		"profile": user,
+		"profile": result,
 	})
 }
 
-func (h *Handler) getUserProfile(c *fiber.Ctx) error {
+// @Summary      Get user
+// @Description  Show page of user.
+// @Tags         User
+// @Security     ApiKeyAuth
+// @Produce      json
+// @Param        user_id  path      int  true  "User ID"
+// @Success      201  {array}   domain.UserProfileResponse
+// @Failure      400  {object}  ErrorsResponse
+// @Failure      404  {object}  ErrorsResponse
+// @Failure      500  {object}  ErrorsResponse
+// @Router       /users/{user_id} [get]
+func (h *Handler) getUser(c *fiber.Ctx) error {
 	userId, err := strconv.Atoi(c.Params("id"))
 	if err != nil {
-		return NewErrorResponse(c, fiber.StatusBadRequest, "Error occurred on the server", err.Error())
+		return NewErrorResponse(c, fiber.StatusBadRequest, "Error occurred on convertation id in int", err.Error())
 	}
 
-	user, err := h.UserService.GetUser(userId)
+	var UserRepo repository.UserRepository
+	var TeamRepo repository.TeamRepository
+
+	uc := usecase.NewUsecaseGetUser(UserRepo, TeamRepo)
+
+	result, err := uc.Execute(userId, false)
 	if err != nil {
 		return NewErrorResponse(c, fiber.StatusBadRequest, "Error occurred on the server", err.Error())
 	}
 
 	return c.Status(fiber.StatusOK).JSON(fiber.Map{
-		"profile": user,
+		"profile": result,
 	})
 
 }
@@ -54,10 +85,15 @@ func (h *Handler) getUserProfile(c *fiber.Ctx) error {
 // @Failure      500  {object}  ErrorsResponse
 // @Router       /users [get]
 func (h *Handler) getAllUsers(c *fiber.Ctx) error {
-	users, err := h.UserService.GetAllUsers()
+	var UserRepo repository.UserRepository
+	var TeamRepo repository.TeamRepository
+
+	uc := usecase.NewUsecaseGetAllUsers(UserRepo, TeamRepo)
+
+	result, err := uc.Execute()
 	if err != nil {
 		return NewErrorResponse(c, fiber.StatusBadRequest, "Error occurred on the server.", err.Error())
 	}
 
-	return c.Status(fiber.StatusOK).JSON(fiber.Map{"users": users})
+	return c.Status(fiber.StatusOK).JSON(fiber.Map{"users": result})
 }
