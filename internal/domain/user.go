@@ -25,8 +25,10 @@ type UserResponse struct {
 }
 
 type UserProfileResponse struct {
+	Id          int              `json:"userId"`
 	Username    string           `json:"username"`
 	Contact     string           `json:"contact,omitempty"`
+	TeamId      int              `json:"teamId"`
 	TeamName    string           `json:"teamName"`
 	TeamMembers []MemberResponse `json:"teamMembers"`
 }
