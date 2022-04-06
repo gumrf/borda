@@ -8,8 +8,8 @@ import (
 	"borda/internal/service"
 	"borda/pkg/hash"
 	"borda/pkg/pg"
-
 	"fmt"
+	"github.com/gofiber/fiber/v2/middleware/cors"
 	"os"
 	"os/signal"
 
@@ -55,6 +55,7 @@ func Run() {
 	adminService := service.NewAdminService(repository.Tasks)
 
 	app := fiber.New()
+	app.Use(cors.New())
 
 	// Handlers
 	handlers := api.NewHandler(authService, userService, adminService)
