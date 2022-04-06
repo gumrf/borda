@@ -10,7 +10,7 @@ import (
 func (h *Handler) initUserRoutes(router fiber.Router) {
 	users := router.Group("/users", h.authRequired, h.checkUserInTeam)
 	users.Get("/", h.getAllUsers)
-	users.Get("/me", h.getCurentLogetInUser)
+	users.Get("/me", h.getCurentLogedInUser)
 	users.Get("/:id", h.getUser)
 }
 
@@ -24,7 +24,7 @@ func (h *Handler) initUserRoutes(router fiber.Router) {
 // @Failure      404  {object}  ErrorsResponse
 // @Failure      500  {object}  ErrorsResponse
 // @Router       /users/me [get]
-func (h *Handler) getCurentLogetInUser(c *fiber.Ctx) error {
+func (h *Handler) getCurentLogedInUser(c *fiber.Ctx) error {
 	id := c.Locals("userId").(int)
 
 	uc := usecase.NewUsecaseGetUser(h.Repository.Users, h.Repository.Teams)
@@ -33,9 +33,7 @@ func (h *Handler) getCurentLogetInUser(c *fiber.Ctx) error {
 		return NewErrorResponse(c, fiber.StatusBadRequest, "Error occurred on the server", err.Error())
 	}
 
-	return c.Status(fiber.StatusOK).JSON(fiber.Map{
-		"profile": result,
-	})
+	return c.Status(fiber.StatusOK).JSON(result)
 }
 
 // @Summary      Get user
@@ -62,9 +60,7 @@ func (h *Handler) getUser(c *fiber.Ctx) error {
 		return NewErrorResponse(c, fiber.StatusBadRequest, "Error occurred on the server", err.Error())
 	}
 
-	return c.Status(fiber.StatusOK).JSON(fiber.Map{
-		"profile": result,
-	})
+	return c.Status(fiber.StatusOK).JSON(result)
 
 }
 
@@ -87,5 +83,5 @@ func (h *Handler) getAllUsers(c *fiber.Ctx) error {
 		return NewErrorResponse(c, fiber.StatusBadRequest, "Error occurred on the server.", err.Error())
 	}
 
-	return c.Status(fiber.StatusOK).JSON(fiber.Map{"users": result})
+	return c.Status(fiber.StatusOK).JSON(result)
 }

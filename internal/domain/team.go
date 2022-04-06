@@ -25,5 +25,5 @@ type TeamResponse struct {
 
 type MemberResponse struct {
 	Username  string `json:"username"`
-	IsCaptain bool   `json:"isCaptain,omitempty"`
+	IsCaptain bool   `json:"isCaptain"`
 }
