@@ -54,10 +54,13 @@ func Run() {
 	userService := service.NewUserService(repository.Users, repository.Tasks, repository.Teams)
 	adminService := service.NewAdminService(repository.Tasks)
 
+	//Usecases
+	// usecaseGetAllUsers := usecase.NewUsecaseGetAllUsers(repository.Users, repository.Teams)
+
 	app := fiber.New()
 
 	// Handlers
-	handlers := api.NewHandler(authService, userService, adminService)
+	handlers := api.NewHandler(authService, userService, adminService, repository)
 	handlers.Init(app)
 
 	// Catch OS signals

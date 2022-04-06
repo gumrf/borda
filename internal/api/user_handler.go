@@ -1,7 +1,6 @@
 package api
 
 import (
-	"borda/internal/repository"
 	"borda/internal/usecase"
 	"strconv"
 
@@ -27,10 +26,8 @@ func (h *Handler) initUserRoutes(router fiber.Router) {
 // @Router       /users/me [get]
 func (h *Handler) getCurentLogetInUser(c *fiber.Ctx) error {
 	id := c.Locals("userId").(int)
-	var UserRepo repository.UserRepository
-	var TeamRepo repository.TeamRepository
 
-	uc := usecase.NewUsecaseGetUser(UserRepo, TeamRepo)
+	uc := usecase.NewUsecaseGetUser(h.Repository.Users, h.Repository.Teams)
 	result, err := uc.Execute(id, true)
 	if err != nil {
 		return NewErrorResponse(c, fiber.StatusBadRequest, "Error occurred on the server", err.Error())
@@ -58,10 +55,7 @@ func (h *Handler) getUser(c *fiber.Ctx) error {
 		return NewErrorResponse(c, fiber.StatusBadRequest, "Error occurred on convertation id in int", err.Error())
 	}
 
-	var UserRepo repository.UserRepository
-	var TeamRepo repository.TeamRepository
-
-	uc := usecase.NewUsecaseGetUser(UserRepo, TeamRepo)
+	uc := usecase.NewUsecaseGetUser(h.Repository.Users, h.Repository.Teams)
 
 	result, err := uc.Execute(userId, false)
 	if err != nil {
@@ -85,10 +79,8 @@ func (h *Handler) getUser(c *fiber.Ctx) error {
 // @Failure      500  {object}  ErrorsResponse
 // @Router       /users [get]
 func (h *Handler) getAllUsers(c *fiber.Ctx) error {
-	var UserRepo repository.UserRepository
-	var TeamRepo repository.TeamRepository
 
-	uc := usecase.NewUsecaseGetAllUsers(UserRepo, TeamRepo)
+	uc := usecase.NewUsecaseGetAllUsers(h.Repository.Users, h.Repository.Teams)
 
 	result, err := uc.Execute()
 	if err != nil {

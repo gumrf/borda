@@ -3,6 +3,7 @@ package api
 import (
 	_ "borda/docs"
 	"borda/internal/config"
+	"borda/internal/repository"
 	"borda/internal/service"
 	"fmt"
 	"strconv"
@@ -19,14 +20,16 @@ type Handler struct {
 	AuthService  *service.AuthService
 	UserService  *service.UserService
 	AdminService *service.AdminService
+	Repository   *repository.Repository
 }
 
 func NewHandler(authService *service.AuthService, userService *service.UserService,
-	adminService *service.AdminService) *Handler {
+	adminService *service.AdminService, repository *repository.Repository) *Handler {
 	return &Handler{
 		AuthService:  authService,
 		UserService:  userService,
 		AdminService: adminService,
+		Repository:   repository,
 	}
 }
 
