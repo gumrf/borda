@@ -26,18 +26,18 @@ func (h *Handler) initTaskRoutes(router fiber.Router) {
 // @Failure      404      {object}  ErrorsResponse
 // @Failure      500      {object}  ErrorsResponse
 // @Router       /tasks [get]
-func (h *Handler) getAllTasks(ctx *fiber.Ctx) error {
-	id := ctx.Locals("teamId").(int)
+func (h *Handler) getAllTasks(c *fiber.Ctx) error {
+	id := c.Locals("teamId").(int)
 
 	uc := usecase.NewUsecaseGetAllTasks(h.Repository.Tasks, h.Repository.Teams)
 
 	tasks, err := uc.Execute(id)
 	if err != nil {
-		return NewErrorResponse(ctx,
+		return NewErrorResponse(c,
 			fiber.StatusBadRequest, "Error occurred on the server.", err.Error())
 	}
 
-	return ctx.Status(fiber.StatusOK).JSON(fiber.Map{"tasks": tasks})
+	return c.Status(fiber.StatusOK).JSON(tasks)
 }
 
 // @Summary      Submit flag
@@ -78,7 +78,7 @@ func (h *Handler) submitFlag(c *fiber.Ctx) error {
 		Flag:   submission.Flag,
 	}); err != nil {
 		return NewErrorResponse(c,
-			fiber.StatusConflict, err.Error())
+			fiber.StatusConflict, "Error occurred on the server.", err.Error())
 	}
 
 	return c.SendStatus(fiber.StatusOK)
@@ -108,8 +108,8 @@ func (h *Handler) getAllSubmissions(c *fiber.Ctx) error {
 
 	submissions, err := uc.Execute(taskId, userId)
 	if err != nil {
-		return NewErrorResponse(c, fiber.StatusConflict, "", err.Error())
+		return NewErrorResponse(c, fiber.StatusConflict, "Error occurred on the server.", err.Error())
 	}
 
-	return c.Status(fiber.StatusOK).JSON(fiber.Map{"submissions": submissions})
+	return c.Status(fiber.StatusOK).JSON(submissions)
 }
