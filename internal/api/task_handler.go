@@ -2,6 +2,7 @@ package api
 
 import (
 	"borda/internal/domain"
+	"borda/internal/usecase"
 	"strconv"
 
 	"github.com/gofiber/fiber/v2"
@@ -26,9 +27,11 @@ func (h *Handler) initTaskRoutes(router fiber.Router) {
 // @Failure      500      {object}  ErrorsResponse
 // @Router       /tasks [get]
 func (h *Handler) getAllTasks(ctx *fiber.Ctx) error {
-	id := ctx.Locals("userId").(int)
+	id := ctx.Locals("teamId").(int)
 
-	tasks, err := h.UserService.GetAllTasks(id)
+	uc := usecase.NewUsecaseGetAllTasks(h.Repository.Tasks, h.Repository.Teams)
+
+	tasks, err := uc.Execute(id)
 	if err != nil {
 		return NewErrorResponse(ctx,
 			fiber.StatusBadRequest, "Error occurred on the server.", err.Error())
@@ -66,7 +69,9 @@ func (h *Handler) submitFlag(c *fiber.Ctx) error {
 		return NewErrorResponse(c, fiber.StatusBadRequest, "Input is invalid.", err.Error())
 	}
 
-	if err := h.UserService.SolveTask(domain.TaskSubmission{
+	uc := usecase.NewUsecaseSubmitFlag(h.Repository.Tasks)
+
+	if err := uc.Execute(domain.TaskSubmission{
 		TaskId: taskId,
 		TeamId: c.Locals("teamId").(int),
 		UserId: c.Locals("userId").(int),
@@ -99,8 +104,9 @@ func (h *Handler) getAllSubmissions(c *fiber.Ctx) error {
 
 	// Get user id from context
 	userId := c.Locals("userId").(int)
+	uc := usecase.NewUsecaseGetAllSubmissions(h.Repository.Tasks)
 
-	submissions, err := h.UserService.GetTaskSubmissions(taskId, userId)
+	submissions, err := uc.Execute(taskId, userId)
 	if err != nil {
 		return NewErrorResponse(c, fiber.StatusConflict, "", err.Error())
 	}
