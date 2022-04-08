@@ -65,6 +65,7 @@ func (h *Handler) updateTask(c *fiber.Ctx) error {
 			err.Error())
 	}
 
+	//TODO: Fix validation: ints
 	// Validate request payload
 	if err := update.Validate(); err != nil {
 		return NewErrorResponse(c, fiber.StatusBadRequest,
