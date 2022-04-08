@@ -9,9 +9,10 @@ import (
 	"borda/pkg/hash"
 	"borda/pkg/pg"
 	"fmt"
-	"github.com/gofiber/fiber/v2/middleware/cors"
 	"os"
 	"os/signal"
+
+	"github.com/gofiber/fiber/v2/middleware/cors"
 
 	"github.com/gofiber/fiber/v2"
 )
@@ -52,13 +53,12 @@ func Run() {
 		hash.NewSHA1Hasher(config.PasswordSalt()),
 	)
 	userService := service.NewUserService(repository.Users, repository.Tasks, repository.Teams)
-	adminService := service.NewAdminService(repository.Tasks)
 
 	app := fiber.New()
 	app.Use(cors.New())
 
 	// Handlers
-	handlers := api.NewHandler(authService, userService, adminService)
+	handlers := api.NewHandler(authService, userService, repository)
 	handlers.Init(app)
 
 	// Catch OS signals

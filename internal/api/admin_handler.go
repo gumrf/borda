@@ -2,6 +2,7 @@ package api
 
 import (
 	"borda/internal/domain"
+	"borda/internal/usecase"
 	"strconv"
 
 	"github.com/gofiber/fiber/v2"
@@ -27,14 +28,14 @@ func (h *Handler) initAdminRoutes(router fiber.Router) {
 // @Failure      500   {object}  ErrorsResponse
 // @Router       /admin/tasks [get]
 func (h *Handler) adminGetAllTasks(c *fiber.Ctx) error {
-	tasks, err := h.AdminService.GetAllTasks()
+	uc := usecase.NewAdminUsecaseGetAlTasks(h.Repository.Tasks)
+
+	tasks, err := uc.Execute()
 	if err != nil {
 		return NewErrorResponse(c, fiber.StatusBadRequest, "Internal server error", err.Error())
 	}
 
-	return c.Status(fiber.StatusOK).JSON(fiber.Map{
-		"tasks": tasks,
-	})
+	return c.Status(fiber.StatusOK).JSON(tasks)
 }
 
 // @Summary      Update task
@@ -70,15 +71,19 @@ func (h *Handler) updateTask(c *fiber.Ctx) error {
 			"Validation is not passed.", err.Error())
 	}
 
+	//Init usecase
+	uc := usecase.NewAdminUsecaseUpdateTask(h.Repository.Tasks)
+
 	// Update task
-	if err := h.AdminService.UpdateTask(taskId, update); err != nil {
+	updatedTask, err := uc.Execute(taskId, update)
+	if err != nil {
 		return NewErrorResponse(c, fiber.StatusBadRequest,
 			"Internal server error.", err.Error())
 	}
 
 	// TODO: fetch and return task after update
 
-	return c.SendStatus(fiber.StatusOK)
+	return c.Status(fiber.StatusOK).JSON(updatedTask)
 }
 
 // @Summary      Create new task
@@ -101,16 +106,19 @@ func (h *Handler) createNewTask(ctx *fiber.Ctx) error {
 			"Input is invalid.", err.Error())
 	}
 
-	if err := task.Validate(); err != nil {
-		return NewErrorResponse(ctx, fiber.StatusBadRequest,
-			"Validation is not passed.", err.Error())
-	}
+	//TODO: Fix validator: id, author id, points, isActive, isDisable
+	//if err := task.Validate(); err != nil {
+	//	return NewErrorResponse(ctx, fiber.StatusBadRequest,
+	//		"Validation is not passed.", err.Error())
+	//}
 
-	createdTask, err := h.AdminService.CreateNewTask(task)
+	uc := usecase.NewAdminUsecaseCreateNewTask(h.Repository.Tasks)
+
+	createdTask, err := uc.Execute(task)
 	if err != nil {
 		return NewErrorResponse(ctx,
 			fiber.StatusBadRequest, "Internal server error.", err.Error())
 	}
 
-	return ctx.Status(fiber.StatusOK).JSON(fiber.Map{"task": createdTask})
+	return ctx.Status(fiber.StatusOK).JSON(createdTask)
 }

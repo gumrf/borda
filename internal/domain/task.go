@@ -7,7 +7,7 @@ import (
 
 // Task is task
 type Task struct {
-	Id          int    `json:"id" db:"id"`
+	Id          int    `json:"id,omitempty" db:"id"`
 	Title       string `json:"title" db:"title"`
 	Description string `json:"description" db:"description"`
 	Category    string `json:"category" db:"category"`
