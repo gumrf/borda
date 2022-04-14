@@ -9,15 +9,12 @@ import (
 
 type UserRepository interface {
 	SaveUser(username, password, contact string) (int, error)
+	GetAllUsers() ([]*domain.User, error)
 	GetUserByCredentials(username, password string) (*domain.User, error)
 	GetUserById(id int) (*domain.User, error)
 	UpdatePassword(userId int, newPassword string) error
 	AssignRole(userId, roleId int) error
 	GetUserRole(userId int) (*domain.Role, error)
-	GetAllUsers() ([]domain.User, error)
-	// Зачем этот метод?
-	//IsUsernameExists(username string) error
-	// SetSession(userId int, session domain.Session) error
 }
 
 type TeamRepository interface {
@@ -25,12 +22,7 @@ type TeamRepository interface {
 	GetTeamById(teamId int) (*domain.Team, error)
 	GetTeamByToken(token string) (*domain.Team, error)
 	AddMember(teamId, userId int) error
-	GetTeamByUserId(userId int) (int, error) //Временный метод
-	// Нужен ли нам этоти методы ???
-	GetMembers(teamId int) ([]domain.User, error) // Этот метод теперь нужен!
-	//IsTeamNameExists(teamName string) error
-	//IsTeamTokenExists(token string) error May be unnecessary
-	//IsTeamFull(teamId int) error
+	// GetTeamByUserId(userId int) (int, error)
 }
 
 type TaskRepository interface {
@@ -41,8 +33,7 @@ type TaskRepository interface {
 	SolveTask(taskId, teamId int) error
 	SaveTaskSubmission(submission domain.TaskSubmission) error
 	GetTaskSubmissions(taskId, teamId int) ([]*domain.TaskSubmission, error)
-	// Для чего этот метод? Для того что бы не бегать каждый раз по скупе таблиц со всеми вариантами решения таска
-	CheckSolvedTask(taskId, teamId int) (bool, error) // конкретно мне понадобился для получения true/false в ShowAllTasks-user
+	CheckSolvedTask(taskId, teamId int) (bool, error)
 }
 
 type SettingsRepository interface {

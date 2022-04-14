@@ -1,6 +1,15 @@
 basePath: /api/v1
 definitions:
-  api.Error:
+  domain.Author:
+    properties:
+      contact:
+        type: string
+      id:
+        type: integer
+      name:
+        type: string
+    type: object
+  domain.ErrorResponse:
     properties:
       code:
         type: string
@@ -11,20 +20,54 @@ definitions:
       title:
         type: string
     type: object
-  api.ErrorsResponse:
-    properties:
-      errors:
-        items:
-          $ref: '#/definitions/api.Error'
-        type: array
-    type: object
-  domain.Author:
+  domain.PrivateUserProfileResponse:
     properties:
       contact:
         type: string
       id:
         type: integer
-      name:
+      team:
+        $ref: '#/definitions/domain.TeamResponse'
+      username:
+        type: string
+    type: object
+  domain.PublicTaskResponse:
+    properties:
+      author:
+        $ref: '#/definitions/domain.Author'
+      category:
+        type: string
+      complexity:
+        type: string
+      description:
+        type: string
+      hint:
+        type: string
+      id:
+        type: integer
+      isSolved:
+        type: boolean
+      points:
+        type: integer
+      submissions:
+        items:
+          $ref: '#/definitions/domain.SubmissionResponse'
+        type: array
+      title:
+        type: string
+    type: object
+  domain.PublicUserProfileResponse:
+    properties:
+      id:
+        type: integer
+      team:
+        properties:
+          id:
+            type: integer
+          name:
+            type: string
+        type: object
+      username:
         type: string
     type: object
   domain.SignInInput:
@@ -32,6 +75,11 @@ definitions:
       password:
         type: string
       username:
+        type: string
+    type: object
+  domain.SignInResponse:
+    properties:
+      token:
         type: string
     type: object
   domain.SignUpInput:
@@ -43,13 +91,20 @@ definitions:
       username:
         type: string
     type: object
+  domain.SubmissionResponse:
+    properties:
+      flag:
+        type: string
+      isCorrect:
+        type: boolean
+      timestamp:
+        type: string
+      username:
+        type: string
+    type: object
   domain.SubmitFlagRequest:
     properties:
       flag:
-        description: |-
-          TaskId int `json:"taskId"`
-          TeamId int    `json:"teamId"`
-          UserId int    `json:"userId"`
         type: string
     type: object
   domain.Task:
@@ -77,62 +132,26 @@ definitions:
       title:
         type: string
     type: object
-  domain.TaskSubmission:
+  domain.TeamMember:
     properties:
-      flag:
-        type: string
-      isCorrect:
-        type: boolean
-      taskId:
-        type: integer
-      teamId:
-        type: integer
-      timestamp:
-        type: string
-      userId:
-        type: integer
-    type: object
-  domain.TaskSubmissionResponse:
-    properties:
-      flag:
-        type: string
-      isCorrect:
-        type: boolean
-      timestamp:
-        type: string
-      username:
-        type: string
-    type: object
-  domain.UserResponse:
-    properties:
-      team_name:
-        type: string
-      username:
-        type: string
-    type: object
-  domain.UserTaskResponse:
-    properties:
-      author:
-        $ref: '#/definitions/domain.Author'
-      category:
-        type: string
-      complexity:
-        type: string
-      description:
-        type: string
-      hint:
-        type: string
       id:
         type: integer
-      isSolved:
-        type: boolean
-      points:
+      name:
+        type: string
+    type: object
+  domain.TeamResponse:
+    properties:
+      captain:
+        $ref: '#/definitions/domain.TeamMember'
+      id:
         type: integer
-      submissions:
+      members:
         items:
-          $ref: '#/definitions/domain.TaskSubmissionResponse'
+          $ref: '#/definitions/domain.TeamMember'
         type: array
-      title:
+      name:
+        type: string
+      token:
         type: string
     type: object
 host: localhost:8080
@@ -142,47 +161,6 @@ info:
   title: CTF Borda API
   version: "0.1"
 paths:
-  /admin/task/{task_id}:
-    patch:
-      consumes:
-      - application/json
-      description: Update task.
-      parameters:
-      - description: Task ID
-        in: path
-        name: task_id
-        required: true
-        type: integer
-      - description: Task
-        in: body
-        name: task
-        required: true
-        schema:
-          $ref: '#/definitions/domain.Task'
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            type: string
-        "400":
-          description: Bad Request
-          schema:
-            $ref: '#/definitions/api.ErrorsResponse'
-        "404":
-          description: Not Found
-          schema:
-            $ref: '#/definitions/api.ErrorsResponse'
-        "500":
-          description: Internal Server Error
-          schema:
-            $ref: '#/definitions/api.ErrorsResponse'
-      security:
-      - ApiKeyAuth: []
-      summary: Update task
-      tags:
-      - Admin
   /admin/tasks:
     get:
       description: Get all tasks with admin access.
@@ -195,18 +173,10 @@ paths:
             items:
               $ref: '#/definitions/domain.Task'
             type: array
-        "400":
-          description: Bad Request
-          schema:
-            $ref: '#/definitions/api.ErrorsResponse'
-        "404":
-          description: Not Found
-          schema:
-            $ref: '#/definitions/api.ErrorsResponse'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/api.ErrorsResponse'
+            $ref: '#/definitions/domain.ErrorResponse'
       security:
       - ApiKeyAuth: []
       summary: Get all tasks
@@ -233,25 +203,58 @@ paths:
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/api.ErrorsResponse'
-        "404":
-          description: Not Found
-          schema:
-            $ref: '#/definitions/api.ErrorsResponse'
+            $ref: '#/definitions/domain.ErrorResponse'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/api.ErrorsResponse'
+            $ref: '#/definitions/domain.ErrorResponse'
       security:
       - ApiKeyAuth: []
       summary: Create new task
+      tags:
+      - Admin
+  /admin/tasks/{task_id}:
+    patch:
+      consumes:
+      - application/json
+      description: Update task.
+      parameters:
+      - description: Task ID
+        in: path
+        name: task_id
+        required: true
+        type: integer
+      - description: Task
+        in: body
+        name: task
+        required: true
+        schema:
+          $ref: '#/definitions/domain.Task'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            type: string
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/domain.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/domain.ErrorResponse'
+      security:
+      - ApiKeyAuth: []
+      summary: Update task
       tags:
       - Admin
   /auth/sign-in:
     post:
       consumes:
       - application/json
-      description: User sign in.
+      description: Sign in into account.
       parameters:
       - description: Credentials
         in: body
@@ -265,19 +268,15 @@ paths:
         "200":
           description: OK
           schema:
-            type: string
+            $ref: '#/definitions/domain.SignInResponse'
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/api.ErrorsResponse'
-        "404":
-          description: Not Found
-          schema:
-            $ref: '#/definitions/api.ErrorsResponse'
+            $ref: '#/definitions/domain.ErrorResponse'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/api.ErrorsResponse'
+            $ref: '#/definitions/domain.ErrorResponse'
       summary: Sign In
       tags:
       - Auth
@@ -303,94 +302,56 @@ paths:
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/api.ErrorsResponse'
-        "404":
-          description: Not Found
-          schema:
-            $ref: '#/definitions/api.ErrorsResponse'
+            $ref: '#/definitions/domain.ErrorResponse'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/api.ErrorsResponse'
+            $ref: '#/definitions/domain.ErrorResponse'
       summary: Sign Up
       tags:
       - Auth
   /tasks:
     get:
-      description: Get tasks.
+      description: Get all tasks available for user.
       produces:
       - application/json
       responses:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/domain.UserTaskResponse'
+            items:
+              $ref: '#/definitions/domain.PublicTaskResponse'
+            type: array
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/api.ErrorsResponse'
-        "404":
-          description: Not Found
-          schema:
-            $ref: '#/definitions/api.ErrorsResponse'
+            $ref: '#/definitions/domain.ErrorResponse'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/api.ErrorsResponse'
+            $ref: '#/definitions/domain.ErrorResponse'
       security:
       - ApiKeyAuth: []
-      summary: Get all tasks
+      summary: Get tasks
       tags:
       - Tasks
-  /tasks/{task_id}/submissions:
-    get:
-      description: Get all submissions for task.
+  /tasks/{task_id}/flag:
+    post:
+      consumes:
+      - application/json
+      description: Try to solve task by sending flag.
       parameters:
       - description: Task ID
         in: path
         name: task_id
         required: true
         type: integer
-      produces:
-      - application/json
-      responses:
-        "201":
-          description: Created
-          schema:
-            $ref: '#/definitions/domain.TaskSubmission'
-        "400":
-          description: Bad Request
-          schema:
-            $ref: '#/definitions/api.ErrorsResponse'
-        "404":
-          description: Not Found
-          schema:
-            $ref: '#/definitions/api.ErrorsResponse'
-        "500":
-          description: Internal Server Error
-          schema:
-            $ref: '#/definitions/api.ErrorsResponse'
-      security:
-      - ApiKeyAuth: []
-      summary: Get all submission
-      tags:
-      - Tasks
-    post:
-      consumes:
-      - application/json
-      description: Create new flag submission.
-      parameters:
       - description: Flag
         in: body
         name: flag
         required: true
         schema:
           $ref: '#/definitions/domain.SubmitFlagRequest'
-      - description: Task ID
-        in: path
-        name: task_id
-        required: true
-        type: integer
       produces:
       - application/json
       responses:
@@ -401,15 +362,11 @@ paths:
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/api.ErrorsResponse'
-        "404":
-          description: Not Found
-          schema:
-            $ref: '#/definitions/api.ErrorsResponse'
+            $ref: '#/definitions/domain.ErrorResponse'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/api.ErrorsResponse'
+            $ref: '#/definitions/domain.ErrorResponse'
       security:
       - ApiKeyAuth: []
       summary: Submit flag
@@ -421,27 +378,85 @@ paths:
       produces:
       - application/json
       responses:
-        "201":
-          description: Created
+        "200":
+          description: OK
           schema:
             items:
-              $ref: '#/definitions/domain.UserResponse'
+              $ref: '#/definitions/domain.PublicUserProfileResponse'
+            type: array
+        "400":
+          description: error
+          schema:
+            $ref: '#/definitions/domain.ErrorResponse'
+        "500":
+          description: error
+          schema:
+            $ref: '#/definitions/domain.ErrorResponse'
+      security:
+      - ApiKeyAuth: []
+      summary: Get all users
+      tags:
+      - Users
+  /users/{user_id}:
+    get:
+      description: Show public user profile.
+      parameters:
+      - description: User ID
+        in: path
+        name: user_id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/domain.PublicUserProfileResponse'
             type: array
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/api.ErrorsResponse'
+            $ref: '#/definitions/domain.ErrorResponse'
         "404":
           description: Not Found
           schema:
-            $ref: '#/definitions/api.ErrorsResponse'
+            $ref: '#/definitions/domain.ErrorResponse'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/api.ErrorsResponse'
+            $ref: '#/definitions/domain.ErrorResponse'
       security:
       - ApiKeyAuth: []
-      summary: Get all users
+      summary: Get user
+      tags:
+      - Users
+  /users/me:
+    get:
+      description: Show curently logged in user profile.
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/domain.PrivateUserProfileResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/domain.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/domain.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/domain.ErrorResponse'
+      security:
+      - ApiKeyAuth: []
+      summary: Get user profile
       tags:
       - Users
 securityDefinitions:

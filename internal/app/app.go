@@ -8,12 +8,13 @@ import (
 	"borda/internal/service"
 	"borda/pkg/hash"
 	"borda/pkg/pg"
+
 	"fmt"
-	"github.com/gofiber/fiber/v2/middleware/cors"
 	"os"
 	"os/signal"
 
 	"github.com/gofiber/fiber/v2"
+	"github.com/gofiber/fiber/v2/middleware/cors"
 )
 
 // @title                       CTF Borda API
@@ -51,14 +52,12 @@ func Run() {
 	authService := service.NewAuthService(repository.Users, repository.Teams,
 		hash.NewSHA1Hasher(config.PasswordSalt()),
 	)
-	userService := service.NewUserService(repository.Users, repository.Tasks, repository.Teams)
-	adminService := service.NewAdminService(repository.Tasks)
 
 	app := fiber.New()
 	app.Use(cors.New())
 
 	// Handlers
-	handlers := api.NewHandler(authService, userService, adminService)
+	handlers := api.NewHandler(authService, repository)
 	handlers.Init(app)
 
 	// Catch OS signals
@@ -71,17 +70,17 @@ func Run() {
 		// Received an interrupt signal, shutdown.
 		if err := app.Shutdown(); err != nil {
 			// Error from closing listeners, or context timeout:
-			logger.Log.Errorf("Oops... Server is not shutting down! Reason: %w", err)
+			logger.Log.Errorf("Oops... Server is not shutting down! Reason: %v", err)
 		}
 	}()
 
 	// Run server.
 	if err := app.Listen(config.ServerAddr()); err != nil {
-		logger.Log.Errorf("Oops... Server is not running! Reason: %w", err)
+		logger.Log.Errorf("Oops... Server is not running! Reason: %v", err)
 	}
 
 	// Close database connections.
 	if err := db.Close(); err != nil {
-		logger.Log.Errorf("Oops... Can't close database connections! Reason: %w", err)
+		logger.Log.Errorf("Oops... Can't close database connections! Reason: %v", err)
 	}
 }

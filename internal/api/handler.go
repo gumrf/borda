@@ -3,6 +3,7 @@ package api
 import (
 	_ "borda/docs"
 	"borda/internal/config"
+	"borda/internal/repository"
 	"borda/internal/service"
 	"fmt"
 	"strconv"
@@ -16,17 +17,14 @@ import (
 )
 
 type Handler struct {
-	AuthService  *service.AuthService
-	UserService  *service.UserService
-	AdminService *service.AdminService
+	AuthService *service.AuthService
+	Repository  *repository.Repository
 }
 
-func NewHandler(authService *service.AuthService, userService *service.UserService,
-	adminService *service.AdminService) *Handler {
+func NewHandler(authService *service.AuthService, repository *repository.Repository) *Handler {
 	return &Handler{
-		AuthService:  authService,
-		UserService:  userService,
-		AdminService: adminService,
+		AuthService: authService,
+		Repository:  repository,
 	}
 }
 
@@ -49,6 +47,11 @@ func (h *Handler) Init(app *fiber.App) {
 
 	// Everything defined bellow will require authorization
 	v1.Use(jwtMiddleware.New(jwtMiddleware.Config{
+		ErrorHandler: func(c *fiber.Ctx, err error) error {
+			return NewErrorResponse(c, fiber.StatusUnauthorized, "NOT_AUTHORIZED",
+				"Authentication credentials are missing or invalid.",
+				"Provide a properly configured and signed bearer token, and make sure that it has not expired.")
+		},
 		// TODO: DefineErrorHandler function
 		SigningMethod: jwt.SigningMethodHS256.Name,
 		SigningKey:    []byte(config.JWT().SigningKey),
@@ -82,9 +85,11 @@ func (h *Handler) authRequired(c *fiber.Ctx) error {
 func (h *Handler) checkUserInTeam(c *fiber.Ctx) error {
 	id := c.Locals("userId").(int)
 
-	teamId, ok := h.UserService.IsUserInTeam(id)
+	teamId, ok := h.AuthService.VerifyUserTeam(id)
 	if !ok {
-		return NewErrorResponse(c, fiber.StatusForbidden, "User is not a member of any team.")
+		return NewErrorResponse(c, fiber.StatusForbidden,
+			MissingTeamIdCode, "User is not a member of any group",
+			"You tried to access a route that requires team id. Join a team before requesting this route.")
 	}
 
 	// Save team id to context
@@ -96,8 +101,10 @@ func (h *Handler) checkUserInTeam(c *fiber.Ctx) error {
 func (h *Handler) adminPermissionRequired(c *fiber.Ctx) error {
 	scope := c.Locals("scope")
 	if scope != "admin" {
-		return NewErrorResponse(c, fiber.StatusForbidden, "Invalid permission.",
-			"You are not allowed to access resource. Ask for admin permission.")
+		return NewErrorResponse(c, fiber.StatusForbidden, ForbiddenCode,
+			"User does not have admin permission.",
+			"Provide API key with right permission to access this route.",
+		)
 	}
 
 	return c.Next()

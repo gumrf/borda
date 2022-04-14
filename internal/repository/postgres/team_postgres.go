@@ -102,6 +102,22 @@ func (r TeamRepository) GetTeamById(teamId int) (*domain.Team, error) {
 		return nil, err
 	}
 
+	getMembersQuery := fmt.Sprintf(`
+		SELECT name AS user_name, id AS user_id
+		FROM %s
+		WHERE ID IN (
+			SELECT user_id
+			FROM %s
+			WHERE team_id=$1
+		)`,
+		userTable,
+		teamMembersTable,
+	)
+
+	if err := r.db.Select(&team.Members, getMembersQuery, teamId); err != nil {
+		return nil, err
+	}
+
 	return &team, nil
 }
 

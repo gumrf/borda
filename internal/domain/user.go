@@ -19,7 +19,22 @@ type SignInInput struct {
 	Password string `json:"password"`
 }
 
-type UserResponse struct {
+type PublicUserProfileResponse struct {
+	Id       int    `json:"id"`
 	Username string `json:"username"`
-	TeamName string `json:"team_name,omitempty"`
+	Team     struct {
+		Id   int    `json:"id"`
+		Name string `json:"name"`
+	} `json:"team"`
+}
+
+type PrivateUserProfileResponse struct {
+	Id       int          `json:"id"`
+	Username string       `json:"username"`
+	Contact  string       `json:"contact"`
+	Team     TeamResponse `json:"team"`
+}
+
+type SignInResponse struct {
+	Token string `json:"token"`
 }

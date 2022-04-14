@@ -5,9 +5,8 @@ import (
 	"time"
 )
 
-// Task is task
 type Task struct {
-	Id          int    `json:"id" db:"id"`
+	Id          int    `json:"id,omitempty" db:"id"`
 	Title       string `json:"title" db:"title"`
 	Description string `json:"description" db:"description"`
 	Category    string `json:"category" db:"category"`
@@ -38,7 +37,6 @@ type TaskUpdate struct {
 	AuthorContact string `json:"-"`
 }
 
-// TaskFilter represents a filter passed to FindTasks().
 type TaskFilter struct {
 	Id         int    `json:"id,omitempty"`
 	Category   string `json:"category,omitempty"`
@@ -52,14 +50,6 @@ type TaskFilter struct {
 	Limit  int `json:"-"`
 }
 
-//type SolvedTask struct {
-//	TaskId    int       `json:"taskId"`
-//	TeamId    int       `json:"teamId"`
-//	Timestamp time.Time `json:"timestamp"`
-//}
-//
-//type SolvedTasks []SolvedTask
-
 type TaskSubmission struct {
 	TaskId    int       `json:"taskId" db:"task_id"`
 	TeamId    int       `json:"teamId" db:"team_id"`
@@ -69,35 +59,48 @@ type TaskSubmission struct {
 	Timestamp time.Time `json:"timestamp" db:"timestamp"`
 }
 
-// UserTaskResponse содержит только то, что должен увидеть пользователь решающий таски
-type UserTaskResponse struct {
-	Id          int                      `json:"id"`
-	Title       string                   `json:"title" `
-	Description string                   `json:"description" `
-	Category    string                   `json:"category" `
-	Complexity  string                   `json:"complexity" `
-	Points      int                      `json:"points" `
-	Hint        string                   `json:"hint,omitempty"`
-	IsSolved    bool                     `json:"isSolved"`
-	Submissions []TaskSubmissionResponse `json:"submissions"`
-	Author      Author                   `json:"author"`
+type SubmitFlagRequest struct {
+	Flag   string `json:"flag"`
 }
 
-type TaskSubmissionResponse struct {
+type SubmitFlagResponse struct{
+	TaskId int `json:"taskId"`
+	IsCorrect bool `json:"isCorrect"`
+}
+
+type PublicTaskResponse struct {
+	Id          int                  `json:"id"`
+	Title       string               `json:"title" `
+	Description string               `json:"description" `
+	Category    string               `json:"category" `
+	Complexity  string               `json:"complexity" `
+	Points      int                  `json:"points" `
+	Hint        string               `json:"hint,omitempty"`
+	IsSolved    bool                 `json:"isSolved"`
+	Submissions []SubmissionResponse `json:"submissions"`
+	Author      Author               `json:"author"`
+}
+
+type SubmissionResponse struct {
+	Timestamp time.Time `json:"timestamp"`
 	Username  string    `json:"username"`
 	Flag      string    `json:"flag" `
 	IsCorrect bool      `json:"isCorrect"`
-	Timestamp time.Time `json:"timestamp"`
 }
 
-type SubmitFlagRequest struct {
-	//TaskId int `json:"taskId"`
-	//TeamId int    `json:"teamId"`
-	//UserId int    `json:"userId"`
-	Flag string `json:"flag"`
+type PrivateTaskResponse struct {
+	Id          int    `json:"id"`
+	Title       string `json:"title"`
+	Description string `json:"description"`
+	Category    string `json:"category"`
+	Complexity  string `json:"complexity"`
+	Points      int    `json:"points"`
+	Hint        string `json:"hint"`
+	Flag        string `json:"flag"`
+	IsActive    bool   `json:"isActive"`
+	IsDisabled  bool   `json:"isDisabled"`
+	Author      Author `json:"author"`
 }
-
-//type TaskSubmissions []TaskSubmission
 
 func (u *TaskUpdate) ToMap() (map[string]interface{}, error) {
 	bytes, err := json.Marshal(u)

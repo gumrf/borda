@@ -17,7 +17,7 @@ func (t SignInInput) Validate() error {
 	)
 
 	if err != nil {
-		return fmt.Errorf("validation error: %w", err)
+		return fmt.Errorf("validation error: %v", err)
 	}
 
 	return nil
@@ -34,7 +34,7 @@ func (t SignUpInput) Validate() error {
 	)
 
 	if err != nil {
-		return fmt.Errorf("validation error: %w", err)
+		return fmt.Errorf("validation error: %v", err)
 	}
 
 	//if t.AttachTeamMethod == "create" {
@@ -71,7 +71,7 @@ func (t Task) Validate() error {
 	)
 
 	if err != nil {
-		return fmt.Errorf("validation error: %w", err)
+		return fmt.Errorf("validation error: %v", err)
 	}
 
 	return nil
@@ -91,7 +91,7 @@ func (u TaskUpdate) Validate() error {
 	)
 
 	if err != nil {
-		return fmt.Errorf("validation error: %w", err)
+		return fmt.Errorf("validation error: %v", err)
 	}
 
 	return nil
@@ -99,10 +99,10 @@ func (u TaskUpdate) Validate() error {
 
 func (t SubmitFlagRequest) Validate() error {
 	err := validation.ValidateStruct(&t,
-		validation.Field(&t.Flag, validation.Required, validation.Match(regexp.MustCompile("^MACTF{[0-9A-Za-z_]+}$"))),
+		validation.Field(&t.Flag, validation.Required, validation.Match(regexp.MustCompile("^flag{[0-9A-Za-z_]+}$"))),
 	)
 	if err != nil {
-		return fmt.Errorf("validation error: %w", err)
+		return fmt.Errorf("validation error: %v", err)
 	}
 
 	return nil
@@ -116,7 +116,7 @@ func (a Author) Validate() error {
 	)
 
 	if err != nil {
-		return fmt.Errorf("validation error: %w", err)
+		return fmt.Errorf("validation error: %v", err)
 	}
 
 	return nil

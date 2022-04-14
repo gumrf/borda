@@ -96,7 +96,12 @@ func (r UserRepository) GetUserByCredentials(username, password string) (*domain
 
 func (r UserRepository) GetUserById(id int) (*domain.User, error) {
 	getUserQuery := fmt.Sprintf(`
-		SELECT u.id, u.name, u.password, u.contact, m.team_id
+		SELECT 
+			u.id,
+			u.name,
+			u.password,
+			u.contact,
+			COALESCE (m.team_id, 0) AS team_id
 		FROM public.%s AS u
 		INNER JOIN public.%s AS m ON u.id = m.user_id
 		WHERE u.id=$1
@@ -116,21 +121,20 @@ func (r UserRepository) GetUserById(id int) (*domain.User, error) {
 	return &user, nil
 }
 
-func (r UserRepository) GetAllUsers() ([]domain.User, error) {
+func (r UserRepository) GetAllUsers() ([]*domain.User, error) {
 	getUsersQuery := fmt.Sprintf(`
-	SELECT  
+		SELECT  
 			u.id, 
 			u.name, 
 			u.password, 
 			u.contact, 
 			COALESCE (m.team_id, 0) AS team_id
 		FROM public.%s AS u
-		FULL JOIN public.%s AS m ON u.id = m.user_id;`,
+		INNER JOIN public.%s AS m ON u.id = m.user_id`,
 		userTable,
 		teamMembersTable)
 
-	var users []domain.User
-
+	users := make([]*domain.User, 0)
 	if err := r.db.Select(&users, getUsersQuery); err != nil {
 		return nil, err
 	}
