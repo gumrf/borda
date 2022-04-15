@@ -28,3 +28,8 @@ type TeamResponse struct {
 	Captain TeamMember   `json:"captain"`
 	Members []TeamMember `json:"members"`
 }
+
+type TeamInput struct {
+	Method    string `json:"method"`
+	Attribute string `json:"attribute"`
+}
