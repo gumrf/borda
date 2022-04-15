@@ -37,22 +37,24 @@ func (t SignUpInput) Validate() error {
 		return fmt.Errorf("validation error: %v", err)
 	}
 
-	//if t.AttachTeamMethod == "create" {
-	//	err := validation.Validate(&t.AttachTeamAttribute, validation.Required, validation.Length(3, 50), validation.Match(regexp.MustCompile("^[0-9A-Za-z_]+$")))
-	//	if err != nil {
-	//		return ErrInvalidTeamInput
-	//	}
-	//} else if t.AttachTeamMethod == "join" {
-	//	err := validation.Validate(&t.AttachTeamAttribute, validation.Required, is.UUIDv4)
-	//	if err != nil {
-	//		return ErrInvalidTeamInput
-	//	}
-	//} else {
-	//	return ErrInvalidTeamInput
-	//}
+	return nil
+}
+
+func (t TeamInput) Validate() error {
+	if t.Method == "create" {
+		if err := validation.Validate(&t.Attribute, validation.Required, validation.Length(3, 50),
+			validation.Match(regexp.MustCompile("^[0-9A-Za-z_]+$"))); err != nil {
+			return ErrInvalidTeamInput
+		}
+	} else if t.Method == "join" {
+		if err := validation.Validate(&t.Attribute, validation.Required, is.UUIDv4); err != nil {
+			return ErrInvalidTeamInput
+		}
+	} else {
+		return ErrInvalidMethod
+	}
 
 	return nil
-
 }
 
 func (t Task) Validate() error {
@@ -83,7 +85,7 @@ func (u TaskUpdate) Validate() error {
 		validation.Field(&u.Description),
 		validation.Field(&u.Category, is.LowerCase),
 		validation.Field(&u.Complexity, is.LowerCase),
-		validation.Field(&u.Points, is.Digit),
+		//validation.Field(&u.Points, is.Digit), validation error: points: must be either a string or byte slice.
 		validation.Field(&u.Hint),
 		validation.Field(&u.Flag, validation.Match(regexp.MustCompile("^MACTF{[0-9A-Za-z_]+}$"))),
 		validation.Field(&u.AuthorName, validation.Match(regexp.MustCompile("^[0-9A-Za-z_]+$"))),
