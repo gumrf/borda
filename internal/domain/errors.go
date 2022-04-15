@@ -22,6 +22,7 @@ var (
 	ErrTeamNotFound        = errors.New("team not found")
 	ErrTeamMembersNotFound = errors.New("team members not found")
 	ErrMembers             = errors.New("members not found")
+	ErrInvalidMethod       = errors.New("invalid method")
 
 	ErrTaskCreate              = errors.New("can't create new task")
 	ErrTaskUpdate              = errors.New("can't update task")
