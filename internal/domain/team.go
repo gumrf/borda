@@ -28,3 +28,9 @@ type TeamResponse struct {
 	Captain TeamMember   `json:"captain"`
 	Members []TeamMember `json:"members"`
 }
+
+type Scoreboard struct {
+	Name         string `json:"name"`
+	Score        int    `json:"score"`
+	CountMembers int    `json:"countMembers"`
+}
