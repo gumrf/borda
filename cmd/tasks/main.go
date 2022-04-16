@@ -1,7 +1,6 @@
 package main
 
 import (
-	"borda/internal/config"
 	"borda/pkg/pg"
 	"strings"
 
@@ -41,11 +40,13 @@ type Author struct {
 func main() {
 	token := flag.String("token", "GITHUB_ACCESS_TOKEN", "GitHub personal access token")
 	url := flag.String("url", "GIT_REPO_URL", "Git repository url")
+	dburl := flag.String("db", "DB_URL", "Database url")
 
 	flag.Parse()
 
-	fmt.Println("Token:",*token)
-	fmt.Println("URL:",*url)
+	fmt.Println("Token:", *token)
+	fmt.Println("URL:", *url)
+	fmt.Println("DB_URL:", *dburl)
 
 	a := strings.Split(*url, "/")
 	path := "./." + a[len(a)-1]
@@ -68,7 +69,7 @@ func main() {
 		}
 	}
 
-	file, err := os.ReadFile(".ctf_tasks_2022/data.json")
+	file, err := os.ReadFile(path + "/data.json")
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -79,7 +80,7 @@ func main() {
 		log.Fatal(err)
 	}
 
-	db, err := pg.Open(config.DatabaseURL())
+	db, err := pg.Open(*dburl)
 	if err != nil {
 		fmt.Print(err)
 	}
