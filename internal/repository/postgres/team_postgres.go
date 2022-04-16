@@ -2,6 +2,7 @@ package postgres
 
 import (
 	"borda/internal/domain"
+	"context"
 	"errors"
 
 	"database/sql"
@@ -119,6 +120,48 @@ func (r TeamRepository) GetTeamById(teamId int) (*domain.Team, error) {
 	}
 
 	return &team, nil
+}
+
+func (r TeamRepository) GetTeams() ([]*domain.Team, error) {
+	ctx := context.Background()
+
+	tx, err := r.db.BeginTxx(ctx, nil)
+	if err != nil {
+		return nil, err
+	}
+	defer tx.Rollback() // nolint
+
+	getTeamsQuery := fmt.Sprintf(`
+		SELECT *
+		FROM public.%s`,
+		teamTable,
+	)
+
+	teams := make([]*domain.Team, 0)
+	if err := tx.Select(&teams, getTeamsQuery); err != nil {
+		return nil, err
+	}
+
+	for _, team := range teams {
+		getMembersQuery := fmt.Sprintf(`
+		SELECT name AS user_name, id AS user_id
+		FROM %s
+		WHERE ID IN (
+			SELECT user_id
+			FROM %s
+			WHERE team_id=$1
+		)`,
+			userTable,
+			teamMembersTable,
+		)
+
+		if err := tx.Select(&team.Members, getMembersQuery, team.Id); err != nil {
+			return nil, err
+		}
+
+	}
+
+	return teams, nil
 }
 
 func (r TeamRepository) GetTeamByToken(token string) (*domain.Team, error) {
