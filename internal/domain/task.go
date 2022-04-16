@@ -33,6 +33,8 @@ type TaskUpdate struct {
 	Points        int    `json:"points,omitempty"`
 	Hint          string `json:"hint,omitempty"`
 	Flag          string `json:"flag,omitempty"`
+	IsActive      bool   `json:"is_active,omitempty"`   // Обязательно is_active
+	IsDisabled    bool   `json:"is_disabled,omitempty"` // Обязательно is_disabled
 	AuthorName    string `json:"-"`
 	AuthorContact string `json:"-"`
 }
@@ -42,8 +44,8 @@ type TaskFilter struct {
 	Category   string `json:"category,omitempty"`
 	Complexity string `json:"complexity,omitempty"`
 	Points     string `json:"points,omitempty"`
-	IsActive   bool   `json:"is_active,omitempty"`
-	IsDisabled bool   `json:"is_disabled,omitempty"`
+	IsActive   bool   `json:"is_active,omitempty"`   // Обязательно is_active
+	IsDisabled bool   `json:"is_disabled,omitempty"` // Обязательно is_disabled
 	AuthorId   int    `json:"author_id,omitempty"`
 
 	Offset int `json:"-"`
@@ -60,11 +62,11 @@ type TaskSubmission struct {
 }
 
 type SubmitFlagRequest struct {
-	Flag   string `json:"flag"`
+	Flag string `json:"flag"`
 }
 
-type SubmitFlagResponse struct{
-	TaskId int `json:"taskId"`
+type SubmitFlagResponse struct {
+	TaskId    int  `json:"taskId"`
 	IsCorrect bool `json:"isCorrect"`
 }
 
@@ -100,6 +102,12 @@ type PrivateTaskResponse struct {
 	IsActive    bool   `json:"isActive"`
 	IsDisabled  bool   `json:"isDisabled"`
 	Author      Author `json:"author"`
+}
+
+type SolvedTask struct {
+	TaskId    int       `json:"taskId" db:"task_id"`
+	TeamId    int       `json:"teamId" db:"team_id"`
+	Timestamp time.Time `json:"timestamp" db:"timestamp"`
 }
 
 func (u *TaskUpdate) ToMap() (map[string]interface{}, error) {
