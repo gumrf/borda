@@ -23,14 +23,13 @@ type TeamRepository interface {
 	GetTeamByToken(token string) (*domain.Team, error)
 	AddMember(teamId, userId int) error
 	GetTeams() ([]*domain.Team, error)
-	// GetTeamByUserId(userId int) (int, error)
 }
 
 type TaskRepository interface {
 	SaveTask(task domain.Task) (int, error)
 	GetTaskById(id int) (*domain.Task, error)
 	GetTasks(domain.TaskFilter) ([]*domain.Task, error)
-	GetSolvedTasks(teamId int) ([]*domain.SolvedTask, error)
+	GetTasksSolvedByTeam(teamId int) ([]*domain.SolvedTask, error)
 	UpdateTask(id int, update domain.TaskUpdate) error
 	SolveTask(taskId, teamId int) error
 	SaveTaskSubmission(submission domain.TaskSubmission) error

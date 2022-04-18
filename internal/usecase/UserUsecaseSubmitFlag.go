@@ -20,8 +20,10 @@ func (u *UserUsecaseSubmitFlag) Execute(submission domain.TaskSubmission) (domai
 
 	isTaskSolved, err := u.taskRepo.CheckSolvedTask(submission.TaskId, submission.TeamId)
 	if err != nil {
-		return response, domain.ErrTaskSubmissionsNotFound
-	} else if isTaskSolved {
+		return response, err
+	}
+	
+	if isTaskSolved {
 		return response, domain.ErrTaskAlreadySolved
 	}
 

@@ -30,7 +30,7 @@ type TeamResponse struct {
 }
 
 type Scoreboard struct {
-	Name         string `json:"name"`
-	Score        int    `json:"score"`
-	CountMembers int    `json:"countMembers"`
+	TeamName         string `json:"teamName"`
+	Score            int    `json:"score"`
+	TeamMembersCount int    `json:"teamMembersCount"`
 }

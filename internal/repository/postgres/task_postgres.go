@@ -280,11 +280,10 @@ func (r TaskRepository) SolveTask(taskId, teamId int) error {
 	return nil
 }
 
-func (r TaskRepository) GetSolvedTasks(teamId int) ([]*domain.SolvedTask, error) {
+func (r TaskRepository) GetTasksSolvedByTeam(teamId int) ([]*domain.SolvedTask, error) {
 	tx, err := r.db.Beginx()
 	if err != nil {
 		return nil, err
-
 	}
 	defer tx.Rollback() // nolint
 
@@ -295,7 +294,6 @@ func (r TaskRepository) GetSolvedTasks(teamId int) ([]*domain.SolvedTask, error)
 		solvedTasksTable)
 
 	solvedTasks := make([]*domain.SolvedTask, 0)
-
 	if err := tx.Select(&solvedTasks, getSolvedTasksQuery, teamId); err != nil {
 		return nil, err
 	}

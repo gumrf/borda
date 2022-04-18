@@ -7,13 +7,11 @@ import (
 )
 
 func (h *Handler) initScoreboardRoutes(router fiber.Router) {
-	scoreboard := router.Group("/scoreboard")
-
-	scoreboard.Get("", h.getScoreboard)
+	router.Get("/scoreboard", h.getScoreboard)
 }
 
 func (h *Handler) getScoreboard(c *fiber.Ctx) error {
-	uc := usecase.NewUsecaseScoreboard(h.Repository.Teams, h.Repository.Tasks)
+	uc := usecase.NewUserUsecaseGetScoreboard(h.Repository.Teams, h.Repository.Tasks)
 
 	response, err := uc.Execute()
 	if err != nil {

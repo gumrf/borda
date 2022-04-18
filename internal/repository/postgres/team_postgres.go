@@ -2,7 +2,6 @@ package postgres
 
 import (
 	"borda/internal/domain"
-	"context"
 	"errors"
 
 	"database/sql"
@@ -123,9 +122,7 @@ func (r TeamRepository) GetTeamById(teamId int) (*domain.Team, error) {
 }
 
 func (r TeamRepository) GetTeams() ([]*domain.Team, error) {
-	ctx := context.Background()
-
-	tx, err := r.db.BeginTxx(ctx, nil)
+	tx, err := r.db.Beginx()
 	if err != nil {
 		return nil, err
 	}
