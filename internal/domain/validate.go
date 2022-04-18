@@ -40,33 +40,31 @@ func (t SignUpInput) Validate() error {
 	return nil
 }
 
-func (t TeamInput) Validate() error {
-	if t.Method == "create" {
-		if err := validation.Validate(&t.Attribute, validation.Required, validation.Length(3, 50),
+func (i AttachTeamInput) Validate() error {
+	if i.Method == "create" {
+		if err := validation.Validate(&i.Attribute, validation.Required, validation.Length(3, 50),
 			validation.Match(regexp.MustCompile("^[0-9A-Za-z_]+$"))); err != nil {
-			return ErrInvalidTeamInput
+			return ErrInvalidJoinTeamAttribute
 		}
-	} else if t.Method == "join" {
-		if err := validation.Validate(&t.Attribute, validation.Required, is.UUIDv4); err != nil {
-			return ErrInvalidTeamInput
+	} else if i.Method == "join" {
+		if err := validation.Validate(&i.Attribute, validation.Required, is.UUIDv4); err != nil {
+			return ErrInvalidJoinTeamAttribute
 		}
 	} else {
-		return ErrInvalidMethod
+		return ErrInvalidJoinTeamMethod
 	}
 
 	return nil
 }
 
-func (t Task) Validate() error {
+func (t Task) Validate(prefix string) error {
 	err := validation.ValidateStruct(&t,
-		validation.Field(&t.Id, validation.Required, is.Digit),
 		validation.Field(&t.Title, validation.Required, validation.Match(regexp.MustCompile("^[0-9A-Za-z_?!,.\\s]+$"))),
 		validation.Field(&t.Description, validation.Required),
 		validation.Field(&t.Category, validation.Required, is.LowerCase),
 		validation.Field(&t.Complexity, validation.Required, is.LowerCase),
-		validation.Field(&t.Points, validation.Required, is.Digit),
 		validation.Field(&t.Hint),
-		validation.Field(&t.Flag, validation.Required, validation.Match(regexp.MustCompile("^MACTF{[0-9A-Za-z_]+}$"))),
+		validation.Field(&t.Flag, validation.Match(regexp.MustCompile(fmt.Sprintf("^%s{[0-9A-Za-z_]+}$", prefix)))),
 		validation.Field(&t.IsActive, validation.Required),
 		validation.Field(&t.IsDisabled, validation.Required),
 		validation.Field(&t.Author),
@@ -76,24 +74,31 @@ func (t Task) Validate() error {
 		return fmt.Errorf("validation error: %v", err)
 	}
 
+	if t.Points > 0 {
+		return fmt.Errorf("validation error: points must be > 0")
+	}
+
 	return nil
 }
 
-func (u TaskUpdate) Validate() error {
+func (u TaskUpdate) Validate(prefix string) error {
 	err := validation.ValidateStruct(&u,
 		validation.Field(&u.Title, validation.Match(regexp.MustCompile("^[0-9A-Za-z_?!,.\\s]+$"))),
 		validation.Field(&u.Description),
 		validation.Field(&u.Category, is.LowerCase),
 		validation.Field(&u.Complexity, is.LowerCase),
-		//validation.Field(&u.Points, is.Digit), validation error: points: must be either a string or byte slice.
 		validation.Field(&u.Hint),
-		validation.Field(&u.Flag, validation.Match(regexp.MustCompile("^MACTF{[0-9A-Za-z_]+}$"))),
+		validation.Field(&u.Flag, validation.Match(regexp.MustCompile(fmt.Sprintf("^%s{[0-9A-Za-z_]+}$", prefix)))),
 		validation.Field(&u.AuthorName, validation.Match(regexp.MustCompile("^[0-9A-Za-z_]+$"))),
 		validation.Field(&u.AuthorContact, validation.Match(regexp.MustCompile("^@[a-z0-9_]+[a-z0-9]$"))),
 	)
 
 	if err != nil {
 		return fmt.Errorf("validation error: %v", err)
+	}
+
+	if u.Points <= 0 {
+		return fmt.Errorf("validation error: points must be > 0")
 	}
 
 	return nil
@@ -112,13 +117,16 @@ func (t SubmitFlagRequest) Validate() error {
 
 func (a Author) Validate() error {
 	err := validation.ValidateStruct(&a,
-		validation.Field(&a.Id, is.Digit),
 		validation.Field(&a.Name, validation.Required, validation.Match(regexp.MustCompile("^[0-9A-Za-z_?!,.\\s]+$"))),
 		validation.Field(&a.Contact, validation.Match(regexp.MustCompile("^@[a-z0-9_]+[a-z0-9]$"))),
 	)
 
 	if err != nil {
 		return fmt.Errorf("validation error: %v", err)
+	}
+
+	if a.Id <= 0{
+		return fmt.Errorf("validation err: id must be > 0")
 	}
 
 	return nil

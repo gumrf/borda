@@ -8,7 +8,7 @@ import (
 )
 
 func (h *Handler) initTeamRoutes(router fiber.Router) {
-	team := router.Group("/team", h.authRequired)
+	team := router.Group("/teams", h.authRequired)
 	team.Post("", h.joinTeam)
 }
 
@@ -17,14 +17,14 @@ func (h *Handler) initTeamRoutes(router fiber.Router) {
 // @Tags         Team
 // @Accept       json
 // @Produce      json
-// @Param        credentials  body      domain.TeamInput  true  "Credentials"
+// @Param        TeamInput  body      domain.TeamInput  true  "Team Input"
 // @Success      201          {string}  Created
 // @Failure      400,500      {object}  domain.ErrorResponse
 // @Router       /team [post]
 func (h *Handler) joinTeam(c *fiber.Ctx) error {
 	userId := c.Locals("userId").(int)
 
-	var input domain.TeamInput
+	var input domain.AttachTeamInput
 
 	if err := c.BodyParser(&input); err != nil {
 		return NewErrorResponse(c, fiber.StatusBadRequest, IncorrectInputCode, "Input is incorrect", err.Error())
