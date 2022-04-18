@@ -61,6 +61,7 @@ func (h *Handler) Init(app *fiber.App) {
 	h.initUserRoutes(v1)
 	h.initTaskRoutes(v1)
 	h.initAdminRoutes(v1)
+	h.initTeamRoutes(v1)
 }
 
 func (h *Handler) authRequired(c *fiber.Ctx) error {

@@ -66,8 +66,8 @@ func TestTaskValidate(t *testing.T) {
 
 func TestTaskUpdateValidate(t *testing.T) {
 	type testCase struct {
-		Name string
-
+		Name       string
+		Prefix     string
 		TaskUpdate TaskUpdate
 
 		ExpectedError error
@@ -75,7 +75,7 @@ func TestTaskUpdateValidate(t *testing.T) {
 
 	validate := func(t *testing.T, tc *testCase) {
 		t.Run(tc.Name, func(t *testing.T) {
-			actualError := tc.TaskUpdate.Validate()
+			actualError := tc.TaskUpdate.Validate(tc.Prefix)
 
 			assert.Equal(t, tc.ExpectedError, actualError)
 		})
@@ -83,6 +83,7 @@ func TestTaskUpdateValidate(t *testing.T) {
 
 	validate(t, &testCase{
 		Name: "",
+		Prefix: "flag",
 		TaskUpdate: TaskUpdate{
 			Title: "!",
 		},
@@ -228,7 +229,7 @@ func TestUserSignUpInputValidate(t *testing.T) {
 			Password: "AUE322%$#",
 			Contact:  "@drop2_der",
 		},
-		ExpectedError: ErrInvalidTeamInput,
+		ExpectedError: ErrInvalidJoinTeamAttribute,
 	})
 
 	validate(t, &testCase{
@@ -238,7 +239,7 @@ func TestUserSignUpInputValidate(t *testing.T) {
 			Password: "AUE322%$#",
 			Contact:  "@drop2_der",
 		},
-		ExpectedError: ErrInvalidTeamInput,
+		ExpectedError: ErrInvalidJoinTeamAttribute,
 	})
 
 	validate(t, &testCase{
@@ -248,6 +249,6 @@ func TestUserSignUpInputValidate(t *testing.T) {
 			Password: "AUE322%$#",
 			Contact:  "@drop2_der",
 		},
-		ExpectedError: ErrInvalidTeamInput,
+		ExpectedError: ErrInvalidJoinTeamAttribute,
 	})
 }

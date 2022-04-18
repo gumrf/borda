@@ -45,7 +45,7 @@ func (r TeamRepository) SaveTeam(teamLeaderId int, teamName string) (int, error)
 	}
 
 	if isTeamExists {
-		return -1, NewErrNotFound("team", "name", teamName)
+		return -1, NewErrAlreadyExist("team", "name", teamName)
 	}
 
 	// Generate access token for team
@@ -79,6 +79,10 @@ func (r TeamRepository) SaveTeam(teamLeaderId int, teamName string) (int, error)
 	)
 
 	if _, err := tx.Exec(addLeaderToTeamQuery, teamId, teamLeaderId); err != nil {
+		return -1, err
+	}
+
+	if err := tx.Commit(); err != nil {
 		return -1, err
 	}
 

@@ -61,7 +61,7 @@ func (h *Handler) updateTask(c *fiber.Ctx) error {
 		return NewErrorResponse(c, fiber.StatusBadRequest, IncorrectInputCode, "Input is incorrect", err.Error())
 	}
 
-	if err := update.Validate(); err != nil {
+	if err := update.Validate("flag"); err != nil {
 		return NewErrorResponse(c, fiber.StatusBadRequest, InvalidInputCode, "Input is invalid.", err.Error())
 	}
 
