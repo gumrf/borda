@@ -280,6 +280,27 @@ func (r TaskRepository) SolveTask(taskId, teamId int) error {
 	return nil
 }
 
+func (r TaskRepository) GetTasksSolvedByTeam(teamId int) ([]*domain.SolvedTask, error) {
+	tx, err := r.db.Beginx()
+	if err != nil {
+		return nil, err
+	}
+	defer tx.Rollback() // nolint
+
+	getSolvedTasksQuery := fmt.Sprintf(`
+		SELECT *
+		FROM public.%s
+		WHERE team_id=$1`,
+		solvedTasksTable)
+
+	solvedTasks := make([]*domain.SolvedTask, 0)
+	if err := tx.Select(&solvedTasks, getSolvedTasksQuery, teamId); err != nil {
+		return nil, err
+	}
+
+	return solvedTasks, nil
+}
+
 func (r TaskRepository) CheckSolvedTask(taskId, teamId int) (bool, error) {
 	query := fmt.Sprintf(`
 		SELECT EXISTS (

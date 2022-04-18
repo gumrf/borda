@@ -18,6 +18,15 @@ func NewUserUsecaseSubmitFlag(TaskRepo repository.TaskRepository) *UserUsecaseSu
 func (u *UserUsecaseSubmitFlag) Execute(submission domain.TaskSubmission) (domain.SubmitFlagResponse, error) {
 	var response domain.SubmitFlagResponse
 
+	isTaskSolved, err := u.taskRepo.CheckSolvedTask(submission.TaskId, submission.TeamId)
+	if err != nil {
+		return response, err
+	}
+	
+	if isTaskSolved {
+		return response, domain.ErrTaskAlreadySolved
+	}
+
 	task, err := u.taskRepo.GetTaskById(submission.TaskId)
 	if err != nil {
 		return response, domain.ErrTaskNotFound

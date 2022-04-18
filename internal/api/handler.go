@@ -44,6 +44,7 @@ func (h *Handler) Init(app *fiber.App) {
 	v1 := api.Group("/v1")
 
 	h.initAuthRoutes(v1)
+	h.initScoreboardRoutes(v1)
 
 	// Everything defined bellow will require authorization
 	v1.Use(jwtMiddleware.New(jwtMiddleware.Config{

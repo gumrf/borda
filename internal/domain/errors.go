@@ -28,6 +28,7 @@ var (
 	ErrTasksNotFound           = errors.New("tasks not found")
 	ErrTaskNotFound            = errors.New("task not found")
 	ErrTaskSolve               = errors.New("can't solve task")
+	ErrTaskAlreadySolved       = errors.New("task already solved")
 	ErrTaskSaveSubmission      = errors.New("can't save task submission")
 	ErrTaskSubmissionsNotFound = errors.New("can't get task submissions")
 )
