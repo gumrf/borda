@@ -84,14 +84,14 @@ func (h *Handler) authRequired(c *fiber.Ctx) error {
 	return c.Next()
 }
 
-func (h *Handler) checkUserInTeam(c *fiber.Ctx) error {
+func (h *Handler) teamRequired(c *fiber.Ctx) error {
 	id := c.Locals("userId").(int)
 
 	teamId, ok := h.AuthService.VerifyUserTeam(id)
 	if !ok {
 		return NewErrorResponse(c, fiber.StatusForbidden,
 			MissingTeamIdCode, "User is not a member of any group",
-			"You tried to access a route that requires team id. Join a team before requesting this route.")
+			"Join a team before requesting this route.")
 	}
 
 	// Save team id to context

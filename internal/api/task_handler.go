@@ -9,9 +9,9 @@ import (
 )
 
 func (h *Handler) initTaskRoutes(router fiber.Router) {
-	tasks := router.Group("/tasks", h.authRequired)
+	tasks := router.Group("/tasks", h.authRequired, h.teamRequired)
 	tasks.Get("", h.getAllTasks)
-	tasks.Post("/:id/flag", h.checkUserInTeam, h.submitFlag)
+	tasks.Post("/:id/flag", h.submitFlag)
 	// tasks.Get("/:id/submissions", h.getAllSubmissions)
 }
 
