@@ -24,31 +24,43 @@ func (u *UserUsecaseGetProfile) Execute(userId int) (domain.PrivateUserProfileRe
 		return domain.PrivateUserProfileResponse{}, err
 	}
 
-	team, err := u.teamRepo.GetTeamById(user.TeamId)
-	if err != nil {
-		return domain.PrivateUserProfileResponse{}, err
-	}
+	var response domain.PrivateUserProfileResponse
+	
+	if user.TeamId == 0 {
+		response = domain.PrivateUserProfileResponse{
+			Id:       user.Id,
+			Username: user.Username,
+			Contact:  user.Contact,
+			Team:     domain.TeamResponse{},
+		}
 
-	response := domain.PrivateUserProfileResponse{
-		Id:       user.Id,
-		Username: user.Username,
-		Contact:  user.Contact,
-		Team: domain.TeamResponse{
-			Id:    team.Id,
-			Name:  team.Name,
-			Token: team.Token,
-			Captain: func() domain.TeamMember {
-				var captain domain.TeamMember
-				for _, m := range team.Members {
-					if m.UserId == team.TeamLeaderId {
-						captain.UserId = m.UserId
-						captain.Name = m.Name
+	} else {
+		team, err := u.teamRepo.GetTeamById(user.TeamId)
+		if err != nil {
+			return domain.PrivateUserProfileResponse{}, err
+		}
+
+		response = domain.PrivateUserProfileResponse{
+			Id:       user.Id,
+			Username: user.Username,
+			Contact:  user.Contact,
+			Team: domain.TeamResponse{
+				Id:    team.Id,
+				Name:  team.Name,
+				Token: team.Token,
+				Captain: func() domain.TeamMember {
+					var captain domain.TeamMember
+					for _, m := range team.Members {
+						if m.UserId == team.TeamLeaderId {
+							captain.UserId = m.UserId
+							captain.Name = m.Name
+						}
 					}
-				}
-				return captain
-			}(),
-			Members: team.Members,
-		},
+					return captain
+				}(),
+				Members: team.Members,
+			},
+		}
 	}
 
 	return response, nil
