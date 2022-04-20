@@ -79,7 +79,7 @@ func (r TeamRepository) SaveTeam(teamLeaderId int, teamName string) (int, error)
 	)
 
 	if _, err := tx.Exec(addLeaderToTeamQuery, teamId, teamLeaderId); err != nil {
-		return -1, err
+		return -1, errors.New("You already in team")
 	}
 
 	if err := tx.Commit(); err != nil {
@@ -303,7 +303,7 @@ func (r TeamRepository) AddMember(teamId, userId int) error {
 
 	var id int = -1
 	if err = tx.Get(&id, addMemberQuery, teamId, userId); err != nil || id == -1 {
-		return err
+		return errors.New("You already in team")
 	}
 
 	// Commit transaction
