@@ -10,6 +10,7 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/jmoiron/sqlx"
+	"github.com/lib/pq"
 )
 
 type TeamRepository struct {
@@ -79,7 +80,13 @@ func (r TeamRepository) SaveTeam(teamLeaderId int, teamName string) (int, error)
 	)
 
 	if _, err := tx.Exec(addLeaderToTeamQuery, teamId, teamLeaderId); err != nil {
-		return -1, errors.New("You already in team")
+		if pqerr, ok := err.(*pq.Error); ok {
+			switch pqerr.Code.Name() {
+			case "foreign_key_violation", "unique_violation":
+				return -1, errors.New("user already in team")
+			}
+		}
+		return -1, err
 	}
 
 	if err := tx.Commit(); err != nil {
@@ -303,7 +310,13 @@ func (r TeamRepository) AddMember(teamId, userId int) error {
 
 	var id int = -1
 	if err = tx.Get(&id, addMemberQuery, teamId, userId); err != nil || id == -1 {
-		return errors.New("You already in team")
+		if pqerr, ok := err.(*pq.Error); ok {
+			switch pqerr.Code.Name() {
+			case "foreign_key_violation", "unique_violation":
+				return errors.New("user already in team")
+			}
+		}
+		return err
 	}
 
 	// Commit transaction
