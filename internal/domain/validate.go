@@ -41,16 +41,17 @@ func (t SignUpInput) Validate() error {
 }
 
 func (i AttachTeamInput) Validate() error {
-	if i.Method == "create" {
+	switch i.Method {
+	case "create":
 		if err := validation.Validate(&i.Attribute, validation.Required, validation.Length(3, 50),
 			validation.Match(regexp.MustCompile("^[0-9A-Za-z_]+$"))); err != nil {
 			return ErrInvalidJoinTeamAttribute
 		}
-	} else if i.Method == "join" {
+	case "join":
 		if err := validation.Validate(&i.Attribute, validation.Required, is.UUIDv4); err != nil {
 			return ErrInvalidJoinTeamAttribute
 		}
-	} else {
+	default:
 		return ErrInvalidJoinTeamMethod
 	}
 
@@ -125,7 +126,7 @@ func (a Author) Validate() error {
 		return fmt.Errorf("validation error: %v", err)
 	}
 
-	if a.Id <= 0{
+	if a.Id <= 0 {
 		return fmt.Errorf("validation err: id must be > 0")
 	}
 
