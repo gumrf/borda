@@ -5,7 +5,7 @@ RUN  apk add --update make
 COPY . /borda/
 WORKDIR /borda
 
-RUN go mod download
+# RUN go mod download -x
 
 ENV CGO_ENABLED=0 GOOS=linux GOARCH=amd64
 RUN go build -o ./build/borda-backend ./cmd/main.go
