@@ -58,7 +58,7 @@ func (t SignUpInput) Validate() error {
 func (t Task) Validate() error {
 	err := validation.ValidateStruct(&t,
 		validation.Field(&t.Id, validation.Required, is.Digit),
-		validation.Field(&t.Title, validation.Required, validation.Match(regexp.MustCompile("^[0-9A-Za-z_?!,.\\s]+$"))),
+		validation.Field(&t.Title, validation.Required, validation.Match(regexp.MustCompile("^[A-Za-z0-9 ]+$"))),
 		validation.Field(&t.Description, validation.Required),
 		validation.Field(&t.Category, validation.Required, is.LowerCase),
 		validation.Field(&t.Complexity, validation.Required, is.LowerCase),
