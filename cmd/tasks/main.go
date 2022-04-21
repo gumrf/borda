@@ -39,9 +39,9 @@ type Author struct {
 }
 
 func main() {
-	token := flag.String("token", "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", "GitHub personal access token")
-	url := flag.String("url", "https://github.com/gumrf/ctf_tasks_2022", "Git repository url")
-	dburl := flag.String("db", "postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@${POSTGRES_HOST}:5432/${POSTGRES_DB}?sslmode=disable", "Database url")
+	token := flag.String("token", "GITHUB_ACCESS_TOKEN", "GitHub personal access token")
+	url := flag.String("url", "GIT_REPO_URL", "Git repository url")
+	dburl := flag.String("db", "DB_URL", "Database url")
 
 	flag.Parse()
 
