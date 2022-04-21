@@ -46,8 +46,9 @@ CREATE TABLE IF NOT EXISTS author (
 
 CREATE TABLE IF NOT EXISTS task (
    id          serial PRIMARY KEY,
-   title       VARCHAR(256) NOT NULL,
+   title       VARCHAR(256) UNIQUE NOT NULL,
    description TEXT NOT NULL,
+   link        VARCHAR(256)
    category    VARCHAR(256) NOT NULL,
    complexity  VARCHAR(256),
    points      INTEGER NOT NULL,

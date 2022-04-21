@@ -9,6 +9,7 @@ type Task struct {
 	Id          int    `json:"id,omitempty" db:"id"`
 	Title       string `json:"title" db:"title"`
 	Description string `json:"description" db:"description"`
+	Link        string `json:"link" db:"link"`
 	Category    string `json:"category" db:"category"`
 	Complexity  string `json:"complexity" db:"complexity"`
 	Points      int    `json:"points" db:"points"`
@@ -28,6 +29,7 @@ type Author struct {
 type TaskUpdate struct {
 	Title         string `json:"title,omitempty"`
 	Description   string `json:"description,omitempty"`
+	Link          string `json:"link,omitempty"`
 	Category      string `json:"category,omitempty"`
 	Complexity    string `json:"complexity,omitempty"`
 	Points        int    `json:"points,omitempty"`
@@ -60,11 +62,11 @@ type TaskSubmission struct {
 }
 
 type SubmitFlagRequest struct {
-	Flag   string `json:"flag"`
+	Flag string `json:"flag"`
 }
 
-type SubmitFlagResponse struct{
-	TaskId int `json:"taskId"`
+type SubmitFlagResponse struct {
+	TaskId    int  `json:"taskId"`
 	IsCorrect bool `json:"isCorrect"`
 }
 
@@ -72,6 +74,7 @@ type PublicTaskResponse struct {
 	Id          int                  `json:"id"`
 	Title       string               `json:"title" `
 	Description string               `json:"description" `
+	Link        string               `json:"link"`
 	Category    string               `json:"category" `
 	Complexity  string               `json:"complexity" `
 	Points      int                  `json:"points" `
@@ -92,6 +95,7 @@ type PrivateTaskResponse struct {
 	Id          int    `json:"id"`
 	Title       string `json:"title"`
 	Description string `json:"description"`
+	Link        string `json:"link"`
 	Category    string `json:"category"`
 	Complexity  string `json:"complexity"`
 	Points      int    `json:"points"`
