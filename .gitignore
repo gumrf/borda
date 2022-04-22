@@ -1,3 +1,5 @@
+static/
+
 # Postgres mount volume
 .postgres
 
