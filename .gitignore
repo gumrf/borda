@@ -1,3 +1,5 @@
+.env
+
 static/
 
 # Postgres mount volume

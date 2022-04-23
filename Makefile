@@ -5,7 +5,7 @@ build:
 	CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o ./build/borda-backend ./cmd/main.go
 
 run:
-	go run ./cmd/main.go
+	go run ./cmd/borda-api-server/main.go serve
 
 swag:
 	swag init -g internal/app/app.go
