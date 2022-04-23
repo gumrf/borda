@@ -1,54 +1,74 @@
-package main
+package commands
 
 import (
+	"borda/internal/domain"
+	"borda/internal/repository/postgres"
 	"borda/pkg/pg"
 	"encoding/json"
 	"errors"
-	"flag"
-	"fmt"
-	"log"
 	"os"
 	"strings"
 
 	git "github.com/go-git/go-git/v5"
 	"github.com/go-git/go-git/v5/plumbing/transport/http"
-	"github.com/jmoiron/sqlx"
+	"github.com/spf13/cobra"
 )
 
+func ImportTasksCommand() *cobra.Command {
+	var command = &cobra.Command{
+		Use:   "import-tasks",
+		Short: "Import tasks from GitHub repository",
+		RunE: func(cmd *cobra.Command, args []string) error {
+			token, err := cmd.Flags().GetString("token")
+			if err != nil {
+				return err
+			}
+
+			repoURL, err := cmd.Flags().GetString("repo")
+			if err != nil {
+				return err
+			}
+
+			dbURL, err := cmd.Flags().GetString("db")
+			if err != nil {
+				return err
+			}
+
+			if err := importTasks(token, repoURL, dbURL); err != nil {
+				return err
+			}
+
+			return nil
+		},
+	}
+
+	command.Flags().StringP("token", "t", "nil", "GitHub personal access token")
+	command.Flags().StringP("repo", "r", "nil", "Git repository URL")
+	command.Flags().String("db", "db", "Database URL")
+
+	command.MarkFlagRequired("token")
+	command.MarkFlagRequired("repo")
+	command.MarkFlagRequired("db")
+
+	return command
+}
+
 type Task struct {
-	Id          int      `json:"id"`
-	Title       string   `json:"title"`
-	Description string   `json:"description"`
-	Category    string   `json:"category"`
-	Complexity  string   `json:"complexity"`
-	Points      int      `json:"points"`
-	Hint        string   `json:"hint"`
-	Flag        string   `json:"flag"`
-	Author      Author   `json:"author"`
-	IsActive    bool     `json:"isActive"`
-	IsDisabled  bool     `json:"isDisabled"`
-	Link        string   `json:"link"`
-	Files       []string `json:"files"`
+	Id          int           `json:"id"`
+	Title       string        `json:"title"`
+	Description string        `json:"description"`
+	Category    string        `json:"category"`
+	Complexity  string        `json:"complexity"`
+	Points      int           `json:"points"`
+	Hint        string        `json:"hint"`
+	Flag        string        `json:"flag"`
+	Author      domain.Author `json:"author"`
+	Link        string        `json:"link"`
+	Files       []string      `json:"files"`
 }
 
-type Author struct {
-	Id      int    `json:"id"`
-	Name    string `json:"name"`
-	Contact string `json:"contact"`
-}
-
-func main() {
-	token := flag.String("token", "nil", "GitHub personal access token")
-	url := flag.String("url", "nil", "Git repository URL")
-	dsn := flag.String("db", "nil", "Database URL")
-
-	flag.Parse()
-
-	fmt.Println("Token:", *token)
-	fmt.Println("URL:", *url)
-	fmt.Println("DB_URL:", *dsn)
-
-	a := strings.Split(*url, "/")
+func importTasks(token, repoURL, dbURL string) error {
+	a := strings.Split(repoURL, "/")
 	path := os.TempDir() + "/" + a[len(a)-1]
 
 	_, err := git.PlainClone(path, false, &git.CloneOptions{
@@ -57,32 +77,32 @@ func main() {
 		// https://help.github.com/articles/creating-a-personal-access-token-for-the-command-line/
 		Auth: &http.BasicAuth{
 			Username: "nil", // yes, this can be anything except an empty string
-			Password: *token,
+			Password: token,
 		},
-		URL:      *url,
+		URL:      repoURL,
 		Progress: os.Stdout,
 	})
 
 	if err != nil {
 		if !errors.Is(err, git.ErrRepositoryAlreadyExists) {
-			log.Fatal(err)
+			return err
 		}
 	}
 
 	file, err := os.ReadFile(path + "/data.json")
 	if err != nil {
-		log.Fatal(err)
+		return err
 	}
 
 	var data []Task
 	err = json.Unmarshal(file, &data)
 	if err != nil {
-		log.Fatal(err)
+		return err
 	}
 
-	db, err := pg.Open(*dsn)
+	db, err := pg.Open(dbURL)
 	if err != nil {
-		fmt.Print(err)
+		return err
 	}
 
 	for _, task := range data {
@@ -90,76 +110,34 @@ func main() {
 			taskPath := strings.ReplaceAll(strings.ToLower(task.Title), " ", "-")
 
 			if err := os.MkdirAll("static/"+taskPath, 0777); err != nil {
-				log.Fatal(err)
+				return err
 			}
 
 			for _, file := range task.Files {
 				src, err := os.ReadFile(strings.Join([]string{path, task.Category, taskPath, file}, "/"))
 				if err != nil {
-					log.Fatal(err)
+					return err
 				}
 
 				if err := os.WriteFile("static/"+taskPath+"/"+file, src, 0777); err != nil {
-					log.Fatal(err)
+					return err
 				}
 			}
 		}
 
-		tx, err := db.Beginx()
-		if err != nil {
-			fmt.Println(err)
-		}
-		defer tx.Rollback() //nolint
-
-		if err := findOrCreateAuthor(tx, &task.Author); err != nil {
-			fmt.Print(err)
-		}
-
-		query := `
-		INSERT INTO public.task (
-			title, 
-			description, 
-			category, 
-			complexity, 
-			points, 
-			hint, 
-			flag, 
-			is_active, 
-			is_disabled, 
-			author_id
-		)
-		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)`
-
-		if _, err := tx.Exec(
-			query, task.Title, task.Description, task.Category, task.Complexity,
-			task.Points, task.Hint, task.Flag, true, false, task.Author.Id,
-		); err != nil {
-			log.Fatalln(err)
-		}
-
-		if err := tx.Commit(); err != nil {
-			log.Fatalln(err)
-		}
-	}
-}
-
-func findOrCreateAuthor(tx *sqlx.Tx, author *Author) error {
-	query := `
-		SELECT id
-		FROM author
-		WHERE name = $1
-		LIMIT 1`
-
-	if err := tx.Get(&author.Id, query, author.Name); err != nil {
-		insert := `
-			INSERT INTO author (
-				name,
-				contact
-			)
-			VALUES ($1, $2)
-			RETURNING id`
-
-		if err := tx.Get(&author.Id, insert, author.Name, author.Contact); err != nil {
+		if _, err := postgres.NewTaskRepository(db).SaveTask(domain.Task{
+			Title:       task.Title,
+			Description: task.Description,
+			Category:    task.Category,
+			Complexity:  task.Complexity,
+			Points:      task.Points,
+			Hint:        task.Hint,
+			Flag:        task.Flag,
+			IsActive:    true,
+			IsDisabled:  false,
+			Author:      task.Author,
+			Link:        task.Link,
+		}); err != nil {
 			return err
 		}
 	}
