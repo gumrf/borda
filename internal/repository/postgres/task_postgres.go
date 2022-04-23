@@ -26,13 +26,13 @@ func NewTaskRepository(db *sqlx.DB) *TaskRepository {
 func (r TaskRepository) SaveTask(task domain.Task) (int, error) {
 	tx, err := r.db.Beginx()
 	if err != nil {
-		return -1, fmt.Errorf("TaskRepository.Create: beginx: %w", err)
+		return 0, err
 	}
 	defer tx.Rollback() //nolint
 
 	_, err = r.findOrCreateAuthor(tx, &task.Author)
 	if err != nil {
-		return -1, fmt.Errorf("TaskRepository.Create: findOrCreateAuthor: %w", err)
+		return 0, err
 	}
 
 	query := fmt.Sprintf(`
@@ -46,25 +46,24 @@ func (r TaskRepository) SaveTask(task domain.Task) (int, error) {
 			flag, 
 			is_active, 
 			is_disabled, 
-			author_id
+			author_id,
+			link
 		)
-		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
 		RETURNING id`,
 		taskTable,
 	)
 
-	result := tx.QueryRowx(
-		query,
+	if err := tx.Get(&task.Id, query,
 		task.Title, task.Description, task.Category, task.Complexity,
 		task.Points, task.Hint, task.Flag, task.IsActive, task.IsDisabled,
-		task.Author.Id)
-
-	if err := result.Scan(&task.Id); err != nil {
-		return -1, fmt.Errorf("TaskRepository.Create: scan: %w", err)
+		task.Author.Id, task.Link,
+	); err != nil {
+		return 0, err
 	}
 
 	if err := tx.Commit(); err != nil {
-		return -1, fmt.Errorf("TaskRepository.Create: commit: %w", err)
+		return task.Id, err
 	}
 
 	return task.Id, nil
@@ -79,25 +78,19 @@ func (r TaskRepository) findOrCreateAuthor(tx *sqlx.Tx, author *domain.Author) (
 		authorTable,
 	)
 
-	result := tx.QueryRowx(query, author.Name)
-	err := result.Scan(&author.Id)
-	if err != nil {
-		if errors.Is(err, sql.ErrNoRows) {
-			_query := fmt.Sprintf(`
-				INSERT INTO public.%s (
-					name,
-					contact
-				)
-				VALUES ($1, $2)
-				RETURNING id`,
-				authorTable,
+	if err := tx.Get(&author.Id, query, author.Name); err != nil {
+		fmt.Println(author.Id)
+		insert := fmt.Sprintf(`
+			INSERT INTO public.%s (
+				name,
+				contact
 			)
+			VALUES ($1, $2)
+			RETURNING id`,
+			authorTable,
+		)
 
-			_result := tx.QueryRowx(_query, author.Name, author.Contact)
-			if err := _result.Scan(&author.Id); err != nil {
-				return -1, err
-			}
-		} else {
+		if err := tx.Get(&author.Id, insert, author.Name, author.Contact); err != nil {
 			return -1, err
 		}
 	}
@@ -170,7 +163,8 @@ func (r TaskRepository) findTasks(tx *sqlx.Tx, filter domain.TaskFilter) (_ []*d
 			task.hint,   
 			task.flag, 
 			task.is_active, 
-			task.is_disabled, 
+			task.is_disabled,
+			task.link,
 			author.id AS "author.id",
 			author.name AS "author.name",
 			author.contact AS "author.contact"

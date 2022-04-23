@@ -9,7 +9,6 @@ type Task struct {
 	Id          int    `json:"id,omitempty" db:"id"`
 	Title       string `json:"title" db:"title"`
 	Description string `json:"description" db:"description"`
-	Link        string `json:"link" db:"link"`
 	Category    string `json:"category" db:"category"`
 	Complexity  string `json:"complexity" db:"complexity"`
 	Points      int    `json:"points" db:"points"`
@@ -18,6 +17,7 @@ type Task struct {
 	IsActive    bool   `json:"isActive" db:"is_active"`
 	IsDisabled  bool   `json:"isDisabled" db:"is_disabled"`
 	Author      Author `json:"author" db:"author"`
+	Link        string `json:"link" db:"link"`
 }
 
 type Author struct {
@@ -29,7 +29,6 @@ type Author struct {
 type TaskUpdate struct {
 	Title         string `json:"title,omitempty"`
 	Description   string `json:"description,omitempty"`
-	Link          string `json:"link,omitempty"`
 	Category      string `json:"category,omitempty"`
 	Complexity    string `json:"complexity,omitempty"`
 	Points        int    `json:"points,omitempty"`
@@ -37,6 +36,7 @@ type TaskUpdate struct {
 	Flag          string `json:"flag,omitempty"`
 	AuthorName    string `json:"-"`
 	AuthorContact string `json:"-"`
+	Link          string `json:"link,omitempty"`
 }
 
 type TaskFilter struct {
@@ -74,7 +74,6 @@ type PublicTaskResponse struct {
 	Id          int                  `json:"id"`
 	Title       string               `json:"title" `
 	Description string               `json:"description" `
-	Link        string               `json:"link"`
 	Category    string               `json:"category" `
 	Complexity  string               `json:"complexity" `
 	Points      int                  `json:"points" `
@@ -82,6 +81,7 @@ type PublicTaskResponse struct {
 	IsSolved    bool                 `json:"isSolved"`
 	Submissions []SubmissionResponse `json:"submissions"`
 	Author      Author               `json:"author"`
+	Link        string               `json:"link"`
 }
 
 type SubmissionResponse struct {
@@ -95,7 +95,6 @@ type PrivateTaskResponse struct {
 	Id          int    `json:"id"`
 	Title       string `json:"title"`
 	Description string `json:"description"`
-	Link        string `json:"link"`
 	Category    string `json:"category"`
 	Complexity  string `json:"complexity"`
 	Points      int    `json:"points"`
@@ -104,6 +103,7 @@ type PrivateTaskResponse struct {
 	IsActive    bool   `json:"isActive"`
 	IsDisabled  bool   `json:"isDisabled"`
 	Author      Author `json:"author"`
+	Link        string `json:"link"`
 }
 
 func (u *TaskUpdate) ToMap() (map[string]interface{}, error) {
