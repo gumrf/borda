@@ -164,7 +164,7 @@ func (r TaskRepository) findTasks(tx *sqlx.Tx, filter domain.TaskFilter) (_ []*d
 			task.flag, 
 			task.is_active, 
 			task.is_disabled,
-			task.link,
+			COALESCE (task.link, '') as link,
 			author.id AS "author.id",
 			author.name AS "author.name",
 			author.contact AS "author.contact"
