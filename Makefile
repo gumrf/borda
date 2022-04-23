@@ -2,7 +2,7 @@ GO_BUILDER_IMAGE := golang:1.17.7-alpine
 IMAGE := alpine:3.15.0
 
 build:
-	CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o ./build/borda-backend ./cmd/main.go
+	CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o ./bin/borda-api-server ./cmd/borda-api-server/main.go
 
 run:
 	go run ./cmd/borda-api-server/main.go serve
