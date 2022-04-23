@@ -21,9 +21,9 @@ func NewUserUsecaseGetUsers(UserRepo repository.UserRepository,
 func (uc *UserUsecaseGetUsers) Execute(id ...int) ([]domain.PublicUserProfileResponse, error) {
 	users := make([]*domain.User, 0)
 
-	if len(id) > 0{
+	if len(id) > 0 {
 		user, err := uc.userRepo.GetUserById(id[0])
-		if err != nil{
+		if err != nil {
 			return []domain.PublicUserProfileResponse{}, err
 		}
 		users = append(users, user)
@@ -57,8 +57,8 @@ func (uc *UserUsecaseGetUsers) Execute(id ...int) ([]domain.PublicUserProfileRes
 				Id:       user.Id,
 				Username: user.Username,
 				Team: struct {
-					Id   int    "json:\"id\""
-					Name string "json:\"name\""
+					Id   int    `json:"id,omitempty"`
+					Name string `json:"name,omitempty"`
 				}{team.Id, team.Name},
 			}
 		}

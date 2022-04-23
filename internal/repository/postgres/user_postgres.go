@@ -103,7 +103,7 @@ func (r UserRepository) GetUserById(id int) (*domain.User, error) {
 			u.contact,
 			COALESCE (m.team_id, 0) AS team_id
 		FROM public.%s AS u
-		INNER JOIN public.%s AS m ON u.id = m.user_id
+		LEFT JOIN public.%s AS m ON u.id = m.user_id
 		WHERE u.id=$1
 		LIMIT 1`,
 		userTable,
@@ -130,7 +130,7 @@ func (r UserRepository) GetAllUsers() ([]*domain.User, error) {
 			u.contact, 
 			COALESCE (m.team_id, 0) AS team_id
 		FROM public.%s AS u
-		INNER JOIN public.%s AS m ON u.id = m.user_id`,
+		LEFT JOIN public.%s AS m ON u.id = m.user_id`,
 		userTable,
 		teamMembersTable)
 

@@ -49,6 +49,7 @@ func (h *Handler) Init(app *fiber.App) {
 	v1 := api.Group("/v1")
 
 	h.initAuthRoutes(v1)
+	h.initScoreboardRoutes(v1)
 
 	// Everything defined bellow will require authorization
 	v1.Use(jwtMiddleware.New(jwtMiddleware.Config{
@@ -66,6 +67,7 @@ func (h *Handler) Init(app *fiber.App) {
 	h.initUserRoutes(v1)
 	h.initTaskRoutes(v1)
 	h.initAdminRoutes(v1)
+	h.initTeamRoutes(v1)
 }
 
 func (h *Handler) authRequired(c *fiber.Ctx) error {
@@ -87,14 +89,14 @@ func (h *Handler) authRequired(c *fiber.Ctx) error {
 	return c.Next()
 }
 
-func (h *Handler) checkUserInTeam(c *fiber.Ctx) error {
+func (h *Handler) teamRequired(c *fiber.Ctx) error {
 	id := c.Locals("userId").(int)
 
 	teamId, ok := h.AuthService.VerifyUserTeam(id)
 	if !ok {
 		return NewErrorResponse(c, fiber.StatusForbidden,
 			MissingTeamIdCode, "User is not a member of any group",
-			"You tried to access a route that requires team id. Join a team before requesting this route.")
+			"Join a team before requesting this route.")
 	}
 
 	// Save team id to context

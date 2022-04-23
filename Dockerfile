@@ -6,7 +6,7 @@ COPY . /borda/
 WORKDIR /borda
 
 ENV CGO_ENABLED=0 GOOS=linux GOARCH=amd64
-RUN go build -o ./build/borda-api-server ./cmd/borda-api-server/main.go
+RUN go build -o ./bin/borda-api-server ./cmd/borda-api-server/main.go
 
 FROM alpine:latest
 
@@ -14,7 +14,7 @@ RUN apk add --no-cache ca-certificates
 
 WORKDIR /borda
 
-COPY --from=builder /borda/build/* /borda/
+COPY --from=builder /borda/bin/* /borda/
 COPY ./migrations/* /borda/migrations/
 
 EXPOSE 8080

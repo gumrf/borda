@@ -34,7 +34,7 @@ CREATE TABLE IF NOT EXISTS team (
 CREATE TABLE IF NOT EXISTS team_member (
    id serial NOT NULL PRIMARY KEY,
    team_id integer NOT NULL REFERENCES team(id),
-   user_id integer NOT NULL REFERENCES "user"(id)
+   user_id integer UNIQUE NOT NULL REFERENCES "user"(id)
 );
 
 CREATE TABLE IF NOT EXISTS author (

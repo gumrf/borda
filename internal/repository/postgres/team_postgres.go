@@ -10,6 +10,7 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/jmoiron/sqlx"
+	"github.com/lib/pq"
 )
 
 type TeamRepository struct {
@@ -45,7 +46,7 @@ func (r TeamRepository) SaveTeam(teamLeaderId int, teamName string) (int, error)
 	}
 
 	if isTeamExists {
-		return -1, NewErrNotFound("team", "name", teamName)
+		return -1, NewErrAlreadyExist("team", "name", teamName)
 	}
 
 	// Generate access token for team
@@ -79,6 +80,16 @@ func (r TeamRepository) SaveTeam(teamLeaderId int, teamName string) (int, error)
 	)
 
 	if _, err := tx.Exec(addLeaderToTeamQuery, teamId, teamLeaderId); err != nil {
+		if pqerr, ok := err.(*pq.Error); ok {
+			switch pqerr.Code.Name() {
+			case "foreign_key_violation", "unique_violation":
+				return -1, errors.New("user already in team")
+			}
+		}
+		return -1, err
+	}
+
+	if err := tx.Commit(); err != nil {
 		return -1, err
 	}
 
@@ -119,6 +130,46 @@ func (r TeamRepository) GetTeamById(teamId int) (*domain.Team, error) {
 	}
 
 	return &team, nil
+}
+
+func (r TeamRepository) GetTeams() ([]*domain.Team, error) {
+	tx, err := r.db.Beginx()
+	if err != nil {
+		return nil, err
+	}
+	defer tx.Rollback() // nolint
+
+	getTeamsQuery := fmt.Sprintf(`
+		SELECT *
+		FROM public.%s`,
+		teamTable,
+	)
+
+	teams := make([]*domain.Team, 0)
+	if err := tx.Select(&teams, getTeamsQuery); err != nil {
+		return nil, err
+	}
+
+	for _, team := range teams {
+		getMembersQuery := fmt.Sprintf(`
+		SELECT name AS user_name, id AS user_id
+		FROM %s
+		WHERE ID IN (
+			SELECT user_id
+			FROM %s
+			WHERE team_id=$1
+		)`,
+			userTable,
+			teamMembersTable,
+		)
+
+		if err := tx.Select(&team.Members, getMembersQuery, team.Id); err != nil {
+			return nil, err
+		}
+
+	}
+
+	return teams, nil
 }
 
 func (r TeamRepository) GetTeamByToken(token string) (*domain.Team, error) {
@@ -259,6 +310,12 @@ func (r TeamRepository) AddMember(teamId, userId int) error {
 
 	var id int = -1
 	if err = tx.Get(&id, addMemberQuery, teamId, userId); err != nil || id == -1 {
+		if pqerr, ok := err.(*pq.Error); ok {
+			switch pqerr.Code.Name() {
+			case "foreign_key_violation", "unique_violation":
+				return errors.New("user already in team")
+			}
+		}
 		return err
 	}
 
