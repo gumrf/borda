@@ -17,6 +17,7 @@ type Task struct {
 	IsActive    bool   `json:"isActive" db:"is_active"`
 	IsDisabled  bool   `json:"isDisabled" db:"is_disabled"`
 	Author      Author `json:"author" db:"author"`
+	Link        string `json:"link" db:"link"`
 }
 
 type Author struct {
@@ -37,6 +38,7 @@ type TaskUpdate struct {
 	IsDisabled    bool   `json:"is_disabled,omitempty"` // Обязательно is_disabled
 	AuthorName    string `json:"-"`
 	AuthorContact string `json:"-"`
+	Link          string `json:"link,omitempty"`
 }
 
 type TaskFilter struct {
@@ -81,6 +83,7 @@ type PublicTaskResponse struct {
 	IsSolved    bool                 `json:"isSolved"`
 	Submissions []SubmissionResponse `json:"submissions"`
 	Author      Author               `json:"author"`
+	Link        string               `json:"link"`
 }
 
 type SubmissionResponse struct {
@@ -102,6 +105,7 @@ type PrivateTaskResponse struct {
 	IsActive    bool   `json:"isActive"`
 	IsDisabled  bool   `json:"isDisabled"`
 	Author      Author `json:"author"`
+	Link        string `json:"link"`
 }
 
 type SolvedTask struct {

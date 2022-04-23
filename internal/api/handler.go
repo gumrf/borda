@@ -31,6 +31,11 @@ func NewHandler(authService *service.AuthService, repository *repository.Reposit
 func (h *Handler) Init(app *fiber.App) {
 	app.Use(logger.New())
 
+	app.Static("/files", "./static", fiber.Static{
+		Browse:   false,
+		Download: true,
+	})
+
 	app.Get("/ping", func(c *fiber.Ctx) error {
 		return c.Status(fiber.StatusOK).JSON(fiber.Map{
 			c.Path(): "pong",

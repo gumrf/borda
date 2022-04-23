@@ -60,7 +60,7 @@ func (i AttachTeamInput) Validate() error {
 
 func (t Task) Validate(prefix string) error {
 	err := validation.ValidateStruct(&t,
-		validation.Field(&t.Title, validation.Required, validation.Match(regexp.MustCompile("^[0-9A-Za-z_?!,.\\s]+$"))),
+		validation.Field(&t.Title, validation.Required, validation.Match(regexp.MustCompile("^[A-Za-z0-9 ]+$"))),
 		validation.Field(&t.Description, validation.Required),
 		validation.Field(&t.Category, validation.Required, is.LowerCase),
 		validation.Field(&t.Complexity, validation.Required, is.LowerCase),
@@ -84,7 +84,7 @@ func (t Task) Validate(prefix string) error {
 
 func (u TaskUpdate) Validate(prefix string) error {
 	err := validation.ValidateStruct(&u,
-		validation.Field(&u.Title, validation.Match(regexp.MustCompile("^[0-9A-Za-z_?!,.\\s]+$"))),
+		validation.Field(&u.Title, validation.Match(regexp.MustCompile("^[A-Za-z0-9 ]+$"))),
 		validation.Field(&u.Description),
 		validation.Field(&u.Category, is.LowerCase),
 		validation.Field(&u.Complexity, is.LowerCase),

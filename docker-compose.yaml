@@ -3,13 +3,14 @@
 # Build images:   docker-compose build
 # Start app:      docker-compose up borda
 # Start database: docker-compose up db
+# Import tasks:   docker-compose up import-tasks
 # Stop all:       docker-compose down (add -v to wipe db)
 #
 version: "3.9"
 services:
   borda:
-    image: borda-backend
-    container_name: borda-backend
+    image: borda-api-server
+    container_name: borda-api-server
     build:
       context: .
       dockerfile: Dockerfile
@@ -19,6 +20,19 @@ services:
       - .env
     depends_on:
       - db
+
+  import-tasks:
+    image: borda-api-server:latest
+    build:
+      context: .
+    environment:
+      - .env
+    depends_on:
+      - db
+    command: ["import-tasks", 
+      "--token", "${GITHUB_ACCESS_TOKEN}",
+      "--repo", "${TASK_REPOSITORY_URL}",
+      "--db", "${DATABASE_URL}"]
 
   db:
     container_name: postgres

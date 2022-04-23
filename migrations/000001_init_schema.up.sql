@@ -45,8 +45,8 @@ CREATE TABLE IF NOT EXISTS author (
 );
 
 CREATE TABLE IF NOT EXISTS task (
-   id          serial PRIMARY KEY,
-   title       VARCHAR(256) NOT NULL,
+   id          serial NOT NULL PRIMARY KEY,
+   title       VARCHAR(256) UNIQUE NOT NULL,
    description TEXT NOT NULL,
    category    VARCHAR(256) NOT NULL,
    complexity  VARCHAR(256),
@@ -55,7 +55,8 @@ CREATE TABLE IF NOT EXISTS task (
    flag        VARCHAR(256) NOT NULL,
    is_active   bool NOT NULL,
    is_disabled bool NOT NULL,
-   author_id   INTEGER REFERENCES author(id)
+   author_id   INTEGER REFERENCES author(id),
+   link        VARCHAR(256)
 );
 
 CREATE TABLE IF NOT EXISTS solved_task (
