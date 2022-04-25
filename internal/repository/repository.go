@@ -35,6 +35,7 @@ type TaskRepository interface {
 	SaveTaskSubmission(submission domain.TaskSubmission) error
 	GetTaskSubmissions(taskId, teamId int) ([]*domain.TaskSubmission, error)
 	CheckSolvedTask(taskId, teamId int) (bool, error)
+	FindOrCreateAuthor(tx *sqlx.Tx, author domain.Author) (int, error)
 }
 
 type SettingsRepository interface {
