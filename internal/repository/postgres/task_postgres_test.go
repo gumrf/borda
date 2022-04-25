@@ -37,9 +37,8 @@ func TestTaskRepository_SaveTask(t *testing.T) {
 					IsActive:    true,
 					IsDisabled:  false,
 					Author: domain.Author{
-						Id:      1,
-						Name:    "Author1",
-						Contact: "@author1",
+						Name:    "SuccessAuthor",
+						Contact: "@success",
 					},
 					Link: "success",
 				},
@@ -51,11 +50,6 @@ func TestTaskRepository_SaveTask(t *testing.T) {
 
 	for _, testCase := range testTable {
 		t.Run(testCase.name, func(t *testing.T) {
-			// tx, err := db.Beginx()
-			// if err != nil {
-			// 	t.Errorf("error with trancaction = %v", err)
-			// }
-			// defer tx.Rollback()
 
 			actualResponse, actualErr := repo.SaveTask(testCase.args.input)
 
@@ -65,61 +59,6 @@ func TestTaskRepository_SaveTask(t *testing.T) {
 		})
 	}
 
-}
-
-func TestTaskRepository_FindOrCreateAuthor(t *testing.T) {
-	db := MustOpenDB(t)
-	repo := postgres.NewTaskRepository(db)
-	require := require.New(t)
-
-	type args struct {
-		author domain.Author
-	}
-	testTable := []struct {
-		name         string
-		args         args
-		wantResponse int
-		wantErr      error
-	}{
-		// TODO: Add test cases.
-		{
-			name: "OK_1",
-			args: args{
-				author: domain.Author{
-					Name:    "Tester",
-					Contact: "@tester",
-				},
-			},
-			wantResponse: 4,
-			wantErr:      nil,
-		},
-		{
-			name: "OK_2",
-			args: args{
-				author: domain.Author{
-					Name: "Author1",
-				},
-			},
-			wantResponse: 1,
-			wantErr:      nil,
-		},
-	}
-
-	for _, testCase := range testTable {
-		t.Run(testCase.name, func(t *testing.T) {
-			tx, err := db.Beginx()
-			if err != nil {
-				t.Errorf("error with trancaction = %v", err)
-			}
-			defer tx.Rollback()
-
-			actualResponse, actualErr := repo.FindOrCreateAuthor(tx, testCase.args.author)
-
-			require.Equal(testCase.wantResponse, actualResponse, t)
-			require.Equal(testCase.wantErr, actualErr, t)
-
-		})
-	}
 }
 
 func TestTaskRepository_GetTasks(t *testing.T) {
