@@ -30,7 +30,7 @@ func (r TaskRepository) SaveTask(task domain.Task) (int, error) {
 	}
 	defer tx.Rollback() //nolint
 
-	_, err = r.findOrCreateAuthor(tx, &task.Author)
+	_, err = r.FindOrCreateAuthor(tx, task.Author)
 	if err != nil {
 		return 0, err
 	}
@@ -69,7 +69,7 @@ func (r TaskRepository) SaveTask(task domain.Task) (int, error) {
 	return task.Id, nil
 }
 
-func (r TaskRepository) findOrCreateAuthor(tx *sqlx.Tx, author *domain.Author) (int, error) {
+func (r TaskRepository) FindOrCreateAuthor(tx *sqlx.Tx, author domain.Author) (int, error) {
 	query := fmt.Sprintf(`
 		SELECT id
 		FROM public.%s
