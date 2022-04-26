@@ -157,6 +157,7 @@ func (r UserRepository) UpdatePassword(userId int, newPassword string) error {
 	return nil
 }
 
+//Метод не используется.
 func (r UserRepository) AssignRole(userId, roleId int) error {
 	// Begin transaction
 	tx, err := r.db.Beginx()
