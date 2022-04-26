@@ -3,6 +3,7 @@ package usecase
 import (
 	"borda/internal/domain"
 	"borda/internal/repository"
+	"sort"
 )
 
 type UserUsecaseGetScoreboard struct {
@@ -52,6 +53,10 @@ func (uc *UserUsecaseGetScoreboard) Execute() ([]domain.Scoreboard, error) {
 
 		response = append(response, responseItem)
 	}
+
+	sort.Slice(response, func(i, j int) (less bool) {
+		return response[i].Score > response[j].Score
+	})
 
 	return response, nil
 }
