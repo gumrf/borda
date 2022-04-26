@@ -75,8 +75,10 @@ func (t Task) Validate(prefix string) error {
 		return fmt.Errorf("validation error: %v", err)
 	}
 
-	if t.Points > 0 {
-		return fmt.Errorf("validation error: points must be > 0")
+	if t.Points != 0 {
+		if t.Points < 0{
+			return fmt.Errorf("validation error: points must be > 0")
+		}
 	}
 
 	return nil
@@ -98,8 +100,10 @@ func (u TaskUpdate) Validate(prefix string) error {
 		return fmt.Errorf("validation error: %v", err)
 	}
 
-	if u.Points <= 0 {
-		return fmt.Errorf("validation error: points must be > 0")
+	if u.Points != 0 {
+		if u.Points < 0{
+			return fmt.Errorf("validation error: points must be > 0")
+		}
 	}
 
 	return nil
@@ -126,9 +130,9 @@ func (a Author) Validate() error {
 		return fmt.Errorf("validation error: %v", err)
 	}
 
-	if a.Id <= 0 {
-		return fmt.Errorf("validation err: id must be > 0")
-	}
+	// if a.Id <= 0 {
+	// 	return fmt.Errorf("validation err: id must be > 0")
+	// }
 
 	return nil
 }

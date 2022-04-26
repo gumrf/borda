@@ -34,8 +34,8 @@ type TaskUpdate struct {
 	Points        int    `json:"points,omitempty"`
 	Hint          string `json:"hint,omitempty"`
 	Flag          string `json:"flag,omitempty"`
-	IsActive      bool   `json:"is_active,omitempty"`   // Обязательно is_active
-	IsDisabled    bool   `json:"is_disabled,omitempty"` // Обязательно is_disabled
+	IsActive      string `json:"is_active,omitempty"`   // Обязательно is_active
+	IsDisabled    string `json:"is_disabled,omitempty"` // Обязательно is_disabled
 	AuthorName    string `json:"-"`
 	AuthorContact string `json:"-"`
 	Link          string `json:"link,omitempty"`
