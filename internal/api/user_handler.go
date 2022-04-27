@@ -8,10 +8,10 @@ import (
 )
 
 func (h *Handler) initUserRoutes(router fiber.Router) {
-	users := router.Group("/users", h.authRequired, h.teamRequired)
-	users.Get("/", h.getAllUsers)
+	users := router.Group("/users", h.authRequired)
+	users.Get("/", h.getAllUsers, h.teamRequired)
 	users.Get("/me", h.getCurentLoggedInUser)
-	users.Get("/:id", h.getUser)
+	users.Get("/:id", h.getUser, h.teamRequired)
 }
 
 // @Summary      Get user profile
