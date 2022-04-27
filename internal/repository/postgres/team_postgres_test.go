@@ -1,202 +1,247 @@
 package postgres_test
 
-// TODO: Make new tests
-// import (
-// 	"borda/internal/domain"
-// 	"borda/internal/repository"
-// 	"borda/internal/repository/postgres"
+import (
+	"borda/internal/domain"
+	"borda/internal/repository/postgres"
+	"testing"
 
-// 	"fmt"
-// 	"testing"
+	"github.com/stretchr/testify/require"
+)
 
-// 	"github.com/jmoiron/sqlx"
-// 	"github.com/stretchr/testify/assert"
-// )
+func TestTeamRepository_SaveTeam(t *testing.T) {
+	db := MustOpenDB(t)
+	userRepo := postgres.NewUserRepository(db)
+	teamRepo := postgres.NewTeamRepository(db)
+	requre := require.New(t)
 
-// func uploadTeamSettings(db *sqlx.DB) error {
-// 	query := `
-// 	INSERT INTO settings
-// 	(key, value)
-// 	VALUES($1, $2)
-// 	`
-// 	_, err := db.Query(query, "team_limit", "5")
-// 	if err != nil {
-// 		return err
-// 	}
+	type args struct {
+		teamLeaderId int
+		teamName     string
+	}
+	testTable := []struct {
+		name         string
+		args         args
+		wantResponse int
+		wantErr      error
+	}{
+		// TODO: Add test cases.
+		{
+			name: "OK",
+			args: args{
+				teamLeaderId: 4,
+				teamName:     "Momstr",
+			},
+			wantResponse: 4,
+			wantErr:      nil,
+		},
+	}
+	for _, testCase := range testTable {
+		t.Run(testCase.name, func(t *testing.T) {
+			_, err := userRepo.SaveUser("TestUser", "TestPswd", "@testcontact")
+			requre.Equal(testCase.wantErr, err, t)
 
-// 	return nil
-// }
+			actualResponse, actualErr := teamRepo.SaveTeam(testCase.args.teamLeaderId, testCase.args.teamName)
 
-// func setUp(t *testing.T) (*sqlx.DB, repository.TeamRepository) {
-// 	db := MustOpenDB(t)
+			requre.Equal(testCase.wantErr, actualErr, t)
+			requre.Equal(testCase.wantResponse, actualResponse, t)
+		})
+	}
+}
 
-// 	if err := uploadTeamSettings(db); err != nil {
-// 		fmt.Printf("err: %v\n", err)
-// 		t.Fatal("Failed load team settings")
-// 	}
+func TestTeamRepository_GetTeamById(t *testing.T) {
+	db := MustOpenDB(t)
+	teamRepo := postgres.NewTeamRepository(db)
+	requre := require.New(t)
 
-// 	repo := postgres.NewTeamRepository(db)
+	type args struct {
+		teamId int
+	}
+	testTable := []struct {
+		name         string
+		args         args
+		wantResponse *domain.Team
+		wantErr      error
+	}{
+		// TODO: Add test cases.
+		{
+			name: "OK",
+			args: args{
+				teamId: 1,
+			},
+			wantResponse: &domain.Team{
+				Id:           1,
+				Name:         "Team1",
+				TeamLeaderId: 1,
+				Token:        "7c8b4c73-9fdd-4fbb-b926-43de9aa6f24d",
+				Members: []domain.TeamMember{
+					{
+						UserId: 1,
+						Name:   "User1",
+					},
+				},
+			},
+			wantErr: nil,
+		},
+	}
+	for _, testCase := range testTable {
+		t.Run(testCase.name, func(t *testing.T) {
+			actualResponse, actualErr := teamRepo.GetTeamById(testCase.args.teamId)
 
-// 	return db, repo
-// }
+			requre.Equal(testCase.wantErr, actualErr, t)
+			requre.Equal(testCase.wantResponse, actualResponse, t)
+		})
+	}
+}
 
-// // func Test_TeamRepository_Create(t *testing.T) {
-// // 	// setup
-// // 	db, repo := setUp(t)
-// // 	assert := assert.New(t)
-// // 	userId, err := makeTestUser(db, "jayse", "test", "@jaysess")
-// // 	if err != nil {
-// // 		fmt.Printf("err: %v\n", err)
-// // 		panic("Test user not created")
-// // 	}
+func TestTeamRepository_GetTeams(t *testing.T) {
+	db := MustOpenDB(t)
+	teamRepo := postgres.NewTeamRepository(db)
+	requre := require.New(t)
 
-// // 	// tests
+	testTable := []struct {
+		name         string
+		wantResponse []*domain.Team
+		wantErr      error
+	}{
+		// TODO: Add test cases.
+		{
+			name: "OK",
+			wantResponse: []*domain.Team{
+				{
+					Id:           1,
+					Name:         "Team1",
+					TeamLeaderId: 1,
+					Token:        "7c8b4c73-9fdd-4fbb-b926-43de9aa6f24d",
+					Members: []domain.TeamMember{
+						{
+							UserId: 1,
+							Name:   "User1",
+						},
+					},
+				},
+				{
+					Id:           2,
+					Name:         "Team2",
+					TeamLeaderId: 2,
+					Token:        "e01e949e-9dd0-428e-96c0-28adebf4df3d",
+					Members: []domain.TeamMember{
+						{
+							UserId: 2,
+							Name:   "User2",
+						},
+					},
+				},
+				{
+					Id:           3,
+					Name:         "Team3",
+					TeamLeaderId: 3,
+					Token:        "bd58e756-7ef3-4043-bf4c-2c5ae9b9ad0b",
+					Members: []domain.TeamMember{
+						{
+							UserId: 3,
+							Name:   "User3",
+						},
+					},
+				},
+			},
+			wantErr: nil,
+		},
+	}
+	for _, testCase := range testTable {
+		t.Run(testCase.name, func(t *testing.T) {
+			actualResponse, actualErr := teamRepo.GetTeams()
 
-// // 	// Default
-// // 	teamName := "ShrekTeam"
-// // 	teamId, err := repo.CreateNewTeam(userId, teamName)
-// // 	if err != nil {
-// // 		fmt.Printf("err: %v\n", err)
-// // 	}
-// // 	assert.Equal(team.Name, teamName, "they should be equal")
-// // 	assert.Equal(team.TeamLeaderId, userId, "they should be equal")
-// // 	assert.NotNil(team.Token, "must be not nil")
-// // 	assert.NotNil(team.Id, "must be not nil")
+			requre.Equal(testCase.wantErr, actualErr, t)
+			requre.Equal(testCase.wantResponse, actualResponse, t)
+		})
+	}
+}
 
-// // 	// Duplicate name
-// // 	team, err = repo.Create(userId, teamName)
-// // 	assert.Error(err)
-// // }
+func TestTeamRepository_GetTeamByToken(t *testing.T) {
+	db := MustOpenDB(t)
+	repo := postgres.NewTeamRepository(db)
+	requre := require.New(t)
 
-// stUser(db, "jayseClone", "test", "@jaysessClone")
-// 	if err != nil {
-// 		t.Fatalf("err: %v\nTest user not created\n", err)
-// 	}
+	type args struct {
+		token string
+	}
+	testTable := []struct {
+		name         string
+		args         args
+		wantResponse *domain.Team
+		wantErr      error
+	}{
+		// TODO: Add test cases.
+		{
+			name: "OK_1",
+			args: args{
+				token: "e01e949e-9dd0-428e-96c0-28adebf4df3d",
+			},
+			wantResponse: &domain.Team{
+				Id:           2,
+				Name:         "Team2",
+				TeamLeaderId: 2,
+				Token:        "e01e949e-9dd0-428e-96c0-28adebf4df3d",
+			},
+			wantErr: nil,
+		},
+		{
+			name: "OK_2",
+			args: args{
+				token: "7c8b4c73-9fdd-4fbb-b926-43de9aa6f24d",
+			},
+			wantResponse: &domain.Team{
+				Id:           1,
+				Name:         "Team1",
+				TeamLeaderId: 1,
+				Token:        "7c8b4c73-9fdd-4fbb-b926-43de9aa6f24d",
+			},
+			wantErr: nil,
+		},
+	}
+	for _, testCase := range testTable {
+		t.Run(testCase.name, func(t *testing.T) {
+			actualResponse, actualErr := repo.GetTeamByToken(testCase.args.token)
 
-// 	teamName := "ShrekTeam"
-// 	team, err := repo.Create(userId, teamName)
-// 	if err != nil {
-// 		t.Fatalf("err: %v\nTest user not created\n", err)
+			requre.Equal(testCase.wantErr, actualErr, t)
+			requre.Equal(testCase.wantResponse, actualResponse, t)
+		})
+	}
+}
 
-// 	}
+func TestTeamRepository_AddMember(t *testing.T) {
+	db := MustOpenDB(t)
+	userRepo := postgres.NewUserRepository(db)
+	teamRepo := postgres.NewTeamRepository(db)
+	requre := require.New(t)
 
-// 	err = repo.AddMember(team.Id, userId)
-// 	if err != nil {
-// 		fmt.Printf("err: %v\n", err)
-// 	}
+	type args struct {
+		teamId int
+		userId int
+	}
+	testTable := []struct {
+		name string
 
-// 	err = repo.AddMember(team.Id, userId2)
-// 	if err != nil {
-// 		fmt.Printf("err: %v\n", err)
-// 	}
+		args    args
+		wantErr error
+	}{
+		// TODO: Add test cases.
+		{
+			name: "OK",
+			args: args{
+				teamId: 1,
+				userId: 4,
+			},
+			wantErr: nil,
+		},
+	}
+	for _, testCase := range testTable {
+		t.Run(testCase.name, func(t *testing.T) {
+			_, err := userRepo.SaveUser("TestUser", "TestPswd", "@testcontact")
+			requre.Equal(testCase.wantErr, err, t)
 
-// 	// test
-
-// 	// Default
-// 	users, err := repo.GetMembers(team.Id)
-// 	if err != nil {
-// 		fmt.Printf("err: %v\n", err)
-// 	}
-
-// 	assert.True(len(users) == 2)
-// 	var _user domain.User = users[0]
-// 	assert.Equal(_user.Username, "jayse")
-// 	assert.Equal(_user.Password, "test")
-// 	assert.Equal(_user.Contact, "@jaysess")
-// 	assert.Equal(_user.Id, 1)
-// 	assert.Equal(_user.TeamId, 1)
-
-// 	_user = users[1]
-// 	assert.Equal(_user.Username, "jayseClone")
-// 	assert.Equal(_user.Password, "test")
-// 	assert.Equal(_user.Contact, "@jaysessClone")
-// 	assert.Equal(_user.Id, 2)
-// 	assert.Equal(_user.TeamId, 1)
-
-// 	// Not found team by id
-// 	_, err = repo.GetMembers(1337)
-// 	assert.Error(err, "Team with id=%v not found", "they should be equal")
-// }
-// func Test_TeamRepository_Get(t *testing.T) {
-// 	// setup
-// 	db, repo := setUp(t)
-// 	assert := assert.New(t)
-
-// 	userId, err := makeTestUser(db, "jayse", "test", "@jaysess")
-// 	if err != nil {
-// 		fmt.Printf("err: %v\n", err)
-// 		panic("Test user not created")
-// 	}
-
-// 	teamName := "ShrekTeam"
-// 	team, err := repo.Create(userId, teamName)
-// 	if err != nil {
-// 		fmt.Printf("err: %v\n", err)
-// 		panic("Test team not created")
-// 	}
-
-// 	// tests
-
-// 	// Default
-// 	teamAssert, err := repo.Get(team.Id)
-// 	if err != nil {
-// 		fmt.Printf("err: %v\n", err)
-// 		t.Fatal("Test team asserted not created")
-// 	}
-// 	assert.Equal(team.Name, teamAssert.Name, "they should be equal")
-// 	assert.Equal(team.TeamLeaderId, teamAssert.TeamLeaderId, "they should be equal")
-// 	assert.Equal(team.Token, teamAssert.Token, "they should be equal")
-// 	assert.Equal(team.Id, teamAssert.Id, "they should be equal")
-
-// 	// Not found
-// 	teamAssert, err = repo.Get(1337)
-// 	assert.Error(err, "Team not found with id=1337", "they should be equal")
-// }
-
-// func Test_TeamRepository_AddMember(t *testing.T) {
-// 	// setup
-// 	db, repo := setUp(t)
-// 	assert := assert.New(t)
-// 	userId, err := makeTestUser(db, "jayse", "test", "@jaysess")
-// 	if err != nil {
-// 		fmt.Printf("err: %v\n", err)
-// 		panic("Test user not created")
-// 	}
-// 	teamName := "ShrekTeam"
-// 	team, err := repo.CreateNewTeam(userId, teamName)
-// 	if err != nil {
-// 		fmt.Printf("err: %v\n", err)
-// 		panic("Test team not created")
-// 	}
-
-// 	// tests
-
-// 	// Default
-// 	err = repo.AddMember(team.Id, userId)
-// 	if err != nil {
-// 		fmt.Printf("err: %v\n", err)
-// 	}
-
-// 	// Duplicate
-// 	err = repo.AddMember(team.Id, userId)
-// 	assert.Error(err, "User id=1 already in team with id=1", "they should be equal")
-
-// 	// Not user
-// 	err = repo.AddMember(team.Id, 1337)
-// 	assert.Error(err, "User with id=%v not found", "they should be equal")
-
-// 	// Not team
-// 	err = repo.AddMember(1337, 1)
-// 	assert.Error(err, "Team with id=%v not found", "they should be equal")
-// }
-
-// func Test_TeamRepository_GetMembers(t *testing.T) {
-// 	// setup
-// 	db, repo := setUp(t)
-// 	assert := assert.New(t)
-
-// 	userId, err := makeTestUser(db, "jayse", "test", "@jaysess")
-// 	if err != nil {
-// 		t.Fatalf("err: %v\nTest user not created\n", err)
-// 	}
-// 	userId2, err := makeTe
+			actualErr := teamRepo.AddMember(testCase.args.teamId, testCase.args.userId)
+			requre.Equal(testCase.wantErr, actualErr, t)
+		})
+	}
+}
