@@ -26,7 +26,7 @@ func MustOpenDB(t *testing.T) *sqlx.DB {
 		t.Fatal(err)
 	}
 
-	if err := pg.Migrate(db, migrationsPath); err != nil {
+	if err := pg.Migrate(db, migrationsPath, 1); err != nil {
 		t.Fatal(err)
 	}
 

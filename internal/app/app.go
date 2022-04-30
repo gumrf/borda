@@ -41,7 +41,7 @@ func Run() {
 	}
 	logger.Log.Info("Connected to Postgres: ", config.DatabaseURL())
 
-	if err := pg.Migrate(db, config.MigrationsPath()); err != nil {
+	if err := pg.Migrate(db, config.MigrationsPath(), 2); err != nil {
 		logger.Log.Fatalf("Failed to run migrations: %v", err)
 	}
 

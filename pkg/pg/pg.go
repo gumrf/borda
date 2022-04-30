@@ -44,7 +44,7 @@ func Open(dsn string) (*sqlx.DB, error) {
 	return db, nil
 }
 
-func Migrate(db *sqlx.DB, migrationsPath string) error {
+func Migrate(db *sqlx.DB, migrationsPath string, version uint) error {
 	driver, err := postgres.WithInstance(db.DB, &postgres.Config{})
 	if err != nil {
 		return fmt.Errorf("connect db driver instance: %w", err)
@@ -55,7 +55,7 @@ func Migrate(db *sqlx.DB, migrationsPath string) error {
 		return fmt.Errorf("initialize migrations: %w", err)
 	}
 
-	if err := m.Up(); err != nil && err != migrate.ErrNoChange {
+	if err := m.Migrate(version); err != nil && err != migrate.ErrNoChange {
 		return fmt.Errorf("apply migrations: %w", err)
 	}
 
