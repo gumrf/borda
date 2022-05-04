@@ -17,7 +17,7 @@ func NewSettingsRepository(db *sqlx.DB) *SettingsRepository {
 
 func (r SettingsRepository) Get(key string) (value string, err error) {
 	query := fmt.Sprintf(`
-		SELECT *
+		SELECT value
 		FROM public.%s
 		WHERE key=$1
 		LIMIT 1`, settingsTable)
@@ -48,7 +48,7 @@ func (r SettingsRepository) Set(key string, value string) (settingId int, err er
 		RETURNING id`,
 		settingsTable)
 	id := -1
-	err = r.db.QueryRowx(query, value, key).Scan(&id)
+	err = r.db.QueryRowx(query, key, value).Scan(&id)
 
 	if err != nil || id == -1 {
 		return id, fmt.Errorf("team repository create error: %v", err)
