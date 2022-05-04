@@ -9,6 +9,8 @@ import (
 
 func TestSettingsRepository_Get(t *testing.T) {
 	db := MustOpenDB(t)
+	defer MustCloseDB(t, db)
+
 	repo := postgres.NewSettingsRepository(db)
 	require := require.New(t)
 
@@ -33,6 +35,8 @@ func TestSettingsRepository_Get(t *testing.T) {
 	}
 	for _, testCase := range testTable {
 		t.Run(testCase.name, func(t *testing.T) {
+			helpSetSettings(t, db, "team_limit", "4")
+
 			actualResponse, actualErr := repo.Get(testCase.args.key)
 
 			require.Equal(testCase.wantErr, actualErr, t)
@@ -43,6 +47,8 @@ func TestSettingsRepository_Get(t *testing.T) {
 
 func TestSettingsRepository_Set(t *testing.T) {
 	db := MustOpenDB(t)
+	defer MustCloseDB(t, db)
+
 	repo := postgres.NewSettingsRepository(db)
 	require := require.New(t)
 
@@ -63,7 +69,7 @@ func TestSettingsRepository_Set(t *testing.T) {
 				key:   "TEST",
 				value: "1337",
 			},
-			wantResponse: 2,
+			wantResponse: 1,
 			wantErr:      nil,
 		},
 	}
