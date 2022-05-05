@@ -2,246 +2,607 @@ package postgres_test
 
 import (
 	"borda/internal/domain"
-	"borda/internal/repository"
 	"borda/internal/repository/postgres"
-
 	"testing"
 
 	"github.com/jmoiron/sqlx"
-	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
-func Test_NewTaskRepository(t *testing.T) {
+func TestTaskRepository_SaveTask(t *testing.T) {
 	db := MustOpenDB(t)
+	defer MustCloseDB(t, db)
 
-	taskRepository := postgres.NewTaskRepository(db)
+	repo := postgres.NewTaskRepository(db)
+	require := require.New(t)
 
-	require.Implements(t, (*repository.TaskRepository)(nil), taskRepository)
-}
-
-func Test_TaskRepository_CreateNewTask(t *testing.T) {
-	type testCase struct {
-		Name string
-
-		Task domain.Task
-
-		ExpectedInt   int
-		ExpectedError error
+	type args struct {
+		input domain.Task
 	}
 
-	validate := func(t *testing.T, tc *testCase) {
-		t.Run(tc.Name, func(t *testing.T) {
-			db := MustOpenDB(t)
-			defer MustCloseDB(t, db)
+	testTable := []struct {
+		name         string
+		args         args
+		wantResponse int
+		wantErr      error
+	}{
+		{
+			name: "OK_1",
+			args: args{
+				input: domain.Task{
+					Title:       "Success",
+					Description: "Success test",
+					Category:    "Success",
+					Complexity:  "Hard",
+					Points:      1000,
+					Hint:        "Success",
+					Flag:        "flag{success}",
+					IsActive:    true,
+					IsDisabled:  false,
+					Author: domain.Author{
+						Name:    "SuccessAuthor",
+						Contact: "@success",
+					},
+					Link: "success",
+				},
+			},
+			wantResponse: 1,
+			wantErr:      nil,
+		},
+	}
 
-			taskRepository := postgres.NewTaskRepository(db)
+	for _, testCase := range testTable {
+		t.Run(testCase.name, func(t *testing.T) {
 
-			actualInt, actualError := taskRepository.SaveTask(tc.Task)
+			actualResponse, actualErr := repo.SaveTask(testCase.args.input)
 
-			require.Equal(t, tc.ExpectedInt, actualInt)
-			require.Equal(t, tc.ExpectedError, actualError)
+			require.Equal(testCase.wantResponse, actualResponse, t)
+			require.Equal(testCase.wantErr, actualErr, t)
+
 		})
 	}
 
-	validate(t, &testCase{
-		Name: "OK",
-		Task: domain.Task{
-			Title: "Test Task",
-			Author: domain.Author{
-				Name:    "Test Team",
-				Contact: "test@mail.com",
-			},
-		},
-		ExpectedInt:   1,
-		ExpectedError: nil,
-	})
 }
 
-func Test_TaskRepository_GetTasks(t *testing.T) {
-	type testCase struct {
-		Name string
+func TestTaskRepository_GetTasks(t *testing.T) {
+	db := MustOpenDB(t)
+	defer MustCloseDB(t, db)
 
-		Filter domain.TaskFilter
+	repo := postgres.NewTaskRepository(db)
+	require := require.New(t)
 
-		ExpectedSlice []*domain.Task
-		ExpectedError error
+	helpCreateTask(t, db)
+
+	type args struct {
+		input domain.TaskFilter
+	}
+	testTable := []struct {
+		name         string
+		args         args
+		wantResponse []*domain.Task
+		wantErr      error
+	}{
+		// TODO: Add test cases.
+		{
+			name: "OK_1",
+			args: args{
+				input: domain.TaskFilter{
+					Id: 1,
+				},
+			},
+			wantResponse: []*domain.Task{{
+				Id:          1,
+				Title:       "Task1",
+				Description: "Task1 description",
+				Category:    "test",
+				Complexity:  "hard",
+				Points:      1000,
+				Hint:        "Hint for task 1",
+				Flag:        "flag{flag_for_task_1}",
+				IsActive:    false,
+				IsDisabled:  true,
+				Author: domain.Author{
+					Id:      1,
+					Name:    "Author1",
+					Contact: "@author1",
+				},
+				Link: "task1",
+			},
+			},
+			wantErr: nil,
+		},
+		{
+			name: "OK_2",
+			args: args{
+				input: domain.TaskFilter{
+					IsActive:   true,
+					IsDisabled: false,
+				},
+			},
+			wantResponse: []*domain.Task{{
+				Id:          2,
+				Title:       "Task2",
+				Description: "Task2 description",
+				Category:    "test",
+				Complexity:  "hard",
+				Points:      1337,
+				Hint:        "Hint for task 2",
+				Flag:        "flag{flag_for_task_2}",
+				IsActive:    true,
+				IsDisabled:  false,
+				Author: domain.Author{
+					Id:      1,
+					Name:    "Author1",
+					Contact: "@author1",
+				},
+				Link: "task2",
+			}},
+			wantErr: nil,
+		},
 	}
 
-	validate := func(t *testing.T, tc *testCase) {
-		t.Run(tc.Name, func(t *testing.T) {
-			db := MustOpenDB(t)
-			defer MustCloseDB(t, db)
+	for _, testCase := range testTable {
+		t.Run(testCase.name, func(t *testing.T) {
+			actualResponse, actualErr := repo.GetTasks(testCase.args.input)
 
-			for _, i := range tc.ExpectedSlice {
-				MustCreateTask(t, db, i)
+			require.Equal(testCase.wantErr, actualErr, t)
+			require.Equal(testCase.wantResponse, actualResponse, t)
+		})
+	}
+
+}
+
+func TestTaskRepository_GetTaskById(t *testing.T) {
+	db := MustOpenDB(t)
+	defer MustCloseDB(t, db)
+
+	repo := postgres.NewTaskRepository(db)
+	require := require.New(t)
+
+	helpCreateTask(t, db)
+
+	type args struct {
+		taskId int
+	}
+	testTable := []struct {
+		name         string
+		args         args
+		wantResponse *domain.Task
+		wantErr      error
+	}{
+		// TODO: Add test cases.
+		{
+			name: "OK",
+			args: args{
+				taskId: 1,
+			},
+			wantResponse: &domain.Task{
+				Id:          1,
+				Title:       "Task1",
+				Description: "Task1 description",
+				Category:    "test",
+				Complexity:  "hard",
+				Points:      1000,
+				Hint:        "Hint for task 1",
+				Flag:        "flag{flag_for_task_1}",
+				IsActive:    false,
+				IsDisabled:  true,
+				Author: domain.Author{
+					Id:      1,
+					Name:    "Author1",
+					Contact: "@author1",
+				},
+				Link: "task1",
+			},
+			wantErr: nil,
+		},
+	}
+	for _, testCase := range testTable {
+		t.Run(testCase.name, func(t *testing.T) {
+			actualResponse, actualErr := repo.GetTaskById(testCase.args.taskId)
+
+			require.Equal(testCase.wantErr, actualErr, t)
+			require.Equal(testCase.wantResponse, actualResponse, t)
+		})
+	}
+}
+
+func TestTaskRepository_UpdateTask(t *testing.T) {
+	db := MustOpenDB(t)
+	defer MustCloseDB(t, db)
+
+	repo := postgres.NewTaskRepository(db)
+	require := require.New(t)
+
+	helpCreateTask(t, db)
+
+	type args struct {
+		taskId int
+		input  domain.TaskUpdate
+	}
+	testTable := []struct {
+		name         string
+		args         args
+		wantResponse *domain.Task
+		wantErr      error
+	}{
+		// TODO: Add test cases. Обязательно добавить больше тк!!!!!!!!!
+		{
+			name: "OK",
+			args: args{
+				taskId: 1,
+				input: domain.TaskUpdate{
+					Title: "UpdatedTitleTask1",
+				},
+			},
+			wantResponse: &domain.Task{
+				Id:          1,
+				Title:       "UpdatedTitleTask1",
+				Description: "Task1 description",
+				Category:    "test",
+				Complexity:  "hard",
+				Points:      1000,
+				Hint:        "Hint for task 1",
+				Flag:        "flag{flag_for_task_1}",
+				IsActive:    false,
+				IsDisabled:  true,
+				Author: domain.Author{
+					Id:      1,
+					Name:    "Author1",
+					Contact: "@author1",
+				},
+				Link: "task1",
+			},
+			wantErr: nil,
+		},
+	}
+
+	for _, testCase := range testTable {
+		t.Run(testCase.name, func(t *testing.T) {
+			actualErr := repo.UpdateTask(testCase.args.taskId, testCase.args.input)
+			actualResponse, err := repo.GetTaskById(testCase.args.taskId)
+
+			require.Equal(nil, err, t)
+			require.Equal(testCase.wantErr, actualErr, t)
+			require.Equal(testCase.wantResponse, actualResponse, t)
+		})
+	}
+}
+
+func TestTaskRepository_SolveTask(t *testing.T) {
+	db := MustOpenDB(t)
+	defer MustCloseDB(t, db)
+
+	repo := postgres.NewTaskRepository(db)
+	require := require.New(t)
+
+	helpCreateUser(t, db)
+	helpCreateTeam(t, db)
+	helpCreateTask(t, db)
+
+	type args struct {
+		taskId int
+		teamId int
+	}
+	testTable := []struct {
+		name    string
+		args    args
+		wantErr error
+	}{
+		// TODO: Add test cases.
+		{
+			name: "OK",
+			args: args{
+				taskId: 1,
+				teamId: 1,
+			},
+			wantErr: nil,
+		},
+	}
+
+	for _, testCase := range testTable {
+		t.Run(testCase.name, func(t *testing.T) {
+			actualErr := repo.SolveTask(testCase.args.taskId, testCase.args.teamId)
+
+			require.Equal(testCase.wantErr, actualErr, 1)
+		})
+	}
+}
+
+func TestTaskRepository_GetTasksSolvedByTeam(t *testing.T) {
+	db := MustOpenDB(t)
+	defer MustCloseDB(t, db)
+
+	repo := postgres.NewTaskRepository(db)
+	require := require.New(t)
+
+	helpCreateUser(t, db)
+	helpCreateTeam(t, db)
+	helpCreateTask(t, db)
+
+	type args struct {
+		teamId           int
+		taskIdForSolving int
+	}
+	testTable := []struct {
+		name         string
+		args         args
+		wantResponse []*domain.SolvedTask
+		wantErr      error
+	}{
+		// TODO: Add test cases.
+		{
+			name: "OK_1",
+			args: args{
+				teamId:           1,
+				taskIdForSolving: 1,
+			},
+			wantResponse: []*domain.SolvedTask{{
+				TaskId: 1,
+				TeamId: 1,
+			}},
+			wantErr: nil,
+		},
+	}
+	for _, testCase := range testTable {
+		t.Run(testCase.name, func(t *testing.T) {
+			err := repo.SolveTask(testCase.args.taskIdForSolving, testCase.args.teamId)
+			actualResponses, actualErr := repo.GetTasksSolvedByTeam(testCase.args.teamId)
+
+			require.Equal(testCase.wantErr, err, t)
+			require.Equal(testCase.wantErr, actualErr, t)
+			for i, actualResponse := range actualResponses {
+				require.Equal(testCase.wantResponse[i].TaskId, actualResponse.TaskId, t)
+				require.Equal(testCase.wantResponse[i].TeamId, actualResponse.TeamId, t)
+			}
+		})
+	}
+}
+
+func TestTaskRepository_CheckSolvedTask(t *testing.T) {
+	db := MustOpenDB(t)
+	defer MustCloseDB(t, db)
+
+	repo := postgres.NewTaskRepository(db)
+	require := require.New(t)
+
+	helpCreateUser(t, db)
+	helpCreateTeam(t, db)
+	helpCreateTask(t, db)
+
+	type args struct {
+		taskId int
+		teamId int
+	}
+	testTable := []struct {
+		name         string
+		args         args
+		wantResponse bool
+		wantErr      error
+	}{
+		// TODO: Add test cases.
+		{
+			name: "OK_1",
+			args: args{
+				taskId: 1,
+				teamId: 2,
+			},
+			wantResponse: true,
+			wantErr:      nil,
+		},
+		{
+			name: "OK_2",
+			args: args{
+				taskId: 1,
+				teamId: 1,
+			},
+			wantResponse: false,
+			wantErr:      nil,
+		},
+	}
+	for _, testCase := range testTable {
+		t.Run(testCase.name, func(t *testing.T) {
+
+			if testCase.name == "OK_1" {
+				err := repo.SolveTask(testCase.args.taskId, testCase.args.teamId)
+				require.Equal(nil, err, t)
 			}
 
-			taskRepository := postgres.NewTaskRepository(db)
+			actualResponses, actualErr := repo.CheckSolvedTask(testCase.args.taskId, testCase.args.teamId)
 
-			actualSlice, actualError := taskRepository.GetTasks(tc.Filter)
-
-			assert.Equal(t, tc.ExpectedSlice, actualSlice)
-			assert.Equal(t, tc.ExpectedError, actualError)
+			require.Equal(testCase.wantErr, actualErr, t)
+			require.Equal(testCase.wantResponse, actualResponses, t)
 		})
 	}
-
-	validate(t, &testCase{
-		Name: "Select active",
-		Filter: domain.TaskFilter{
-			IsActive: true,
-		},
-		ExpectedSlice: []*domain.Task{
-			&domain.Task{
-				Id:       1,
-				Title:    "Test Task 1",
-				IsActive: true,
-				Author: domain.Author{
-					Id:      1,
-					Name:    "Test Team",
-					Contact: "test@mail.com",
-				},
-			},
-			&domain.Task{
-				Id:       2,
-				Title:    "Test Task 2",
-				IsActive: true,
-				Author: domain.Author{
-					Id:      1,
-					Name:    "Test Team",
-					Contact: "test@mail.com",
-				},
-			},
-			&domain.Task{
-				Id:       3,
-				Title:    "Test Task 3",
-				IsActive: true,
-				Author: domain.Author{
-					Id:      1,
-					Name:    "Test Team",
-					Contact: "test@mail.com",
-				},
-			},
-		},
-		ExpectedError: nil,
-	})
 }
 
-func Test_TaskRepository_GetTaskById(t *testing.T) {
-	type testCase struct {
-		Name string
+func TestTaskRepository_SaveTaskSubmission(t *testing.T) {
+	db := MustOpenDB(t)
+	defer MustCloseDB(t, db)
 
-		TaskId int
+	repo := postgres.NewTaskRepository(db)
+	require := require.New(t)
 
-		ExpectedTask  *domain.Task
-		ExpectedError error
+	helpCreateUser(t, db)
+	helpCreateTeam(t, db)
+	helpCreateTask(t, db)
+
+	type args struct {
+		submission domain.TaskSubmission
 	}
+	testTable := []struct {
+		name    string
+		args    args
+		wantErr error
+	}{
+		// TODO: Add test cases.
+		{
+			name: "OK_1",
+			args: args{
+				submission: domain.TaskSubmission{
+					TaskId:    1,
+					TeamId:    1,
+					UserId:    1,
+					Flag:      "flag{HeheBoY}",
+					IsCorrect: false,
+				},
+			},
+			wantErr: nil,
+		},
+		{
+			name: "OK_2",
+			args: args{
+				submission: domain.TaskSubmission{
+					TaskId:    1,
+					TeamId:    1,
+					UserId:    1,
+					Flag:      "flag{falg_for_task_1}",
+					IsCorrect: true,
+				},
+			},
+			wantErr: nil,
+		},
+	}
+	for _, testCase := range testTable {
+		t.Run(testCase.name, func(t *testing.T) {
+			actualErr := repo.SaveTaskSubmission(testCase.args.submission)
 
-	validate := func(t *testing.T, tc *testCase) {
-		t.Run(tc.Name, func(t *testing.T) {
-			db := MustOpenDB(t)
-			defer MustCloseDB(t, db)
-
-			MustCreateTask(t, db, tc.ExpectedTask)
-
-			taskRepository := postgres.NewTaskRepository(db)
-
-			actualTask, actualError := taskRepository.GetTaskById(tc.TaskId)
-
-			assert.Equal(t, tc.ExpectedTask, actualTask)
-			assert.Equal(t, tc.ExpectedError, actualError)
+			require.Equal(testCase.wantErr, actualErr, t)
 		})
 	}
-
-	validate(t, &testCase{
-		Name:   "OK",
-		TaskId: 1,
-		ExpectedTask: &domain.Task{
-			Id:          1,
-			Title:       "Test Title",
-			Description: "Test description",
-			Category:    "Test",
-			Complexity:  "",
-			Points:      100,
-			Hint:        "",
-			Flag:        "flag{_test_}",
-			IsActive:    false,
-			IsDisabled:  false,
-			Author: domain.Author{
-				Id:      1,
-				Name:    "Test Name",
-				Contact: "test@mail.com",
-			},
-		},
-		ExpectedError: nil,
-	})
 }
 
-// func Test_TaskRepository_UpdateTask(t *testing.T) {
-// 	type testCase struct {
-// 		Name string
+func TestTaskRepository_GetTaskSubmissions(t *testing.T) {
+	db := MustOpenDB(t)
+	defer MustCloseDB(t, db)
 
-// 		Task   domain.Task
-// 		Update domain.TaskUpdate
+	repo := postgres.NewTaskRepository(db)
+	require := require.New(t)
 
-// 		ExpectedError error
-// 	}
+	helpCreateUser(t, db)
+	helpCreateTeam(t, db)
+	helpCreateTask(t, db)
 
-// 	validate := func(t *testing.T, tc *testCase) {
-// 		t.Run(tc.Name, func(t *testing.T) {
-// 			db := MustOpenDB(t)
-// 			defer MustCloseDB(t, db)
+	type args struct {
+		taskId int
+		teamId int
+	}
+	testTable := []struct {
+		name         string
+		args         args
+		wantResponse []*domain.TaskSubmission
+		wantErr      error
+	}{
+		// TODO: Add test cases.
+		{
+			name: "OK_1",
+			args: args{
+				taskId: 1,
+				teamId: 2,
+			},
+			wantResponse: []*domain.TaskSubmission{
+				{
+					TaskId:    1,
+					TeamId:    1,
+					UserId:    1,
+					Flag:      "flag{HeheBoY}",
+					IsCorrect: false,
+				},
+				{
+					TaskId:    1,
+					TeamId:    1,
+					UserId:    1,
+					Flag:      "flag{falg_for_task_1}",
+					IsCorrect: true,
+				}},
+			wantErr: nil,
+		},
+		{
+			name: "OK_2",
+			args: args{
+				taskId: 2,
+				teamId: 2,
+			},
+			wantResponse: []*domain.TaskSubmission{},
+			wantErr:      nil,
+		},
+	}
+	for _, testCase := range testTable {
+		t.Run(testCase.name, func(t *testing.T) {
+			TestTaskRepository_SaveTaskSubmission(t)
 
-// 			MustCreateTask(t, db, &tc.Task)
+			actualResponses, actualErr := repo.GetTaskSubmissions(testCase.args.taskId, testCase.args.teamId)
 
-// 			taskRepository := postgres.NewTaskRepository(db)
+			require.Equal(testCase.wantErr, actualErr, t)
+			for i, actualResponse := range actualResponses {
+				require.Equal(testCase.wantResponse[i].TaskId, actualResponse.TaskId, t)
+				require.Equal(testCase.wantResponse[i].TeamId, actualResponse.TeamId, t)
+				require.Equal(testCase.wantResponse[i].Flag, actualResponse.Flag, t)
+				require.Equal(testCase.wantResponse[i].IsCorrect, actualResponse.IsCorrect)
+				require.Equal(testCase.wantResponse[i].UserId, actualResponse.UserId, t)
+			}
+		})
+	}
+}
 
-// 			actualError := taskRepository.UpdateTask(tc.Task.Id, tc.Update)
-// 			actualTask, _ := taskRepository.GetTaskById(tc.Task.Id)
-
-// 			assert.Equal(t, tc.ExpectedError, actualError)
-// 		})
-// 	}
-
-// 	validate(t, &testCase{
-// 		Name: "",
-// 		Task: domain.Task{
-// 			Title:       "Test Task",
-// 			Description: "",
-// 			Category:    "",
-// 			Complexity:  "",
-// 			Points:      0,
-// 			Hint:        "",
-// 			Flag:        "",
-// 			IsActive:    false,
-// 			IsDisabled:  false,
-// 			Author:      domain.Author{},
-// 		},
-// 		Update: domain.TaskUpdate{
-// 			Title:         "Test Task After Update",
-// 			Description:   "New description",
-// 			Category:      "Web",
-// 			Complexity:    "Easy",
-// 			Points:        400,
-// 			Hint:          "Super hint",
-// 			Flag:          "flag{flag}",
-// 			AuthorName:    "New name",
-// 			AuthorContact: "New Contact",
-// 		},
-// 		ExpectedError: nil,
-// 	})
-// }
-
-// MustCreateTask creates a task in the database. Fatal on error.
-func MustCreateTask(t *testing.T, db *sqlx.DB, task *domain.Task) *domain.Task {
+func helpCreateTask(t *testing.T, db *sqlx.DB) {
 	t.Helper()
 
-	id, err := postgres.NewTaskRepository(db).SaveTask(*task)
-	if err != nil {
-		t.Fatal(err)
+	tasks := []*domain.Task{
+		{
+			Title:       "Task1",
+			Description: "Task1 description",
+			Category:    "test",
+			Complexity:  "hard",
+			Points:      1000,
+			Hint:        "Hint for task 1",
+			Flag:        "flag{flag_for_task_1}",
+			IsActive:    false,
+			IsDisabled:  true,
+			Author: domain.Author{
+				Name:    "Author1",
+				Contact: "@author1",
+			},
+			Link: "task1",
+		},
+		{
+			Title:       "Task2",
+			Description: "Task2 description",
+			Category:    "test",
+			Complexity:  "hard",
+			Points:      1337,
+			Hint:        "Hint for task 2",
+			Flag:        "flag{flag_for_task_2}",
+			IsActive:    true,
+			IsDisabled:  false,
+			Author: domain.Author{
+				Name:    "Author1",
+				Contact: "@author1",
+			},
+			Link: "task2",
+		},
+		{
+			Title:       "Task3",
+			Description: "Task3 description",
+			Category:    "test",
+			Complexity:  "hard",
+			Points:      1,
+			Hint:        "Hint for task 3",
+			Flag:        "flag{flag_for_task_3}",
+			IsActive:    false,
+			IsDisabled:  true,
+			Author: domain.Author{
+				Name:    "Author1",
+				Contact: "@author1",
+			},
+			Link: "task3",
+		},
 	}
 
-	task.Id = id
-
-	return task
+	for _, task := range tasks {
+		_, err := postgres.NewTaskRepository(db).SaveTask(*task)
+		if err != nil {
+			t.Fatal(err)
+		}
+	}
 }

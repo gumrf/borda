@@ -1,148 +1,428 @@
 package postgres_test
 
-// TODO: Make new tests
+import (
+	"borda/internal/config"
+	"borda/internal/domain"
+	"borda/internal/repository/postgres"
+	hash "borda/pkg/hash"
+	"testing"
 
-//import (
-//	"borda/internal/domain"
-//	"borda/internal/repository/postgres"
-//	"testing"
+	"github.com/jmoiron/sqlx"
+	"github.com/stretchr/testify/require"
+)
+
+func TestUserRepository_SaveUser(t *testing.T) {
+	db := MustOpenDB(t)
+	defer MustCloseDB(t, db)
+
+	repo := postgres.NewUserRepository(db)
+	require := require.New(t)
+
+	type args struct {
+		username string
+		password string
+		contact  string
+	}
+	testTable := []struct {
+		name         string
+		args         args
+		wantResponse int
+		wantErr      error
+	}{
+		// TODO: Add test casese
+		{
+			name: "OK",
+			args: args{
+				username: "Success",
+				password: "Sucsess",
+				contact:  "@success",
+			},
+			wantResponse: 1,
+			wantErr:      nil,
+		},
+	}
+	for _, testCase := range testTable {
+		t.Run(testCase.name, func(t *testing.T) {
+			actualResponse, actualErr := repo.SaveUser(testCase.args.username, testCase.args.password, testCase.args.contact)
+
+			require.Equal(testCase.wantErr, actualErr, t)
+			require.Equal(testCase.wantResponse, actualResponse, t)
+		})
+	}
+}
+
+func TestUserRepository_GetUserByCredentials(t *testing.T) {
+	db := MustOpenDB(t)
+	defer MustCloseDB(t, db)
+
+	repo := postgres.NewUserRepository(db)
+	require := require.New(t)
+
+	hasher := hash.NewSHA1Hasher(config.PasswordSalt())
+
+	helpCreateUser(t, db)
+
+	type args struct {
+		username string
+		password string
+	}
+	testTable := []struct {
+		name         string
+		args         args
+		wantResponse *domain.User
+		wantErr      error
+		hasher       hash.PasswordHasher
+	}{
+		// TODO: Add test cases.
+		{
+			name: "OK_1",
+			args: args{
+				username: "User1",
+				password: "User1Pass",
+			},
+			wantResponse: &domain.User{
+				Id:       1,
+				Username: "User1",
+				Password: "User1Pass",
+				Contact:  "@contact1",
+			},
+			wantErr: nil,
+		},
+		{
+			name: "OK_2",
+			args: args{
+				username: "User2",
+				password: "User2Pass",
+			},
+			wantResponse: &domain.User{
+				Id:       2,
+				Username: "User2",
+				Password: "User2Pass",
+				Contact:  "@contact2",
+			},
+			wantErr: nil,
+		},
+	}
+	for _, testCase := range testTable {
+		t.Run(testCase.name, func(t *testing.T) {
+
+			hashedPswd, err := hasher.Hash(testCase.args.password)
+			require.Equal(testCase.wantErr, err, t)
+
+			actualResponse, actualErr := repo.GetUserByCredentials(testCase.args.username, hashedPswd)
+
+			hashedTestPswd, err := hasher.Hash(testCase.wantResponse.Password)
+			require.Equal(testCase.wantErr, err, t)
+
+			require.Equal(testCase.wantErr, actualErr, t)
+			require.Equal(testCase.wantResponse.Id, actualResponse.Id, t)
+			require.Equal(testCase.wantResponse.Username, actualResponse.Username, t)
+			require.Equal(testCase.wantResponse.Contact, actualResponse.Contact, t)
+			require.Equal(hashedTestPswd, actualResponse.Password, t)
+		})
+	}
+}
+
+func TestUserRepository_GetUserById(t *testing.T) {
+	db := MustOpenDB(t)
+	defer MustCloseDB(t, db)
+
+	repo := postgres.NewUserRepository(db)
+	require := require.New(t)
+
+	hasher := hash.NewSHA1Hasher(config.PasswordSalt())
+
+	helpCreateUser(t, db)
+
+	type args struct {
+		id int
+	}
+	testTable := []struct {
+		name         string
+		args         args
+		wantResponse *domain.User
+		wantErr      error
+	}{
+		// TODO: Add test cases.
+		{
+			name: "OK_1",
+			args: args{
+				id: 1,
+			},
+			wantResponse: &domain.User{
+				Id:       1,
+				Username: "User1",
+				Password: "User1Pass",
+				Contact:  "@contact1",
+			},
+			wantErr: nil,
+		},
+		{
+			name: "OK_2",
+			args: args{
+				id: 2,
+			},
+			wantResponse: &domain.User{
+				Id:       2,
+				Username: "User2",
+				Password: "User2Pass",
+				Contact:  "@contact2",
+			},
+			wantErr: nil,
+		},
+	}
+
+	for _, testCase := range testTable {
+		t.Run(testCase.name, func(t *testing.T) {
+
+			actualResponse, actualErr := repo.GetUserById(testCase.args.id)
+
+			hashedTestPswd, err := hasher.Hash(testCase.wantResponse.Password)
+			require.Equal(testCase.wantErr, err, t)
+
+			require.Equal(testCase.wantErr, actualErr, t)
+			require.Equal(testCase.wantResponse.Id, actualResponse.Id, t)
+			require.Equal(testCase.wantResponse.Username, actualResponse.Username, t)
+			require.Equal(testCase.wantResponse.Contact, actualResponse.Contact, t)
+			require.Equal(hashedTestPswd, actualResponse.Password, t)
+		})
+	}
+}
+
+func TestUserRepository_GetAllUsers(t *testing.T) {
+	db := MustOpenDB(t)
+	defer MustCloseDB(t, db)
+
+	repo := postgres.NewUserRepository(db)
+	require := require.New(t)
+
+	hasher := hash.NewSHA1Hasher(config.PasswordSalt())
+
+	helpCreateUser(t, db)
+
+	testTable := []struct {
+		name         string
+		wantResponse []*domain.User
+		wantErr      error
+	}{
+		// TODO: Add test cases.
+		{
+			name: "OK",
+			wantResponse: []*domain.User{
+				{
+					Id:       1,
+					Username: "User1",
+					Password: "User1Pass",
+					Contact:  "@contact1",
+					TeamId:   0,
+				},
+				{
+					Id:       2,
+					Username: "User2",
+					Password: "User2Pass",
+					Contact:  "@contact2",
+					TeamId:   0,
+				},
+			},
+			wantErr: nil,
+		},
+	}
+
+	for _, testCase := range testTable {
+		t.Run(testCase.name, func(t *testing.T) {
+			actualResponse, actualErr := repo.GetAllUsers()
+			require.Equal(testCase.wantErr, actualErr, t)
+
+			i := 1
+
+			for _, user := range testCase.wantResponse {
+
+				wantPass, err := hasher.Hash(user.Password)
+				require.Equal(testCase.wantErr, err, t)
+
+				require.Equal(user.Id, actualResponse[i].Id, t)
+				require.Equal(wantPass, actualResponse[i].Password, t)
+				require.Equal(user.Contact, actualResponse[i].Contact, t)
+				require.Equal(user.Username, actualResponse[i].Username, t)
+				i--
+			}
+
+		})
+	}
+}
+
+func TestUserRepository_UpdatePassword(t *testing.T) {
+	db := MustOpenDB(t)
+	defer MustCloseDB(t, db)
+
+	repo := postgres.NewUserRepository(db)
+	require := require.New(t)
+
+	hasher := hash.NewSHA1Hasher(config.PasswordSalt())
+
+	helpCreateUser(t, db)
+
+	type args struct {
+		userId      int
+		newPassword string
+	}
+	testTable := []struct {
+		name    string
+		args    args
+		wantErr error
+	}{
+		// TODO: Add test cases.
+		{
+			name: "OK_1",
+			args: args{
+				userId:      1,
+				newPassword: "NewPassword",
+			},
+			wantErr: nil,
+		},
+		{
+			name: "OK_2",
+			args: args{
+				userId:      2,
+				newPassword: "NewPswd",
+			},
+			wantErr: nil,
+		},
+	}
+	for _, testCase := range testTable {
+		t.Run(testCase.name, func(t *testing.T) {
+			pswd, err := hasher.Hash(testCase.args.newPassword)
+			require.Equal(testCase.wantErr, err, t)
+
+			actualErr := repo.UpdatePassword(testCase.args.userId, pswd)
+			require.Equal(testCase.wantErr, actualErr, t)
+		})
+	}
+}
+
+//Не используется функция
+// func Test_AssignRole(t *testing.T) {
+// 	db := MustOpenDB(t)
+// 	repo := postgres.NewUserRepository(db)
+// 	require := require.New(t)
 //
-//	"github.com/jmoiron/sqlx"
-//	"github.com/stretchr/testify/assert"
-//)
+// 	type args struct {
+// 		userId int
+// 		roleId int
+// 	}
+// 	testTable := []struct {
+// 		name    string
+// 		args    args
+// 		wantErr error
+// 	}{
+// 		// TODO: Add test cases.
+// 		{
+// 			name: "OK",
+// 			args: args{
+// 				userId: 4,
+// 				roleId: 2,
+// 			},
+// 			wantErr: nil,
+// 		},
+// 	}
+// 	for _, testCase := range testTable {
+// 		t.Run(testCase.name, func(t *testing.T) {
+// 			TestUserRepository_SaveUser(t)
 //
-//func makeTestRole(t *testing.T, db *sqlx.DB, roleName string) int {
-//	query := "INSERT INTO role (name) VALUES($1) RETURNING id"
-//
-//	id := -1
-//	err := db.Get(&id, query, roleName)
-//	if err != nil {
-//		t.Fatalf("makeTestRole error: %v", err)
-//	}
-//
-//	if id < 1 {
-//		t.Fatal("makeTestRole error: id must be > 0")
-//	}
-//
-//	return id
-//}
-//
-//func Test_UserRepository_CreateNewUser(t *testing.T) {
-//	db := MustOpenDB(t)
-//	repo := postgres.NewUserRepository(db)
-//
-//	user := domain.User{
-//		Username: "roro",
-//		Password: "12345",
-//		Contact:  "@roro",
-//	}
-//	username := "roro"
-//	password := "12345"
-//	contact := "@roro"
-//
-//	userId, err := repo.CreateNewUser(username, password, contact)
-//
-//	assert := assert.New(t)
-//	assert.Equal(nil, err, "err should nil")
-//	assert.Equal(1, userId)
-//
-//	var testedUser domain.User
-//	if err := db.Get(&testedUser, `SELECT * FROM public."user" WHERE id=$1`, userId); err != nil {
-//		t.Fatalf("get user error: %v", err)
-//	}
-//
-//	assert.Equal(testedUser.Username, user.Username, "should be equal")
-//	assert.Equal(testedUser.Password, user.Password, "should be equal")
-//	assert.Equal(testedUser.Contact, user.Contact, "should be equal")
-//}
-//
-//func Test_UserRepository_UpdatePassword(t *testing.T) {
-//	db := MustOpenDB(t)
-//	repo := postgres.NewUserRepository(db)
-//	assert := assert.New(t)
-//
-//	userId, err := makeTestUser(db, "roro", "1234", "@roro")
-//	if err != nil {
-//		t.Fatalf("makeTestUser error%v\n", err)
-//	}
-//
-//	newPassword := "4321"
-//	err = repo.UpdatePassword(userId, newPassword)
-//
-//	assert.Equal(nil, err, "should be nil")
-//
-//	var password string
-//	if err := db.Get(&password, `SELECT password FROM public."user" WHERE id=$1`, userId); err != nil {
-//		t.Fatalf("get user password error: %v", err)
-//	}
-//
-//	assert.Equal(newPassword, password, "should be equal")
-//}
-//
-//func Test_UserRepository_AssignRole(t *testing.T) {
-//	db := MustOpenDB(t)
-//	repo := postgres.NewUserRepository(db)
-//	assert := assert.New(t)
-//
-//	userId, err := makeTestUser(db, "roro", "1234", "@roro")
-//	if err != nil {
-//		t.Fatalf("makeTestUser error: %v/n", err)
-//	}
-//
-//	roleName := "master"
-//	roleId := makeTestRole(t, db, roleName)
-//
-//	err = repo.AssignRole(userId, roleId)
-//
-//	assert.Equal(nil, err, "Error should be nil")
-//}
-//
-//func Test_UserRepository_GetRole(t *testing.T) {
-//	db := MustOpenDB(t)
-//	repo := postgres.NewUserRepository(db)
-//
-//	user := domain.User{
-//		Id:       1,
-//		Username: "roro",
-//		Password: "12345",
-//		Contact:  "@mail",
-//	}
-//
-//	roleName := "admin"
-//	roleId := makeTestRole(t, db, roleName)
-//
-//	userId, err := makeTestUser(db, user.Username, user.Password, user.Contact)
-//	if err != nil {
-//		t.Fatalf("makeTestUser error: %v/n", err)
-//	}
-//
-//	// make sure method work properly or check error
-//	repo.AssignRole(userId, roleId) // nolint
-//
-//	role, err := repo.GetRole(user.Id)
-//
-//	assert := assert.New(t)
-//	assert.Equal(nil, err, "should be nil")
-//	assert.Equal(role.Id, roleId, "should be equal")
-//	assert.Equal(role.Name, roleName, "should be equal")
-//}
-//
-//func makeTestUser(db *sqlx.DB, username string, password string, contact string) (int, error) {
-//	query := `
-//	INSERT INTO public."user"
-//	(name, password, contact)
-//	VALUES($1, $2, $3)
-//	RETURNING id`
-//
-//	id := -1
-//	err := db.QueryRow(query, username, password, contact).Scan(&id)
-//	if err != nil {
-//		return -1, err
-//	}
-//
-//	if id == -1 {
-//		return -1, err
-//	}
-//
-//	return int(id), err
-//}
+// 			actualErr := repo.AssignRole(testCase.args.userId, testCase.args.roleId)
+// 			require.Equal(testCase.wantErr, actualErr, t)
+// 		})
+// 	}
+// }
+
+func TestUserRepository_GetUserRole(t *testing.T) {
+	db := MustOpenDB(t)
+	defer MustCloseDB(t, db)
+
+	repo := postgres.NewUserRepository(db)
+	require := require.New(t)
+
+	helpCreateUser(t, db)
+
+	type args struct {
+		userId int
+	}
+	testTable := []struct {
+		name         string
+		args         args
+		wantResponse *domain.Role
+		wantErr      error
+	}{
+		// TODO: Add test cases.
+		{
+			name: "OK_1",
+			args: args{
+				userId: 1,
+			},
+			wantResponse: &domain.Role{
+				Id:   2,
+				Name: "user",
+			},
+			wantErr: nil,
+		},
+		{
+			name: "OK_2",
+			args: args{
+				userId: 2,
+			},
+			wantResponse: &domain.Role{
+				Id:   2,
+				Name: "user",
+			},
+			wantErr: nil,
+		},
+	}
+	for _, testCase := range testTable {
+		t.Run(testCase.name, func(t *testing.T) {
+
+			actualResponse, actualErr := repo.GetUserRole(testCase.args.userId)
+
+			require.Equal(testCase.wantErr, actualErr, t)
+			require.Equal(testCase.wantResponse, actualResponse, t)
+		})
+	}
+}
+
+func helpCreateUser(t *testing.T, db *sqlx.DB) {
+	t.Helper()
+
+	users := []*domain.User{
+		{
+			Username: "User1",
+			Password: "User1Pass",
+			Contact:  "@contact1",
+		},
+		{
+			Username: "User2",
+			Password: "User2Pass",
+			Contact:  "@contact2",
+		},
+		{
+			Username: "User3",
+			Password: "User3Pass",
+			Contact:  "@contact3",
+		},
+	}
+
+	hasher := hash.NewSHA1Hasher(config.PasswordSalt())
+
+	for _, user := range users {
+		hashedPswd, err := hasher.Hash(user.Password)
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		id, err := postgres.NewUserRepository(db).SaveUser(user.Username, hashedPswd, user.Contact)
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		user.Id = id
+
+	}
+}
