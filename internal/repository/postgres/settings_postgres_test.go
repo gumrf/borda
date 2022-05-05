@@ -4,6 +4,7 @@ import (
 	"borda/internal/repository/postgres"
 	"testing"
 
+	"github.com/jmoiron/sqlx"
 	"github.com/stretchr/testify/require"
 )
 
@@ -81,4 +82,15 @@ func TestSettingsRepository_Set(t *testing.T) {
 			require.Equal(testCase.wantResponse, actualResponse, t)
 		})
 	}
+}
+
+func helpSetSettings(t *testing.T, db *sqlx.DB, key string, value string) int {
+	t.Helper()
+
+	id, err := postgres.NewSettingsRepository(db).Set(key, value)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	return id
 }

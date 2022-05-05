@@ -16,12 +16,11 @@ func TestTeamRepository_SaveTeam(t *testing.T) {
 	teamRepo := postgres.NewTeamRepository(db)
 	requre := require.New(t)
 
+	helpCreateUser(t, db)
+
 	type args struct {
 		teamLeaderId int
 		teamName     string
-		username     string
-		password     string
-		contact      string
 	}
 	testTable := []struct {
 		name         string
@@ -34,10 +33,7 @@ func TestTeamRepository_SaveTeam(t *testing.T) {
 			name: "OK",
 			args: args{
 				teamLeaderId: 1,
-				teamName:     "Momstr",
-				username:     "TestUser",
-				password:     "TestPswd",
-				contact:      "@testcontact",
+				teamName:     "Team1",
 			},
 			wantResponse: 1,
 			wantErr:      nil,
@@ -45,14 +41,6 @@ func TestTeamRepository_SaveTeam(t *testing.T) {
 	}
 	for _, testCase := range testTable {
 		t.Run(testCase.name, func(t *testing.T) {
-			user := &domain.User{
-				Username: testCase.args.username,
-				Password: testCase.args.password,
-				Contact:  testCase.args.contact,
-			}
-
-			helpCreateUser(t, db, user)
-
 			actualResponse, actualErr := teamRepo.SaveTeam(testCase.args.teamLeaderId, testCase.args.teamName)
 
 			requre.Equal(testCase.wantErr, actualErr, t)
@@ -68,11 +56,11 @@ func TestTeamRepository_GetTeamById(t *testing.T) {
 	teamRepo := postgres.NewTeamRepository(db)
 	requre := require.New(t)
 
+	helpCreateUser(t, db)
+	helpCreateTeam(t, db)
+
 	type args struct {
-		teamId   int
-		username string
-		password string
-		contact  string
+		teamId int
 	}
 	testTable := []struct {
 		name         string
@@ -84,10 +72,7 @@ func TestTeamRepository_GetTeamById(t *testing.T) {
 		{
 			name: "OK",
 			args: args{
-				teamId:   1,
-				username: "User1",
-				password: "User1Pswd",
-				contact:  "@contact",
+				teamId: 1,
 			},
 			wantResponse: &domain.Team{
 				Id:           1,
@@ -105,19 +90,6 @@ func TestTeamRepository_GetTeamById(t *testing.T) {
 	}
 	for _, testCase := range testTable {
 		t.Run(testCase.name, func(t *testing.T) {
-			user := &domain.User{
-				Username: testCase.args.username,
-				Password: testCase.args.password,
-				Contact:  testCase.args.contact,
-			}
-			helpCreateUser(t, db, user)
-
-			team := &domain.Team{
-				Name:         testCase.wantResponse.Name,
-				TeamLeaderId: testCase.wantResponse.TeamLeaderId,
-			}
-			helpCreateTeam(t, db, team)
-
 			actualResponse, actualErr := teamRepo.GetTeamById(testCase.args.teamId)
 
 			requre.Equal(testCase.wantErr, actualErr, t)
@@ -136,32 +108,17 @@ func TestTeamRepository_GetTeams(t *testing.T) {
 	teamRepo := postgres.NewTeamRepository(db)
 	requre := require.New(t)
 
-	type args struct {
-		username string
-		password string
-		contact  string
-	}
+	helpCreateUser(t, db)
+	helpCreateTeam(t, db)
+
 	testTable := []struct {
 		name         string
 		wantResponse []*domain.Team
 		wantErr      error
-		args         []args
 	}{
 		// TODO: Add test cases.
 		{
 			name: "OK",
-			args: []args{
-				{
-					username: "User1",
-					password: "User1Pswd",
-					contact:  "@contact1",
-				},
-				{
-					username: "User2",
-					password: "User2Pswd",
-					contact:  "@contact",
-				},
-			},
 			wantResponse: []*domain.Team{
 				{
 					Id:           1,
@@ -191,20 +148,6 @@ func TestTeamRepository_GetTeams(t *testing.T) {
 	}
 	for _, testCase := range testTable {
 		t.Run(testCase.name, func(t *testing.T) {
-			for _, arg := range testCase.args {
-				user := &domain.User{
-					Username: arg.username,
-					Password: arg.password,
-					Contact:  arg.contact,
-				}
-
-				helpCreateUser(t, db, user)
-			}
-
-			for _, team := range testCase.wantResponse {
-				helpCreateTeam(t, db, team)
-			}
-
 			actualResponse, actualErr := teamRepo.GetTeams()
 			requre.Equal(testCase.wantErr, actualErr, t)
 
@@ -225,30 +168,17 @@ func TestTeamRepository_GetTeamByToken(t *testing.T) {
 	repo := postgres.NewTeamRepository(db)
 	requre := require.New(t)
 
-	type args struct {
-		token        string
-		username     string
-		password     string
-		contact      string
-		teamName     string
-		teamLeaderId int
-	}
+	helpCreateUser(t, db)
+	helpCreateTeam(t, db)
+
 	testTable := []struct {
 		name         string
-		args         args
 		wantResponse *domain.Team
 		wantErr      error
 	}{
 		// TODO: Add test cases.
 		{
 			name: "OK_1",
-			args: args{
-				username:     "User1",
-				password:     "User1Pswd",
-				contact:      "@contact",
-				teamName:     "Team1",
-				teamLeaderId: 1,
-			},
 			wantResponse: &domain.Team{
 				Id:           1,
 				Name:         "Team1",
@@ -260,24 +190,11 @@ func TestTeamRepository_GetTeamByToken(t *testing.T) {
 	}
 	for _, testCase := range testTable {
 		t.Run(testCase.name, func(t *testing.T) {
-			user := &domain.User{
-				Username: testCase.args.username,
-				Password: testCase.args.password,
-				Contact:  testCase.args.contact,
-			}
-			helpCreateUser(t, db, user)
 
-			team := &domain.Team{
-				Name:         testCase.args.teamName,
-				TeamLeaderId: testCase.args.teamLeaderId,
-			}
-			helpCreateTeam(t, db, team)
-
-			team = helpGetTeamById(t, db, testCase.wantResponse.Id)
-			testCase.args.token = team.Token
+			team := helpGetTeamById(t, db, testCase.wantResponse.Id)
 			testCase.wantResponse.Token = team.Token
 
-			actualResponse, actualErr := repo.GetTeamByToken(testCase.args.token)
+			actualResponse, actualErr := repo.GetTeamByToken(testCase.wantResponse.Token)
 			requre.Equal(testCase.wantErr, actualErr, t)
 			requre.Equal(testCase.wantResponse, actualResponse, t)
 		})
@@ -292,17 +209,12 @@ func TestTeamRepository_AddMember(t *testing.T) {
 	teamRepo := postgres.NewTeamRepository(db)
 	requre := require.New(t)
 
+	helpCreateUser(t, db)
+	helpCreateTeam(t, db)
+
 	type args struct {
-		teamId       int
-		userId       int
-		username1    string
-		username2    string
-		password1    string
-		password2    string
-		contact1     string
-		contact2     string
-		teamName     string
-		teamLeaderId int
+		teamId int
+		userId int
 	}
 	testTable := []struct {
 		name string
@@ -314,41 +226,14 @@ func TestTeamRepository_AddMember(t *testing.T) {
 		{
 			name: "OK",
 			args: args{
-				teamId:       1,
-				userId:       2,
-				username1:    "User1",
-				username2:    "User2",
-				password1:    "User1Pswd",
-				password2:    "User2Pswd",
-				contact1:     "@contact",
-				contact2:     "@contact2",
-				teamName:     "Team1",
-				teamLeaderId: 1,
+				teamId: 1,
+				userId: 3,
 			},
 			wantErr: nil,
 		},
 	}
 	for _, testCase := range testTable {
 		t.Run(testCase.name, func(t *testing.T) {
-			user1 := &domain.User{
-				Username: testCase.args.username1,
-				Password: testCase.args.password1,
-				Contact:  testCase.args.contact1,
-			}
-			helpCreateUser(t, db, user1)
-
-			user2 := &domain.User{
-				Username: testCase.args.username2,
-				Password: testCase.args.password2,
-				Contact:  testCase.args.contact2,
-			}
-			helpCreateUser(t, db, user2)
-
-			team := &domain.Team{
-				Name:         testCase.args.teamName,
-				TeamLeaderId: testCase.args.teamLeaderId,
-			}
-			helpCreateTeam(t, db, team)
 
 			helpSetSettings(t, db, "team_limit", "4")
 			helpSetSettings(t, db, "value", "team_limit")
@@ -359,17 +244,29 @@ func TestTeamRepository_AddMember(t *testing.T) {
 	}
 }
 
-func helpCreateTeam(t *testing.T, db *sqlx.DB, team *domain.Team) *domain.Team {
+// Вызывать только после helpCreateUser()!!!!!
+func helpCreateTeam(t *testing.T, db *sqlx.DB) {
 	t.Helper()
 
-	id, err := postgres.NewTeamRepository(db).SaveTeam(team.TeamLeaderId, team.Name)
-	if err != nil {
-		t.Fatal(err)
+	teams := []*domain.Team{
+		{
+			Name:         "Team1",
+			TeamLeaderId: 1,
+		},
+		{
+			Name:         "Team2",
+			TeamLeaderId: 2,
+		},
 	}
 
-	team.Id = id
+	for _, team := range teams {
+		id, err := postgres.NewTeamRepository(db).SaveTeam(team.TeamLeaderId, team.Name)
+		if err != nil {
+			t.Fatal(err)
+		}
 
-	return team
+		team.Id = id
+	}
 }
 
 func helpGetTeamById(t *testing.T, db *sqlx.DB, id int) *domain.Team {
@@ -381,15 +278,4 @@ func helpGetTeamById(t *testing.T, db *sqlx.DB, id int) *domain.Team {
 	}
 
 	return team
-}
-
-func helpSetSettings(t *testing.T, db *sqlx.DB, key string, value string) int {
-	t.Helper()
-
-	id, err := postgres.NewSettingsRepository(db).Set(key, value)
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	return id
 }

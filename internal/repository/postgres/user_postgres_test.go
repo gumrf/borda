@@ -37,7 +37,7 @@ func TestUserRepository_SaveUser(t *testing.T) {
 				password: "Sucsess",
 				contact:  "@success",
 			},
-			wantResponse: 4,
+			wantResponse: 1,
 			wantErr:      nil,
 		},
 	}
@@ -60,6 +60,8 @@ func TestUserRepository_GetUserByCredentials(t *testing.T) {
 
 	hasher := hash.NewSHA1Hasher(config.PasswordSalt())
 
+	helpCreateUser(t, db)
+
 	type args struct {
 		username string
 		password string
@@ -75,35 +77,34 @@ func TestUserRepository_GetUserByCredentials(t *testing.T) {
 		{
 			name: "OK_1",
 			args: args{
-				username: "User2",
-				password: "User2Pass",
+				username: "User1",
+				password: "User1Pass",
 			},
 			wantResponse: &domain.User{
 				Id:       1,
-				Username: "User2",
-				Password: "User2Pass",
-				Contact:  "@user2",
+				Username: "User1",
+				Password: "User1Pass",
+				Contact:  "@contact1",
 			},
 			wantErr: nil,
 		},
 		{
 			name: "OK_2",
 			args: args{
-				username: "User3",
-				password: "User3Pass",
+				username: "User2",
+				password: "User2Pass",
 			},
 			wantResponse: &domain.User{
 				Id:       2,
-				Username: "User3",
-				Password: "User3Pass",
-				Contact:  "@user3",
+				Username: "User2",
+				Password: "User2Pass",
+				Contact:  "@contact2",
 			},
 			wantErr: nil,
 		},
 	}
 	for _, testCase := range testTable {
 		t.Run(testCase.name, func(t *testing.T) {
-			helpCreateUser(t, db, testCase.wantResponse)
 
 			hashedPswd, err := hasher.Hash(testCase.args.password)
 			require.Equal(testCase.wantErr, err, t)
@@ -131,6 +132,8 @@ func TestUserRepository_GetUserById(t *testing.T) {
 
 	hasher := hash.NewSHA1Hasher(config.PasswordSalt())
 
+	helpCreateUser(t, db)
+
 	type args struct {
 		id int
 	}
@@ -150,7 +153,7 @@ func TestUserRepository_GetUserById(t *testing.T) {
 				Id:       1,
 				Username: "User1",
 				Password: "User1Pass",
-				Contact:  "@user1",
+				Contact:  "@contact1",
 			},
 			wantErr: nil,
 		},
@@ -161,9 +164,9 @@ func TestUserRepository_GetUserById(t *testing.T) {
 			},
 			wantResponse: &domain.User{
 				Id:       2,
-				Username: "User3",
-				Password: "User3Pass",
-				Contact:  "@user3",
+				Username: "User2",
+				Password: "User2Pass",
+				Contact:  "@contact2",
 			},
 			wantErr: nil,
 		},
@@ -171,7 +174,6 @@ func TestUserRepository_GetUserById(t *testing.T) {
 
 	for _, testCase := range testTable {
 		t.Run(testCase.name, func(t *testing.T) {
-			helpCreateUser(t, db, testCase.wantResponse)
 
 			actualResponse, actualErr := repo.GetUserById(testCase.args.id)
 
@@ -196,6 +198,8 @@ func TestUserRepository_GetAllUsers(t *testing.T) {
 
 	hasher := hash.NewSHA1Hasher(config.PasswordSalt())
 
+	helpCreateUser(t, db)
+
 	testTable := []struct {
 		name         string
 		wantResponse []*domain.User
@@ -209,14 +213,14 @@ func TestUserRepository_GetAllUsers(t *testing.T) {
 					Id:       1,
 					Username: "User1",
 					Password: "User1Pass",
-					Contact:  "@user1",
+					Contact:  "@contact1",
 					TeamId:   0,
 				},
 				{
 					Id:       2,
 					Username: "User2",
 					Password: "User2Pass",
-					Contact:  "@user2",
+					Contact:  "@contact2",
 					TeamId:   0,
 				},
 			},
@@ -226,10 +230,6 @@ func TestUserRepository_GetAllUsers(t *testing.T) {
 
 	for _, testCase := range testTable {
 		t.Run(testCase.name, func(t *testing.T) {
-			for _, user := range testCase.wantResponse {
-				helpCreateUser(t, db, user)
-			}
-
 			actualResponse, actualErr := repo.GetAllUsers()
 			require.Equal(testCase.wantErr, actualErr, t)
 
@@ -244,9 +244,7 @@ func TestUserRepository_GetAllUsers(t *testing.T) {
 				require.Equal(wantPass, actualResponse[i].Password, t)
 				require.Equal(user.Contact, actualResponse[i].Contact, t)
 				require.Equal(user.Username, actualResponse[i].Username, t)
-				//require.Equal(user.TeamId, actualResponse[i].TeamId)
 				i--
-
 			}
 
 		})
@@ -255,17 +253,18 @@ func TestUserRepository_GetAllUsers(t *testing.T) {
 
 func TestUserRepository_UpdatePassword(t *testing.T) {
 	db := MustOpenDB(t)
+	defer MustCloseDB(t, db)
+
 	repo := postgres.NewUserRepository(db)
 	require := require.New(t)
 
 	hasher := hash.NewSHA1Hasher(config.PasswordSalt())
 
+	helpCreateUser(t, db)
+
 	type args struct {
 		userId      int
 		newPassword string
-		username    string
-		oldPassword string
-		contact     string
 	}
 	testTable := []struct {
 		name    string
@@ -278,9 +277,6 @@ func TestUserRepository_UpdatePassword(t *testing.T) {
 			args: args{
 				userId:      1,
 				newPassword: "NewPassword",
-				username:    "User1",
-				oldPassword: "User1Pswd",
-				contact:     "@user1",
 			},
 			wantErr: nil,
 		},
@@ -289,24 +285,12 @@ func TestUserRepository_UpdatePassword(t *testing.T) {
 			args: args{
 				userId:      2,
 				newPassword: "NewPswd",
-				username:    "User2",
-				oldPassword: "User2Pswd",
-				contact:     "@user2",
 			},
 			wantErr: nil,
 		},
 	}
 	for _, testCase := range testTable {
 		t.Run(testCase.name, func(t *testing.T) {
-
-			user := &domain.User{
-				Username: testCase.args.username,
-				Password: testCase.args.oldPassword,
-				Contact:  testCase.args.contact,
-			}
-
-			helpCreateUser(t, db, user)
-
 			pswd, err := hasher.Hash(testCase.args.newPassword)
 			require.Equal(testCase.wantErr, err, t)
 
@@ -353,16 +337,15 @@ func TestUserRepository_UpdatePassword(t *testing.T) {
 
 func TestUserRepository_GetUserRole(t *testing.T) {
 	db := MustOpenDB(t)
-	MustCloseDB(t, db)
+	defer MustCloseDB(t, db)
 
 	repo := postgres.NewUserRepository(db)
 	require := require.New(t)
 
+	helpCreateUser(t, db)
+
 	type args struct {
-		userId   int
-		username string
-		password string
-		contact  string
+		userId int
 	}
 	testTable := []struct {
 		name         string
@@ -374,10 +357,7 @@ func TestUserRepository_GetUserRole(t *testing.T) {
 		{
 			name: "OK_1",
 			args: args{
-				userId:   1,
-				username: "User1",
-				password: "User1Pswd",
-				contact:  "@contact1",
+				userId: 1,
 			},
 			wantResponse: &domain.Role{
 				Id:   2,
@@ -388,10 +368,7 @@ func TestUserRepository_GetUserRole(t *testing.T) {
 		{
 			name: "OK_2",
 			args: args{
-				userId:   2,
-				username: "User2",
-				password: "User2Pswd",
-				contact:  "@contact2",
+				userId: 2,
 			},
 			wantResponse: &domain.Role{
 				Id:   2,
@@ -402,12 +379,6 @@ func TestUserRepository_GetUserRole(t *testing.T) {
 	}
 	for _, testCase := range testTable {
 		t.Run(testCase.name, func(t *testing.T) {
-			user := &domain.User{
-				Username: testCase.args.username,
-				Password: testCase.args.password,
-				Contact:  testCase.args.contact,
-			}
-			helpCreateUser(t, db, user)
 
 			actualResponse, actualErr := repo.GetUserRole(testCase.args.userId)
 
@@ -417,21 +388,41 @@ func TestUserRepository_GetUserRole(t *testing.T) {
 	}
 }
 
-func helpCreateUser(t *testing.T, db *sqlx.DB, user *domain.User) *domain.User {
+func helpCreateUser(t *testing.T, db *sqlx.DB) {
 	t.Helper()
 
+	users := []*domain.User{
+		{
+			Username: "User1",
+			Password: "User1Pass",
+			Contact:  "@contact1",
+		},
+		{
+			Username: "User2",
+			Password: "User2Pass",
+			Contact:  "@contact2",
+		},
+		{
+			Username: "User3",
+			Password: "User3Pass",
+			Contact:  "@contact3",
+		},
+	}
+
 	hasher := hash.NewSHA1Hasher(config.PasswordSalt())
-	hashedPswd, err := hasher.Hash(user.Password)
-	if err != nil {
-		t.Fatal(err)
+
+	for _, user := range users {
+		hashedPswd, err := hasher.Hash(user.Password)
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		id, err := postgres.NewUserRepository(db).SaveUser(user.Username, hashedPswd, user.Contact)
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		user.Id = id
+
 	}
-
-	id, err := postgres.NewUserRepository(db).SaveUser(user.Username, hashedPswd, user.Contact)
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	user.Id = id
-
-	return user
 }
