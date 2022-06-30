@@ -1,32 +1,46 @@
 package pg
 
 import (
+	"context"
 	"errors"
 	"fmt"
+	"log"
+	"net"
+	"strings"
 	"time"
 
 	"github.com/golang-migrate/migrate/v4"
-	"github.com/golang-migrate/migrate/v4/database/postgres"
+	_ "github.com/golang-migrate/migrate/v4/database/pgx"
 	_ "github.com/golang-migrate/migrate/v4/source/file"
-	"github.com/jmoiron/sqlx"
-	_ "github.com/lib/pq"
+	"github.com/jackc/pgx/v4/pgxpool"
 )
 
 const (
-	// timeout is Postgres timeout when trying to connect
 	timeout = 5
 )
 
-func Open(dsn string) (*sqlx.DB, error) {
-	db, err := sqlx.Open("postgres", dsn)
+type Options struct {
+	Logger log.Logger
+}
+
+func Connect(url string) (*pgxpool.Pool, error) {
+	pgxpoolConfig, _ := pgxpool.ParseConfig(url)
+	pgxpoolConfig.ConnConfig.PreferSimpleProtocol = true
+	// pgxpoolConfig.MaxConns = 10
+
+	pool, err := pgxpool.ConnectConfig(context.Background(), pgxpoolConfig)
 	if err != nil {
-		return nil, fmt.Errorf("sqlx.Open: %w", err)
+		return nil, fmt.Errorf("can't create pgx pool: %w", err)
 	}
 
 	retries := 5
 	for {
 		// Try to ping Postgres DB
-		if err := db.Ping(); err != nil {
+		if err := pool.Ping(context.Background()); err != nil {
+			if _, ok := err.(net.Error); !ok {
+				return nil, err
+			}
+
 			if retries >= 0 {
 				fmt.Printf("%v [retries left: %d]\n", err, retries)
 				retries--
@@ -34,37 +48,28 @@ func Open(dsn string) (*sqlx.DB, error) {
 				continue
 			}
 
-			return nil, errors.New("connecting to Postgres failed after maximum attempts")
-
+			return nil, errors.New("reach the maximum number of attempts")
 		}
+
 		break
 	}
-	// db.SetMaxIdleConns(idleConn)
-	// db.SetMaxOpenConns(maxConn)
-	return db, nil
+
+	return pool, nil
 }
 
-func Migrate(db *sqlx.DB, migrationsPath string, version uint) error {
-	driver, err := postgres.WithInstance(db.DB, &postgres.Config{})
+func Migrate(connectionURL, source string, version uint) error {
+	m, err := migrate.New(
+		source, strings.Replace(connectionURL, "postgres", "pgx", 1),
+	)
 	if err != nil {
-		return fmt.Errorf("connect db driver instance: %w", err)
+		return err
 	}
 
-	m, err := migrate.NewWithDatabaseInstance(migrationsPath, "postgres", driver)
-	if err != nil {
-		return fmt.Errorf("initialize migrations: %w", err)
-	}
+	// m.Drop()
 
-	if err := m.Migrate(version); err != nil && err != migrate.ErrNoChange {
-		return fmt.Errorf("apply migrations: %w", err)
-	}
-
-	return nil
-}
-
-func Close(db *sqlx.DB) error {
-	if err := db.Close(); err != nil {
-		return fmt.Errorf("close connection to Postgres: %w", err)
+	migrateError := m.Migrate(version)
+	if migrateError != nil && migrateError != migrate.ErrNoChange {
+		return fmt.Errorf("can't apply migrations: %v", migrateError)
 	}
 
 	return nil

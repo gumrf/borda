@@ -1,33 +1,23 @@
-# Borda backend
+# Бэкенд Борды
 
-## Requirements
+Борда — это платформа для проведения соревнований Capture The Flag.
 
-- Docker
-- docker-compose
-- Go
-- Make
+Этот репозиторий содержит бэкенд приложение для платформы «Борда».
 
-## Set env variables
-    SERVER_ADDR="0.0.0.0:8080"
+## Как устроена платформа
 
-    POSTGRES_HOST=db
-    POSTGRES_USER=postgres
-    POSTGRES_PASSWORD=postgres
-    POSTGRES_DB=postgres
+Бэкенд «Борды» написан на [Go](https://go.dev/). Фронтенд сделан при помощи React фрэймворка - [Remix](https://remix.run/), и хранится в [отдельном репозитории](https://github.com/gumrf/borda-frontend)
 
-    DATABASE_URL="postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@${POSTGRES_HOST}:5432/${POSTGRES_DB}?sslmode=disable"
-    GITHUB_ACCESS_TOKEN=<token>
-    TASK_REPOSITORY_URL=<url>
+Проект собирается с помощью Docker'а, читайте [подробнее про деплой](docs/deploy.md).
 
-## Build images
-    docker-compose build
+## Как работать
 
-## Run
-    docker-compose up borda
+Для работы с платформой вам потребуется [Docker](https://www.docker.com/).
 
-## Debug
-    docker-compose up db
-    make run
+Чтобы запустить Борду локально, нужно:
 
-## Run pgweb(Postgres GUI)
-    docker-compose up pgweb
+1. Скачать репозиторий.
+2. Сделать копию файла `.env.example` и назвать его `.env`. Задать в нём нужные переменные окружения.
+3. Запустить локальный веб-сервер командой `docker compose up borda`.
+
+Больше вариантов локального запуска Борды — [в руководстве по запуску](docs/how-to-run.md).

@@ -1,64 +1,123 @@
 package app
 
 import (
-	"borda/internal/api"
+	_ "borda/api"
 	"borda/internal/config"
-	"borda/internal/logger"
-	"borda/internal/repository"
-	"borda/internal/service"
-	"borda/pkg/hash"
+	"borda/internal/pkg/response"
+	"borda/pkg/log"
 	"borda/pkg/pg"
 
 	"fmt"
 	"os"
 	"os/signal"
+	"strconv"
+	"time"
 
+	swagger "github.com/arsmn/fiber-swagger/v2"
 	"github.com/gofiber/fiber/v2"
-	"github.com/gofiber/fiber/v2/middleware/cors"
+	loggerMiddleware "github.com/gofiber/fiber/v2/middleware/logger"
+	jwtMiddleware "github.com/gofiber/jwt/v3"
+	"github.com/golang-jwt/jwt/v4"
 )
 
-// @title                       CTF Borda API
+// type App struct {
+// 	mutex  sync.Mutex
+// 	server *fiber.App
+// 	config Config
+// }
+
+// @title                       Borda API
 // @version                     0.1
-// @description                 REST API for CTF Borda.
+// @description                 REST API for Borda.
 // @host                        localhost:8080
 // @BasePath                    /api/v1
 // @securityDefinitions.apikey  ApiKeyAuth
 // @in                          header
 // @name                        Authorization
 
-// Run initializes whole application
+// Run initialize the application
 func Run() {
-	conf := config.Config()
+	// ctx := context.Background()
 
-	if err := logger.InitLogger(conf.GetString("logger.path"), conf.GetString("logger.file_name")); err != nil {
-		fmt.Println("Failed to initialize logger:", err)
-		os.Exit(1)
-	}
+	config := config.NewConfig()
+	logger := log.New()
 
-	db, err := pg.Open(config.DatabaseURL())
+	logger.Info(config.String())
+
+	logger.Infof("Connecting to Postgres: %s", config.DBURL())
+	db, err := pg.Connect(config.DBURL())
 	if err != nil {
-		logger.Log.Fatalw("Failed to connect to Postgres:", err)
+		logger.Fatalf("Failed to connect to Postgres: %v", err)
 	}
-	logger.Log.Info("Connected to Postgres: ", config.DatabaseURL())
+	logger.Info("Connected to Postgres: ", config.DBURL())
 
-	if err := pg.Migrate(db, config.MigrationsPath(), 2); err != nil {
-		logger.Log.Fatalf("Failed to run migrations: %v", err)
+	migrateError := pg.Migrate(config.DBURL(), config.MigrationsDir(), 2)
+	if migrateError != nil {
+		logger.Fatalf("Failed to run migrations: %v", migrateError)
 	}
 
-	// Repository
-	repository := repository.NewRepository(db)
+	// repository := repository.NewRepository(db)
 
-	// Services
-	authService := service.NewAuthService(repository.Users, repository.Teams,
-		hash.NewSHA1Hasher(config.PasswordSalt()),
-	)
+	// authService := service.NewAuthService(repository.Users, repository.Teams,
+	// 	hash.NewSHA1Hasher(config.PasswordSalt()),
+	// )
+
+	// userRepository := user.NewUserRepository(db)
+	// teamRepository := team.NewTeamRepository(db)
+
+	// userService := user.NewUserService(userRepository, teamRepository)
+	// userController := user.NewUserController(userService)
+
+	// authService := auth.NewAuthService(userRepository, teamRepository, hash.NewSHA1Hasher(config.Salt()), config.JWT())
+	// authController := auth.NewAuthController(authService)
 
 	app := fiber.New()
-	app.Use(cors.New())
+	app.Use(loggerMiddleware.New())
 
-	// Handlers
-	handlers := api.NewHandler(authService, repository)
-	handlers.Init(app)
+	app.Get("/swagger/*", swagger.HandlerDefault)
+
+	api := app.Group("/api/v1")
+
+	api.Get("/status", func(c *fiber.Ctx) error {
+		return c.Status(fiber.StatusOK).JSON(fiber.Map{
+			"status": "OK",
+			"time":   time.Now().Format(time.UnixDate),
+		})
+	})
+
+	// authController.InitRoutes(api)
+
+	// Everything defined bellow will require authorization
+	api.Use(jwtMiddleware.New(jwtMiddleware.Config{
+		ErrorHandler: func(c *fiber.Ctx, err error) error {
+			return c.Status(fiber.StatusUnauthorized).JSON(response.ErrorResponse{
+				Status: strconv.Itoa(fiber.StatusUnauthorized),
+				Code:   response.NotAuthorizedCode,
+				Title:  "Authentication credentials are missing or invalid.",
+				Detail: "Provide a properly configured and signed bearer token, and make sure that it has not expired.",
+			})
+		},
+		// TODO: DefineErrorHandler function
+		SigningMethod: jwt.SigningMethodHS256.Name,
+		SigningKey:    []byte(config.JWT().SigningKey),
+		ContextKey:    "token",
+	}))
+
+	api.Static("/files", "./_content", fiber.Static{Download: true})
+
+	// userController.InitRoutes(api)
+	// teamController.InitRoutes(api)
+
+	app.Use(
+		func(c *fiber.Ctx) error {
+			// Return HTTP 404 status and JSON response.
+			return c.Status(fiber.StatusNotFound).JSON(response.ErrorResponse{
+				Status: strconv.Itoa(fiber.StatusNotFound),
+				Code:   "NOT_FOUND",
+				Title:  fmt.Sprintf("Cannot %s %s", c.Method(), c.BaseURL()+c.OriginalURL()),
+			})
+		},
+	)
 
 	// Catch OS signals
 	quit := make(chan os.Signal, 1)
@@ -66,21 +125,18 @@ func Run() {
 
 	go func() {
 		<-quit
-		logger.Log.Info("Gracefully shutting down...")
-		// Received an interrupt signal, shutdown.
+
+		logger.Info("Received an interrupt signal, shutdown")
+
 		if err := app.Shutdown(); err != nil {
 			// Error from closing listeners, or context timeout:
-			logger.Log.Errorf("Oops... Server is not shutting down! Reason: %v", err)
+			logger.Errorf("Server shutdown failed: %v", err)
 		}
+
+		db.Close()
 	}()
 
-	// Run server.
-	if err := app.Listen(config.ServerAddr()); err != nil {
-		logger.Log.Errorf("Oops... Server is not running! Reason: %v", err)
-	}
-
-	// Close database connections.
-	if err := db.Close(); err != nil {
-		logger.Log.Errorf("Oops... Can't close database connections! Reason: %v", err)
+	if err := app.Listen(":" + config.GetString("app.port")); err != nil {
+		logger.Errorf("Failed to run BordaApplication: %v", err)
 	}
 }

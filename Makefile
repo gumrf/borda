@@ -8,8 +8,8 @@ run:
 	go run ./cmd/borda-api-server/main.go serve
 
 swag:
-	swag init -g internal/app/app.go
-	swag fmt -g internal/app/app.go
+	swag init -g internal/_app/app.go
+	swag fmt -g internal/_app/app.go
 
 clean:
 	rm -rf ./build

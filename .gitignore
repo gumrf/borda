@@ -1,12 +1,10 @@
 .env
-
-static/
-
-# Postgres mount volume
 .postgres
-
+static/
 logs/
 build/
+bin/
+_content/
 
 # IDEs files
 .idea
