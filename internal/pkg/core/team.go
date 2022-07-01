@@ -6,10 +6,15 @@ import (
 
 type TeamRepository interface {
 	CrudRepository[Team]
-	FindByToken(token string) (Team, error)
-	FindByUserId(userId int) (Team, error)
+	FindByToken(ctx context.Context, token string) (Team, error)
+	FindByUserId(ctx context.Context, userId int) (Team, error)
 	AddMember(ctx context.Context, teamId, userId int) error
 	IsTeamFull(ctx context.Context, teamId int) bool
+}
+
+type TeamService interface {
+	JoinTeam(ctx context.Context, userId int, token string) error
+	CreateTeam(ctx context.Context, userId int, name string) error
 }
 
 type Team struct {
@@ -23,4 +28,5 @@ type Team struct {
 type TeamMember struct {
 	UserId int    `json:"id" db:"user_id"`
 	Name   string `json:"name" db:"user_name"`
+	// IsCaptain bool   `db:"is_captain"`
 }

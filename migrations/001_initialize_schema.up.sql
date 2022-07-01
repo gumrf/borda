@@ -27,14 +27,15 @@ CREATE TABLE IF NOT EXISTS user_role (
 CREATE TABLE IF NOT EXISTS team (
    id serial NOT NULL PRIMARY KEY,
    name varchar(256) UNIQUE NOT NULL,
-   token varchar(256) UNIQUE NOT NULL,
-   team_leader_id integer NOT NULL REFERENCES "user"(id)
+   token varchar(256) UNIQUE NOT NULL
+   -- team_leader_id integer NOT NULL REFERENCES "user"(id)
 );
 
 CREATE TABLE IF NOT EXISTS team_member (
    id serial NOT NULL PRIMARY KEY,
    team_id integer NOT NULL REFERENCES team(id),
-   user_id integer UNIQUE NOT NULL REFERENCES "user"(id)
+   user_id integer UNIQUE NOT NULL REFERENCES "user"(id),
+   is_captain bool NOT NULL
 );
 
 CREATE TABLE IF NOT EXISTS author (

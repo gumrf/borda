@@ -9,9 +9,9 @@ type CrudRepository[T any] interface {
 	Count() int
 	ExistsById(id int) bool
 
-	FindAll() ([]T, error)
-	FindAllById(ids []int) ([]T, error)
-	FindById(id int) (T, error)
+	FindAll(ctx context.Context) ([]T, error)
+	FindAllById(ctx context.Context, ids []int) ([]T, error)
+	FindById(ctx context.Context, id int) (T, error)
 
 	Delete(entity T) error
 	DeleteAll(entities ...T) error

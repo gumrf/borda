@@ -18,18 +18,18 @@ VALUES
        (2,2), (3,2), (4,2), (5,2), (6,2), (7,2), (8,2);
 
 -- Create test Teams
-INSERT INTO public.team (name, token, team_leader_id)
+INSERT INTO public.team (name, token)
 VALUES
-    ('TestTeam1', '7c8b4c73-9fdd-4fbb-b926-43de9aa6f24d', 1),
-    ('TestTeam2', 'e01e949e-9dd0-428e-96c0-28adebf4df3d', 2),
-    ('TestTeam3', 'bd58e756-7ef3-4043-bf4c-2c5ae9b9ad0b', 3);
+    ('TestTeam1', '7c8b4c73-9fdd-4fbb-b926-43de9aa6f24d'),
+    ('TestTeam2', 'e01e949e-9dd0-428e-96c0-28adebf4df3d'),
+    ('TestTeam3', 'bd58e756-7ef3-4043-bf4c-2c5ae9b9ad0b');
 
 -- Add users to team
-INSERT INTO public.team_member(team_id, user_id) 
+INSERT INTO public.team_member(team_id, user_id, is_captain) 
 VALUES 
-       (1,1), (1,2), (1,3), (1,4),
-       (2,5), (2,6),
-       (3,7);
+       (1,1,true), (1,2,false), (1,3,false), (1,4,false),
+       (2,5,true), (2,6,false),
+       (3,7,true);
 
 -- Create test Authors
 INSERT INTO public.author (name, contact)

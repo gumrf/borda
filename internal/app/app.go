@@ -2,10 +2,15 @@ package app
 
 import (
 	_ "borda/api"
+	"borda/internal/auth"
 	"borda/internal/config"
 	"borda/internal/pkg/response"
+	"borda/internal/team"
+	"borda/internal/user"
+	"borda/pkg/hash"
 	"borda/pkg/log"
 	"borda/pkg/pg"
+	"borda/pkg/transaction"
 
 	"fmt"
 	"os"
@@ -56,20 +61,18 @@ func Run() {
 		logger.Fatalf("Failed to run migrations: %v", migrateError)
 	}
 
-	// repository := repository.NewRepository(db)
+	transactionManager := transaction.NewManager(db)
+	// Inittialize repositories
+	userRepository := user.NewUserRepository(db)
+	teamRepository := team.NewTeamRepository(db)
 
-	// authService := service.NewAuthService(repository.Users, repository.Teams,
-	// 	hash.NewSHA1Hasher(config.PasswordSalt()),
-	// )
+	// Initialize services
+	userService := user.NewUserService(userRepository, teamRepository, transactionManager)
+	teamService := team.NewTeamService(userRepository, teamRepository, transactionManager)
+	authService := auth.NewAuthService(userRepository, teamRepository, hash.NewSHA1Hasher(config.Salt()), config.JWT())
 
-	// userRepository := user.NewUserRepository(db)
-	// teamRepository := team.NewTeamRepository(db)
-
-	// userService := user.NewUserService(userRepository, teamRepository)
-	// userController := user.NewUserController(userService)
-
-	// authService := auth.NewAuthService(userRepository, teamRepository, hash.NewSHA1Hasher(config.Salt()), config.JWT())
-	// authController := auth.NewAuthController(authService)
+	userController := user.NewUserController(userService)
+	authController := auth.NewAuthController(authService)
 
 	app := fiber.New()
 	app.Use(loggerMiddleware.New())

@@ -1,47 +1,85 @@
 package team
 
 import (
+	"context"
+	"fmt"
+
+	"github.com/google/uuid"
+
 	"borda/internal/pkg/core"
+	"borda/pkg/transaction"
 )
 
 type TeamService struct {
 	userRepository core.UserRepository
 	teamRepository core.TeamRepository
+	txManager      transaction.Manager
 }
 
-func NewTeamService(userRepository core.UserRepository, teamRepository core.TeamRepository) *TeamService {
+func NewTeamService(userRepository core.UserRepository,
+	teamRepository core.TeamRepository, txManager transaction.Manager) *TeamService {
 	return &TeamService{
 		userRepository: userRepository,
 		teamRepository: teamRepository,
+		txManager:      txManager,
 	}
 }
 
-func (ts *TeamService) JoinTeam(userId int, payload string) error {
-	// TODO: Validate payload
-	// TODO: Wrap in transaction
-	_, err := ts.teamRepository.FindByToken(payload)
+func (ts *TeamService) JoinTeam(userId int, request JoinTeamRequest) error {
+	if err := request.Validate(); err != nil {
+		return fmt.Errorf("can't validate input: %w", err)
+	}
+
+	return ts.txManager.Run(
+		context.Background(),
+		func(ctx context.Context) error {
+			team, err := ts.teamRepository.FindByToken(ctx, request.Token)
+			if err != nil {
+				return fmt.Errorf("can't find team: %w", err)
+			}
+
+			if err := ts.teamRepository.AddMember(ctx, team.Id, userId); err != nil {
+				return fmt.Errorf("can't add member: %w", err)
+			}
+
+			return nil
+		},
+		true, // commit transaction
+	)
+}
+
+func (ts *TeamService) CreateTeam(userId int, request CreatTeamRequest) error {
+	if err := request.Validate(); err != nil {
+		return fmt.Errorf("can't validate input: %w", err)
+	}
+
+	// TODO: token generator
+	uuid, err := uuid.NewRandom()
 	if err != nil {
-		return err
+		return fmt.Errorf("can't create token: %w", err)
 	}
 
-	// if err := ts.teamRepository.AddMember(team.Id, userId); err != nil {
-	// 	return err
-	// }
+	token := uuid.String()
 
-	return nil
-}
+	return ts.txManager.Run(
+		context.Background(),
+		func(ctx context.Context) error {
+			team, err := ts.teamRepository.Save(ctx,
+				Team{
+					Name:  request.Name,
+					Token: token,
+				},
+			)
+			if err != nil {
+				return fmt.Errorf("can't save team: %w", err)
+			}
 
-func (ts *TeamService) CreateTeam(userId int, payload string) error {
-	// TODO: Validate payload
-	// TODO: Wrap in transaction
+			if err := ts.teamRepository.AddMember(ctx, team.Id, userId); err != nil {
+				return fmt.Errorf("can't add member: %w", err)
+			}
 
-	// uuid := uuid.New().String()
-
-	// if _, err := us.teamRepository.Save(); err != nil {
-	// 	return err
-	// }
-	// if err := ts.teamRepository.AddMember(team.Id, userId); err != nil {
-	// 	return err
-	// }
-	return nil
+			return nil
+		},
+		true, // commit transaction
+	)
 }

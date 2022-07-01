@@ -1,12 +1,12 @@
 package team
 
 import (
-	"borda/internal/pkg/middleware"
-	"borda/internal/pkg/response"
-
 	"strconv"
 
 	"github.com/gofiber/fiber/v2"
+
+	"borda/internal/pkg/middleware"
+	"borda/internal/pkg/response"
 )
 
 type TeamController struct {
@@ -50,14 +50,22 @@ func (tc *TeamController) joinTeam(c *fiber.Ctx) error {
 	}
 
 	method := request["method"]
+	data := request["payload"]
 
 	switch method {
 	case "create":
-		_ = tc.teamService.CreateTeam(userId, request["payload"])
+		_ = tc.teamService.CreateTeam(userId, CreatTeamRequest{Name: data})
 	case "join":
-		_ = tc.teamService.CreateTeam(userId, request["payload"])
+		_ = tc.teamService.JoinTeam(userId, JoinTeamRequest{Token: data})
 	default:
-		// TODO: send error
+		return c.Status(fiber.StatusBadRequest).JSON(
+			response.ErrorResponse{
+				Status: strconv.Itoa(fiber.StatusBadRequest),
+				Code:   response.IncorrectInputCode,
+				Title:  "Неизвестный метод. Возможные варианты [create] и [join]'",
+				Detail: err.Error(),
+			},
+		)
 	}
 
 	return c.SendStatus(fiber.StatusCreated)

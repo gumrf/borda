@@ -9,7 +9,7 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/jmoiron/sqlx"
+	"github.com/jackc/pgx/v4/pgxpool"
 	"github.com/lib/pq"
 )
 
@@ -23,21 +23,11 @@ var (
 	ErrUserNotFound      = errors.New("user not found")
 )
 
-// type UserRepository interface {
-// 	shema.CrudRepository[User]
-// 	// GetUserByCredentials ...
-// 	FindByCredentials(username, password string) (User, error)
-// 	// UpdatePassword Change user password
-// 	UpdatePassword(userId int, newPassword string) error
-// 	// GrantRole assigns a role to a user
-// 	GrantRole(userId, roleId int) error
-// }
-
 type PostgresUserRepository struct {
-	db *sqlx.DB
+	db *pgxpool.Pool
 }
 
-func NewUserRepository(db *sqlx.DB) *PostgresUserRepository {
+func NewUserRepository(db *pgxpool.Pool) *PostgresUserRepository {
 	return &PostgresUserRepository{db: db}
 }
 
