@@ -2,7 +2,8 @@ package user
 
 import (
 	shema "borda/internal/pkg"
-	"borda/internal/utils"
+	"borda/pkg/transaction"
+	"strings"
 
 	"context"
 	"database/sql"
@@ -10,7 +11,6 @@ import (
 	"fmt"
 
 	"github.com/jackc/pgx/v4/pgxpool"
-	"github.com/lib/pq"
 )
 
 // const (
@@ -24,72 +24,85 @@ var (
 )
 
 type PostgresUserRepository struct {
-	db *pgxpool.Pool
+	db        *pgxpool.Pool
+	txManager transaction.Manager
 }
 
-func NewUserRepository(db *pgxpool.Pool) *PostgresUserRepository {
-	return &PostgresUserRepository{db: db}
+func NewUserRepository(pool *pgxpool.Pool, txManager transaction.Manager) *PostgresUserRepository {
+	return &PostgresUserRepository{
+		db:        pool,
+		txManager: txManager,
+	}
 }
 
 func (r PostgresUserRepository) Save(ctx context.Context, user User) (User, error) {
-	var err error
+	err := r.txManager.Run(ctx, func(ctx context.Context) error {
+		// query := fmt.Sprintf(`
+		// INSERT INTO public.%s (
+		// 	name,
+		// 	password,
+		// 	contact
+		// )
+		// VALUES($1, $2, $3)
+		// RETURNING id`, shema.Tables.User,
+		// )
 
-	query := fmt.Sprintf(`
-INSERT INTO public.%s (
-	name,
-	password,
-	contact
-)
-VALUES($1, $2, $3)
-RETURNING id`, shema.Tables.User,
-	)
+		// `
+		// 		INSERT INTO %s (
+		// 			name,
+		// 			password,
+		// 			contact
+		// 		)
+		// 		VALUES($1, $2, $3)
+		// 		RETURNING id`, shema.Tables.User,
 
-	tx, ok := utils.ExtractTransaction(ctx)
+		tx, _ := r.txManager.GetTransaction(ctx)
 
-	switch ok {
-	case true:
-		err = tx.GetContext(
-			ctx, &user.Id, query,
+		err := tx.QueryRow(
+			ctx,
+			fmt.Sprintf(
+				strings.Join(
+					[]string{"INSERT INTO %s (",
+						" name,",
+						" password,",
+						" contact",
+						")",
+						"VALUES ($1, $2, $3)",
+						"RETURNING id",
+					},
+					"\n",
+				),
+				shema.Tables.User,
+			),
 			user.Username, user.Password, user.Contact,
-		)
-	default:
-		err = r.db.GetContext(
-			ctx, &user.Id, query,
-			user.Username, user.Password, user.Contact,
-		)
-	}
+		).Scan(&user.Id)
+
+		if err != nil {
+			return err
+		}
+
+		return nil
+	})
 
 	if err != nil {
-		if pqerr, ok := err.(*pq.Error); ok {
-			switch pqerr.Code.Name() {
-			case "unique_violation":
-				return User{}, fmt.Errorf(
-					"%w [name=%v]", ErrUserAlreadyExists, user.Username,
-				)
-			}
-		}
 		return User{}, err
 	}
 
 	return user, nil
 }
 
-func (r PostgresUserRepository) SaveAll(entities []User) ([]User, error) {
-	saveError := utils.Transactional(
-		context.Background(),
-		r.db,
-		func(ctx context.Context) error {
-			var err error
-
-			for i, user := range entities {
-				entities[i], err = r.Save(ctx, user)
-				if err != nil {
-					return err
-				}
+func (r PostgresUserRepository) SaveAll(ctx context.Context, entities []User) ([]User, error) {
+	saveError := r.txManager.Run(ctx, func(ctx context.Context) error {
+		var err error
+		for i, user := range entities {
+			entities[i], err = r.Save(ctx, user)
+			if err != nil {
+				return err
 			}
+		}
 
-			return nil
-		},
+		return nil
+	},
 	)
 
 	if saveError != nil {
@@ -101,79 +114,144 @@ func (r PostgresUserRepository) SaveAll(entities []User) ([]User, error) {
 
 func (r PostgresUserRepository) Count() int {
 	var count int
-	_ = r.db.Get(
-		&count,
+	_ = r.db.QueryRow(
+		context.TODO(),
 		fmt.Sprintf("SELECT COUNT(id) FROM %s", shema.Tables.User),
-	)
+	).Scan(&count)
 
 	return count
 }
 func (r PostgresUserRepository) ExistsById(id int) bool {
 	var exists bool
-	_ = r.db.Get(
-		&exists,
+	_ = r.db.QueryRow(
+		context.TODO(),
 		fmt.Sprintf(
 			"SELECT EXISTS(SELECT 1 FROM %s WHERE id=$1)",
 			shema.Tables.User,
 		),
 		id,
-	)
+	).Scan(&exists)
 
 	return exists
 }
 
-func (r PostgresUserRepository) FindAll() ([]User, error) {
+func (r PostgresUserRepository) FindAll(ctx context.Context) ([]User, error) {
 	users := make([]User, 0)
 
-	err := r.db.Select(&users, fmt.Sprintf("SELECT * FROM %s", shema.Tables.User))
+	err := r.txManager.Run(ctx, func(ctx context.Context) error {
+		tx, _ := r.txManager.GetTransaction(ctx)
+
+		rows, err := tx.Query(
+			ctx, fmt.Sprintf("SELECT * FROM %s", shema.Tables.User),
+		)
+		if err != nil {
+			return nil
+		}
+
+		for rows.Next() {
+			var user User
+			if err := rows.Scan(&user.Id, &user.Username,
+				&user.Password, &user.Contact, &user.TeamId); err != nil {
+				return err
+			}
+
+			users = append(users, user)
+		}
+
+		return nil
+	})
+
 	if err != nil {
-		return []User{}, nil
+		return []User{}, err
 	}
 
 	return users, nil
 }
 
-func (r PostgresUserRepository) FindById(id int) (User, error) {
+func (r PostgresUserRepository) FindById(ctx context.Context, id int) (User, error) {
 	var user User
-	err := r.db.Get(
-		&user,
-		fmt.Sprintf("SELECT * FROM %s WHERE id=$1", shema.Tables.User),
-		id,
-	)
-	if err != nil {
-		if errors.Is(err, sql.ErrNoRows) {
-			return User{}, fmt.Errorf(
-				"%w [id=%v]", ErrUserNotFound, id,
-			)
+
+	err := r.txManager.Run(ctx, func(ctx context.Context) error {
+		tx, _ := r.txManager.GetTransaction(ctx)
+
+		err := tx.QueryRow(
+			ctx,
+			fmt.Sprintf("SELECT * FROM %s WHERE id=$1", shema.Tables.User),
+			id,
+		).Scan(&user.Id, &user.Username, &user.Password,
+			&user.Contact, &user.TeamId)
+
+		if err != nil {
+			if errors.Is(err, sql.ErrNoRows) {
+				return fmt.Errorf(
+					"%w [id=%v]", ErrUserNotFound, id,
+				)
+			}
+			return err
 		}
 
+		return nil
+	})
+
+	if err != nil {
 		return User{}, err
 	}
 
 	return user, nil
 }
 
-func (r PostgresUserRepository) FindAllById(ids []int) ([]User, error) { panic("not implemented") }
+func (r PostgresUserRepository) FindAllById(ctx context.Context, ids []int) ([]User, error) {
+	users := make([]User, len(ids))
 
-func (r PostgresUserRepository) FindByCredentials(username, password string) (User, error) {
+	err := r.txManager.Run(ctx, func(ctx context.Context) error {
+		for _, id := range ids {
+			var err error
+			user, err := r.FindById(ctx, id)
+			if err != nil {
+				return err
+			}
+			users = append(users, user)
+		}
+		return nil
+	})
+
+	if err != nil {
+		return []User{}, err
+	}
+
+	return users, nil
+}
+
+func (r PostgresUserRepository) FindByCredentials(ctx context.Context, username, password string) (User, error) {
 	var user User
 
-	err := r.db.Get(
-		&user,
-		fmt.Sprintf(
-			"SELECT * FROM %s WHERE name=$1 AND password=$2",
-			shema.Tables.User,
-		),
-		username, password,
-	)
-	if err != nil {
-		if errors.Is(err, sql.ErrNoRows) {
-			return User{}, fmt.Errorf(
-				"%w [username=%s, password=%s]",
-				ErrUserNotFound, username, password,
-			)
+	err := r.txManager.Run(ctx, func(ctx context.Context) error {
+		tx, _ := r.txManager.GetTransaction(ctx)
+
+		err := tx.QueryRow(
+			ctx,
+			fmt.Sprintf(
+				"SELECT * FROM %s WHERE name=$1 AND password=$2",
+				shema.Tables.User,
+			),
+			username, password,
+		).Scan(&user)
+
+		if err != nil {
+			if errors.Is(err, sql.ErrNoRows) {
+				return fmt.Errorf(
+					"%w [username=%s, password=%s]",
+					ErrUserNotFound, username, password,
+				)
+			}
+
+			return err
 		}
 
+		return nil
+	})
+
+	if err != nil {
 		return User{}, err
 	}
 
@@ -185,10 +263,49 @@ func (r PostgresUserRepository) DeleteAll(entities ...User) error { panic("not i
 func (r PostgresUserRepository) DeleteById(id int) error          { panic("not implemented") }
 func (r PostgresUserRepository) DeleteAllById(ids []int) error    { panic("not implemented") }
 
-func (r PostgresUserRepository) UpdatePassword(userId int, newPassword string) error {
+func (r PostgresUserRepository) UpdatePassword(ctx context.Context, userId int, newPassword string) (User, error) {
+	// 	query := fmt.Sprintf(`
+	// 		UPDATE public.%s
+	// 		SET password = $1
+	// 		WHERE id = $2`,
+	// 		userTable,
+	// 	)
+	var user User
+
+	err := r.txManager.Run(ctx, func(ctx context.Context) error {
+		tx, _ := r.txManager.GetTransaction(ctx)
+
+		err := tx.QueryRow(
+			ctx,
+			fmt.Sprintf(`
+			 		UPDATE %s SET password = $1 WHERE id = $2`,
+				shema.Tables.User),
+			newPassword, userId,
+		).Scan(&user.Id, &user.Username, &user.Password, &user.Contact, &user.TeamId)
+
+		if err != nil {
+			if errors.Is(err, sql.ErrNoRows) {
+				return fmt.Errorf(
+					"%w [user_id=%v, password=%s]",
+					ErrUserNotFound, userId, newPassword,
+				)
+			}
+
+			return err
+		}
+
+		return nil
+	})
+
+	if err != nil {
+		return User{}, err
+	}
+
+	return user, nil
+}
+func (r PostgresUserRepository) GrantRole(ctx context.Context, userId, roleId int) error {
 	panic("not implemented")
 }
-func (r PostgresUserRepository) GrantRole(userId, roleId int) error { panic("not implemented") }
 
 // func (r PostgresUserRepository) SaveUser(username, password, contact string) (int, error) {
 // 	tx, err := r.db.Beginx()
