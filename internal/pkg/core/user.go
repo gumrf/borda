@@ -1,5 +1,7 @@
 package core
 
+import "context"
+
 type User struct {
 	Id       int    `json:"id" db:"id"`
 	Username string `json:"username" db:"name"`
@@ -11,9 +13,9 @@ type User struct {
 type UserRepository interface {
 	CrudRepository[User]
 	// GetUserByCredentials ...
-	FindByCredentials(username, password string) (User, error)
+	FindByCredentials(ctx context.Context, username, password string) (User, error)
 	// UpdatePassword Change user password
-	UpdatePassword(userId int, newPassword string) error
+	UpdatePassword(ctx context.Context, userId int, newPassword string) (User, error)
 	// GrantRole assigns a role to a user
-	GrantRole(userId, roleId int) error
+	GrantRole(ctx context.Context, userId, roleId int) error
 }
