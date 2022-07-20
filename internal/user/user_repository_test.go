@@ -3,6 +3,7 @@ package user
 import (
 	"borda/internal/pkg/core"
 	"borda/internal/utils"
+	"borda/pkg/transaction"
 
 	"context"
 	"testing"
@@ -16,8 +17,6 @@ func TestPostgresUserRepository_Save(t *testing.T) {
 	type testCase struct {
 		Name string
 
-		PostgresUserRepository *PostgresUserRepository
-
 		Ctx  context.Context
 		User User
 
@@ -25,22 +24,34 @@ func TestPostgresUserRepository_Save(t *testing.T) {
 		ExpectedError error
 	}
 
+	db := utils.MustOpenDB(t)
+	txManager := transaction.NewManager(db)
+	repo := NewUserRepository(db, txManager)
+
 	validate := func(t *testing.T, tc *testCase) {
 		t.Run(tc.Name, func(t *testing.T) {
-			actualUser, actualError := tc.PostgresUserRepository.Save(tc.Ctx, tc.User)
+			//actualUser, actualError := tc.PostgresUserRepository.Save(tc.Ctx, tc.User)
+
+			var actualUser User
+
+			actualError := txManager.Run(
+				tc.Ctx,
+				func(ctx context.Context) error {
+					user, err := repo.Save(ctx, tc.User)
+					actualUser = user
+					return err
+				},
+				true,
+			)
 
 			assert.Equal(t, tc.ExpectedUser, actualUser)
 			assert.ErrorIs(t, actualError, tc.ExpectedError)
 		})
 	}
 
-	db := utils.MustOpenDB(t)
-	repo := NewUserRepository(db)
-
 	validate(t, &testCase{
-		Name:                   "OK",
-		PostgresUserRepository: repo,
-		Ctx:                    context.Background(),
+		Name: "OK",
+		Ctx:  context.Background(),
 		User: User{
 			Id:       0,
 			Username: "Max",
@@ -59,9 +70,8 @@ func TestPostgresUserRepository_Save(t *testing.T) {
 	})
 
 	validate(t, &testCase{
-		Name:                   "DuplicateName",
-		PostgresUserRepository: repo,
-		Ctx:                    context.Background(),
+		Name: "DuplicateName",
+		Ctx:  context.Background(),
 		User: User{
 			Id:       0,
 			Username: "Max",
@@ -78,29 +88,41 @@ func TestPostgresUserRepository_SaveAll(t *testing.T) {
 	type testCase struct {
 		Name string
 
-		PostgresUserRepository *PostgresUserRepository
-
+		Ctx      context.Context
 		Entities []User
 
 		ExpectedSlice []User
 		ExpectedError error
 	}
 
+	db := utils.MustOpenDB(t)
+	txManager := transaction.NewManager(db)
+	repo := NewUserRepository(db, txManager)
+
 	validate := func(t *testing.T, tc *testCase) {
 		t.Run(tc.Name, func(t *testing.T) {
-			actualSlice, actualError := tc.PostgresUserRepository.SaveAll(tc.Entities)
+			var actualUsers []User
+			err := txManager.Run(
+				tc.Ctx,
+				func(ctx context.Context) error {
+					users, err := repo.SaveAll(ctx, tc.Entities)
+					actualUsers = users
 
-			assert.Equal(t, tc.ExpectedSlice, actualSlice)
+					return err
+				},
+				true,
+			)
+
+			actualError := err
+
+			assert.Equal(t, tc.ExpectedSlice, actualUsers)
 			assert.ErrorIs(t, actualError, tc.ExpectedError)
 		})
 	}
 
-	db := utils.MustOpenDB(t)
-	repo := NewUserRepository(db)
-
 	validate(t, &testCase{
-		Name:                   "OK",
-		PostgresUserRepository: repo,
+		Name: "OK",
+		Ctx:  context.Background(),
 		Entities: []User{
 			{
 				Id:       1,
@@ -141,18 +163,21 @@ func TestPostgresUserRepository_FindById(t *testing.T) {
 	type testCase struct {
 		Name string
 
-		PostgresUserRepository *PostgresUserRepository
-
-		Id int
+		Ctx context.Context
+		Id  int
 
 		ExpectedUser  User
 		ExpectedError error
 	}
 
+	db := utils.MustOpenDB(t)
+	txManager := transaction.NewManager(db)
+	repo := NewUserRepository(db, txManager)
+
 	validate := func(t *testing.T, tc *testCase) {
 		t.Run(tc.Name, func(t *testing.T) {
-			_, _ = tc.PostgresUserRepository.Save(
-				context.Background(),
+			_, _ = repo.Save(
+				tc.Ctx,
 				User{
 					Username: "Max",
 					Password: "m4x-1s-g0d",
@@ -160,7 +185,17 @@ func TestPostgresUserRepository_FindById(t *testing.T) {
 				},
 			)
 
-			actualUser, actualError := tc.PostgresUserRepository.FindById(tc.Id)
+			var actualUser User
+
+			actualError := txManager.Run(
+				tc.Ctx,
+				func(ctx context.Context) error {
+					user, err := repo.FindById(ctx, tc.Id)
+					actualUser = user
+					return err
+				},
+				true,
+			)
 
 			assert.Equal(t, tc.ExpectedUser, actualUser)
 			assert.ErrorIs(t, actualError, tc.ExpectedError)
@@ -168,9 +203,9 @@ func TestPostgresUserRepository_FindById(t *testing.T) {
 	}
 
 	validate(t, &testCase{
-		Name:                   "OK",
-		PostgresUserRepository: NewUserRepository(utils.MustOpenDB(t)),
-		Id:                     1,
+		Name: "OK",
+		Ctx:  context.Background(),
+		Id:   1,
 		ExpectedUser: User{
 			Id:       1,
 			Username: "Max",
@@ -182,74 +217,74 @@ func TestPostgresUserRepository_FindById(t *testing.T) {
 	})
 
 	validate(t, &testCase{
-		Name:                   "UserNotFound",
-		PostgresUserRepository: NewUserRepository(utils.MustOpenDB(t)),
-		Id:                     2,
-		ExpectedUser:           User{},
-		ExpectedError:          ErrUserNotFound,
+		Name:          "UserNotFound",
+		Ctx:           context.Background(),
+		Id:            2,
+		ExpectedUser:  User{},
+		ExpectedError: ErrUserNotFound,
 	})
 
 	validate(t, &testCase{
-		Name:                   "NegativeId",
-		PostgresUserRepository: NewUserRepository(utils.MustOpenDB(t)),
-		Id:                     -2,
-		ExpectedUser:           User{},
-		ExpectedError:          ErrUserNotFound,
+		Name:          "NegativeId",
+		Ctx:           context.Background(),
+		Id:            -2,
+		ExpectedUser:  User{},
+		ExpectedError: ErrUserNotFound,
 	})
 }
 
-func TestPostgresUserRepository_FindByCredentials(t *testing.T) {
-	type testCase struct {
-		Name string
+// func TestPostgresUserRepository_FindByCredentials(t *testing.T) {
+// 	type testCase struct {
+// 		Name string
 
-		PostgresUserRepository *PostgresUserRepository
+// 		PostgresUserRepository *PostgresUserRepository
 
-		Username string
-		Password string
+// 		Username string
+// 		Password string
 
-		ExpectedUser  User
-		ExpectedError error
-	}
+// 		ExpectedUser  User
+// 		ExpectedError error
+// 	}
 
-	validate := func(t *testing.T, tc *testCase) {
-		t.Run(tc.Name, func(t *testing.T) {
-			_, _ = tc.PostgresUserRepository.Save(
-				context.Background(),
-				User{
-					Username: "Max",
-					Password: "m4x-1s-g0d",
-					Contact:  "max@mail.god",
-				},
-			)
+// 	validate := func(t *testing.T, tc *testCase) {
+// 		t.Run(tc.Name, func(t *testing.T) {
+// 			_, _ = tc.PostgresUserRepository.Save(
+// 				context.Background(),
+// 				User{
+// 					Username: "Max",
+// 					Password: "m4x-1s-g0d",
+// 					Contact:  "max@mail.god",
+// 				},
+// 			)
 
-			actualUser, actualError := tc.PostgresUserRepository.FindByCredentials(tc.Username, tc.Password)
+// 			actualUser, actualError := tc.PostgresUserRepository.FindByCredentials(tc.Username, tc.Password)
 
-			assert.Equal(t, tc.ExpectedUser, actualUser)
-			assert.ErrorIs(t, actualError, tc.ExpectedError)
-		})
-	}
+// 			assert.Equal(t, tc.ExpectedUser, actualUser)
+// 			assert.ErrorIs(t, actualError, tc.ExpectedError)
+// 		})
+// 	}
 
-	validate(t, &testCase{
-		Name:                   "OK",
-		PostgresUserRepository: NewUserRepository(utils.MustOpenDB(t)),
-		Username:               "Max",
-		Password:               "m4x-1s-g0d",
-		ExpectedUser: User{
-			Id:       1,
-			Username: "Max",
-			Password: "m4x-1s-g0d",
-			Contact:  "max@mail.god",
-			TeamId:   0,
-		},
-		ExpectedError: nil,
-	})
+// 	validate(t, &testCase{
+// 		Name:                   "OK",
+// 		PostgresUserRepository: NewUserRepository(utils.MustOpenDB(t)),
+// 		Username:               "Max",
+// 		Password:               "m4x-1s-g0d",
+// 		ExpectedUser: User{
+// 			Id:       1,
+// 			Username: "Max",
+// 			Password: "m4x-1s-g0d",
+// 			Contact:  "max@mail.god",
+// 			TeamId:   0,
+// 		},
+// 		ExpectedError: nil,
+// 	})
 
-	validate(t, &testCase{
-		Name:                   "NotFound",
-		PostgresUserRepository: NewUserRepository(utils.MustOpenDB(t)),
-		Username:               "NeMax",
-		Password:               "m4x-1s-g0d",
-		ExpectedUser:           User{},
-		ExpectedError:          ErrUserNotFound,
-	})
-}
+// 	validate(t, &testCase{
+// 		Name:                   "NotFound",
+// 		PostgresUserRepository: NewUserRepository(utils.MustOpenDB(t)),
+// 		Username:               "NeMax",
+// 		Password:               "m4x-1s-g0d",
+// 		ExpectedUser:           User{},
+// 		ExpectedError:          ErrUserNotFound,
+// 	})
+// }
